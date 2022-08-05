@@ -2,12 +2,16 @@ package ru.vm.mpb.util
 
 import java.util.LinkedList
 
+typealias NodeFunction<K> = (K) -> Boolean
+typealias EdgeFunction<K> = (K, K) -> Boolean
+typealias PathFunction<K> = (List<K>) -> Boolean
+
 fun <K> dfs(
     root: K,
     links: (K) -> Iterator<K>?,
-    onNode: ((K) -> Boolean)? = null,
-    onEdge: ((K, K) -> Boolean)? = null,
-    onCycle: ((List<K>) -> Boolean)? = null
+    onNode: NodeFunction<K>? = null,
+    onEdge: EdgeFunction<K>? = null,
+    onCycle: PathFunction<K>? = null
 ) {
 
     val q = OrderedHashMap<K, Iterator<K>?>()
@@ -59,4 +63,23 @@ fun <K> bfs(keys: Set<K>, links: (K) -> Iterator<K>?, onNode: ((K) -> Boolean)? 
             q.addLast(l)
         }
     }
+}
+
+fun <K> bfsOnce(
+    keys: Set<K>,
+    links: (K) -> Iterator<K>?,
+    depCount: (K) -> Int?,
+    onNode: ((K) -> Boolean)? = null,
+    onEdge: ((K, K) -> Boolean)? = null,
+) {
+    val visitCountMap = mutableMapOf<K, Int>()
+    bfs(
+        keys,
+        links,
+        onEdge = onEdge,
+        onNode = { k ->
+            val count = visitCountMap.compute(k) { _, count -> (count ?: 0) + 1 }!!
+            count == Integer.max(1, depCount(k) ?: 1) && (onNode == null || onNode(k))
+        }
+    )
 }

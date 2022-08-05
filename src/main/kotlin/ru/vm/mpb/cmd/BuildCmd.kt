@@ -1,8 +1,11 @@
 package ru.vm.mpb.cmd
 
+import kotlinx.coroutines.*
 import ru.vm.mpb.config.MpbConfig
+import ru.vm.mpb.util.bfsOnce
 import ru.vm.mpb.util.dfs
 import ru.vm.mpb.util.parseProjectArgs
+import ru.vm.mpb.util.prefixPrinter
 import kotlin.system.exitProcess
 
 const val SKIP_BUILD_PROFILE = "skip"
@@ -16,6 +19,7 @@ enum class BuildStatus {
 }
 
 class BuildInfo(
+    val deps: Set<String>,
     val dependants: MutableSet<String> = mutableSetOf(),
     var status: BuildStatus = BuildStatus.BUILD
 
@@ -27,7 +31,9 @@ fun propagateStatus(k: String, build: Map<String, BuildInfo>) {
     dfs(k,
         { build[it]!!.dependants.iterator() },
         onEdge = { s, t ->
-            build[t]!!.status = build[s]!!.status
+            val si = build[s]!!
+            val ti = build[t]!!
+            ti.status = maxOf(ti.status, si.status)
             true
         },
         onCycle = {
@@ -35,6 +41,13 @@ fun propagateStatus(k: String, build: Map<String, BuildInfo>) {
             exitProcess(1)
         }
     )
+}
+
+fun traverseProjects(keys: Set<String>, bi: Map<String, BuildInfo>, handler: (String) -> Unit) {
+    bfsOnce(keys, { bi[it]!!.dependants.iterator() }, { bi[it]!!.deps.size }, onNode = {
+        handler(it)
+        true
+    })
 }
 
 
@@ -55,46 +68,62 @@ object BuildCmd: Cmd(
             if (info.deps.isEmpty()) {
                 roots.add(p)
             }
-
             val status = pargs[p].let { if (it.isNotEmpty() && it[0] == SKIP_BUILD_PROFILE) BuildStatus.SKIP else BuildStatus.BUILD }
-            bi.computeIfAbsent(p) { BuildInfo() }.status = status
-
+            bi.computeIfAbsent(p) { BuildInfo(info.deps) }.status = status
             for (d in info.deps) {
-                bi.computeIfAbsent(d) { BuildInfo() }.dependants.add(p)
+                bi.computeIfAbsent(d) { BuildInfo(cfg.projects[d]!!.deps) }.dependants.add(p)
             }
         }
-
-        println(bi)
-        println(roots)
 
         if (roots.isEmpty()) {
             println("invalid configuration, no root projects found")
             exitProcess(1)
         }
+
         for (r in roots) {
             propagateStatus(r, bi)
         }
 
-        bfs(roots, )
+        println("build plan: ")
+        traverseProjects(roots, bi) { prefixPrinter(System.out, it)("${bi[it]!!.status}") }
+        println()
 
-
-
-/*
-        for (e in cfg.projects) {
-
-            val p = e.key
-            val info = e.value
-
-            val a = pargs[p]
-            val profile = if (a.isNotEmpty()) a[0] else DEFAULT_BUILD_PROFILE
-
-            val commands = info.build ?: cfg.build
-            val command = commands[profile] ?: commands[DEFAULT_BUILD_PROFILE]!!
-
-            println(e.key + " " + command)
+        val buildDeps = bi.filter { e -> e.value.status == BuildStatus.BUILD }.mapValues { it.value.deps.toMutableSet() }
+        runBlocking(Dispatchers.Default) {
+            for (k in roots) {
+                launch {
+                    build(k, bi)
+                }
+            }
         }
-*/
 
+    }
+
+    suspend fun build(k: String, bi: Map<String, BuildInfo>) {
+
+        val pp = prefixPrinter(System.out, k)
+        if (bi[k]!!.status == BuildStatus.SKIP) {
+            traverseProjects(setOf(k), bi) { pp("skipping...") }
+            return
+        }
+
+        val status = withContext(Dispatchers.IO) {
+            pp("building...")
+            delay(1000)
+            pp("finished")
+            BuildStatus.OK
+        }
+
+        if (status == BuildStatus.ERROR) {
+            traverseProjects(setOf(k), bi) { pp("build failed") }
+            return
+        }
+
+        for (d in bi[k]!!.dependants) {
+
+
+
+        }
 
     }
 }

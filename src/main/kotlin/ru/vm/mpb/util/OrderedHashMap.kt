@@ -69,10 +69,9 @@ class OrderedHashMap<K, V>: MutableMap<K, V> {
 
     override fun containsKey(key: K): Boolean = map.containsKey(key)
 
-    fun makeFirst(key: K): Boolean = make(key, true)
-    fun makeLast(key: K): Boolean = make(key, false)
-
-    fun make(key: K, firstOrLast: Boolean): Boolean {
+    fun makeFirst(key: K): Boolean = makeFirstOrLast(key, true)
+    fun makeLast(key: K): Boolean = makeFirstOrLast(key, false)
+    fun makeFirstOrLast(key: K, firstOrLast: Boolean): Boolean {
         val n = map[key] ?: return false
         relinkNode(n, if (firstOrLast) null else tail, if (firstOrLast) head else null)
         return true
@@ -90,11 +89,12 @@ class OrderedHashMap<K, V>: MutableMap<K, V> {
 
     override fun isEmpty(): Boolean = head == null
 
-    fun iterator(direction: Boolean): MutableIterator<MutableMap.MutableEntry<K, V>> =
-        LinkedNodeIterator(direction, { it }, if (direction) head else tail)
+    fun <R> iterator(mapper: (LinkedNode<K, V>) -> R, direction: Boolean): MutableIterator<R> =
+        LinkedNodeIterator(direction, mapper, if (direction) head else tail)
 
-    fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> = iterator(true)
-    fun descendingIterator(): MutableIterator<MutableMap.MutableEntry<K, V>> = iterator(false)
+    fun iterator(forward: Boolean = true): MutableIterator<MutableMap.MutableEntry<K, V>> =
+        LinkedNodeIterator(forward, { it }, if (forward) head else tail)
+    fun descendingIterator() = iterator(false)
 
     val firstEntry: MutableMap.MutableEntry<K, V>?
         get() = head
@@ -108,9 +108,13 @@ class OrderedHashMap<K, V>: MutableMap<K, V> {
     val lastKey: K?
         get() = tail?.key
 
-    fun removeFirst(): MutableMap.MutableEntry<K, V>? = removeFirstOrLast(true)
-    fun removeLast(): MutableMap.MutableEntry<K, V>? = removeFirstOrLast(false)
-    fun removeFirstOrLast(firstOrLast: Boolean): MutableMap.MutableEntry<K, V>? {
+    fun removeFirst() = removeFirstOrLast(true)
+    fun removeLast() = removeFirstOrLast(false)
+    fun removeFirstOrLast(firstOrLast: Boolean) = pollFirstOrLast(firstOrLast) ?: throw NoSuchElementException()
+
+    fun pollFirst() = pollFirstOrLast(true)
+    fun pollLast() = pollFirstOrLast(false)
+    fun pollFirstOrLast(firstOrLast: Boolean): MutableMap.MutableEntry<K, V>? {
         val n = (if (firstOrLast) head else tail) ?: return null
         unlinkNode(n)
         map.remove(n.key)
@@ -200,30 +204,8 @@ class OrderedHashMap<K, V>: MutableMap<K, V> {
         linkNode(n)
     }
 
-    private fun removeFromMap(n: LinkedNode<K, V>): LinkedNode<K, V> {
-        if (n.key != null) {
-            map.remove(n.key)
-        }
-        return n
-    }
-
     private fun addNode(key: K, element: V, firstOrLast: Boolean): LinkedNode<K, V> {
         return linkNode(LinkedNode(key, element, if (firstOrLast) null else tail, if (firstOrLast) head else null))
-    }
-
-    private fun removeItem(firstOrLast: Boolean): V? {
-        val n = (if (firstOrLast) head else tail) ?: return null
-        return removeFromMap(unlinkNode(n)).value
-    }
-
-    private fun removeByIterator(iter: MutableIterator<V>, o: Any?): Boolean {
-        while (iter.hasNext()) {
-            if (iter.next() == o) {
-                iter.remove()
-                return true
-            }
-        }
-        return false
     }
 
     class LinkedNode<K, V>(
