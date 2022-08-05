@@ -1,4 +1,4 @@
-./.gradle/
-./.idea/
-./build/
-./mpb.yaml
+.gradle/
+.idea/
+build/
+mpb.yaml
