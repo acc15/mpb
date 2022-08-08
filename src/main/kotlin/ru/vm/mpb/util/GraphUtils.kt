@@ -2,13 +2,14 @@ package ru.vm.mpb.util
 
 import java.util.LinkedList
 
+typealias FetchEdgesFunction<K> = (K) -> Iterable<K>
 typealias NodeFunction<K> = (K) -> Boolean
 typealias EdgeFunction<K> = (K, K) -> Boolean
 typealias PathFunction<K> = (List<K>) -> Boolean
 
 fun <K> dfs(
     root: K,
-    links: (K) -> Iterator<K>?,
+    links: FetchEdgesFunction<K>,
     onNode: NodeFunction<K>? = null,
     onEdge: EdgeFunction<K>? = null,
     onCycle: PathFunction<K>? = null
@@ -26,11 +27,11 @@ fun <K> dfs(
             if (onNode != null && !onNode(k)) {
                 continue
             }
-            iter = links(k)
+            iter = links(k).iterator()
             e.setValue(iter)
         }
 
-        if (iter == null || !iter.hasNext()) {
+        if (!iter.hasNext()) {
             q.removeLast()
             continue
         }
@@ -47,14 +48,14 @@ fun <K> dfs(
     }
 }
 
-fun <K> bfs(keys: Set<K>, links: (K) -> Iterator<K>?, onNode: ((K) -> Boolean)? = null, onEdge: ((K, K) -> Boolean)? = null) {
+fun <K> bfs(keys: Set<K>, links: FetchEdgesFunction<K>, onNode: ((K) -> Boolean)? = null, onEdge: ((K, K) -> Boolean)? = null) {
     val q = LinkedList(keys)
     while (q.isNotEmpty()) {
         val k = q.pop()
         if (onNode != null && !onNode(k)) {
             continue
         }
-        val it = links(k) ?: continue
+        val it = links(k).iterator()
         while (it.hasNext()) {
             val l = it.next()
             if (onEdge != null && !onEdge(k, l)) {
@@ -65,10 +66,25 @@ fun <K> bfs(keys: Set<K>, links: (K) -> Iterator<K>?, onNode: ((K) -> Boolean)? 
     }
 }
 
-fun <K> bfsOnce(
+fun <K> bfsFirstVisitOnly(
     keys: Set<K>,
-    links: (K) -> Iterator<K>?,
-    depCount: (K) -> Int?,
+    links: FetchEdgesFunction<K>,
+    onNode: ((K) -> Boolean)? = null,
+    onEdge: ((K, K) -> Boolean)? = null,
+) {
+    val visitedSet = mutableSetOf<K>()
+    bfs(
+        keys,
+        links,
+        onEdge = onEdge,
+        onNode = { k -> visitedSet.add(k) && (onNode == null || onNode(k)) }
+    )
+}
+
+fun <K> bfsLastVisitOnly(
+    keys: Set<K>,
+    links: (K) -> Iterable<K>,
+    depCount: (K) -> Int,
     onNode: ((K) -> Boolean)? = null,
     onEdge: ((K, K) -> Boolean)? = null,
 ) {
@@ -79,7 +95,7 @@ fun <K> bfsOnce(
         onEdge = onEdge,
         onNode = { k ->
             val count = visitCountMap.compute(k) { _, count -> (count ?: 0) + 1 }!!
-            count == Integer.max(1, depCount(k) ?: 1) && (onNode == null || onNode(k))
+            count == maxOf(depCount(k), 1) && (onNode == null || onNode(k))
         }
     )
 }

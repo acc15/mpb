@@ -7,8 +7,8 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.api.errors.TransportException
 import ru.vm.mpb.config.MpbConfig
 import ru.vm.mpb.executor.parallelExecutor
+import ru.vm.mpb.util.PrefixPrinter
 import ru.vm.mpb.util.parseProjectArgs
-import ru.vm.mpb.util.prefixPrinter
 
 object CheckoutCmd: Cmd(
     setOf("c", "co", "checkout"),
@@ -24,7 +24,7 @@ object CheckoutCmd: Cmd(
             val list = pargs[p]
             val branch = if (list.isEmpty()) cfg.getDefaultBranch(p) else list[0]
 
-            val pp = prefixPrinter(System.out, p)
+            val pp = PrefixPrinter(System.out, p)
             withContext(Dispatchers.IO) {
 
                 val git = Git(FileRepositoryBuilder().setWorkTree(info.dir.toFile()).findGitDir().build())

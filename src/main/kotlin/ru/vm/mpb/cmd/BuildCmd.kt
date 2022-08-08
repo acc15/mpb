@@ -2,10 +2,12 @@ package ru.vm.mpb.cmd
 
 import kotlinx.coroutines.*
 import ru.vm.mpb.config.MpbConfig
-import ru.vm.mpb.util.bfsOnce
-import ru.vm.mpb.util.dfs
-import ru.vm.mpb.util.parseProjectArgs
-import ru.vm.mpb.util.prefixPrinter
+import ru.vm.mpb.util.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.system.exitProcess
 
 const val SKIP_BUILD_PROFILE = "skip"
@@ -13,38 +15,43 @@ const val DEFAULT_BUILD_PROFILE = "default"
 
 enum class BuildStatus {
     BUILD,
+    PENDING,
     SKIP,
-    OK,
+    SUCCESS,
     ERROR
 }
 
-class BuildInfo(
-    val deps: Set<String>,
-    val dependants: MutableSet<String> = mutableSetOf(),
-    var status: BuildStatus = BuildStatus.BUILD
+data class BuildInfo(
+    val pendingDeps: ConcurrentHashMap<String, Unit>,
+    val dependants: Set<String>,
+    var status: AtomicReference<BuildStatus> = AtomicReference(BuildStatus.BUILD)
+)
 
+data class BuildParams(
+    val cfg: MpbConfig,
+    val args: KeyArgs,
+    val bi: Map<String, BuildInfo> = cfg.projects.mapValues { (k, i) ->
+        BuildInfo(
+            i.deps.associateWithTo(ConcurrentHashMap()) {},
+            cfg.projects.filter { e -> e.value.deps.contains(k) }.keys
+        )
+    }
 ) {
-    override fun toString(): String = "BuildInfo(status=${status},dependants=${dependants})"
+    fun getProjectConfig(k: String) = cfg.projects[k]!!
+    fun getBuildInfo(k: String): BuildInfo = bi[k]!!
+    fun getProjectArgs(k: String): List<String> = args[k]
 }
 
-fun propagateStatus(k: String, build: Map<String, BuildInfo>) {
-    dfs(k,
-        { build[it]!!.dependants.iterator() },
-        onEdge = { s, t ->
-            val si = build[s]!!
-            val ti = build[t]!!
-            ti.status = maxOf(ti.status, si.status)
-            true
-        },
-        onCycle = {
-            println("cycle detected: ${it.joinToString(", ")}")
-            exitProcess(1)
-        }
-    )
+fun findCycles(key: String, bp: BuildParams, handler: (List<String>) -> Unit) {
+    dfs(key, { bp.getBuildInfo(it).dependants }, onCycle = { it ->
+        handler(it)
+        false
+    })
 }
 
-fun traverseProjects(keys: Set<String>, bi: Map<String, BuildInfo>, handler: (String) -> Unit) {
-    bfsOnce(keys, { bi[it]!!.dependants.iterator() }, { bi[it]!!.deps.size }, onNode = {
+
+fun traverseProjects(keys: Set<String>, bp: BuildParams, handler: (String) -> Unit) {
+    bfsFirstVisitOnly(keys, { bp.getBuildInfo(it).dependants }, onNode = {
         handler(it)
         true
     })
@@ -59,21 +66,8 @@ object BuildCmd: Cmd(
 
     override fun execute(cfg: MpbConfig, args: List<String>) {
 
-        val bi = mutableMapOf<String, BuildInfo>()
-        val roots = mutableSetOf<String>()
-
-        val pargs = parseProjectArgs(cfg, args)
-
-        for ((p, info) in cfg.projects) {
-            if (info.deps.isEmpty()) {
-                roots.add(p)
-            }
-            val status = pargs[p].let { if (it.isNotEmpty() && it[0] == SKIP_BUILD_PROFILE) BuildStatus.SKIP else BuildStatus.BUILD }
-            bi.computeIfAbsent(p) { BuildInfo(info.deps) }.status = status
-            for (d in info.deps) {
-                bi.computeIfAbsent(d) { BuildInfo(cfg.projects[d]!!.deps) }.dependants.add(p)
-            }
-        }
+        val bp = BuildParams(cfg, parseProjectArgs(cfg, args))
+        val roots = cfg.projects.filter { e -> e.value.deps.isEmpty() }.keys
 
         if (roots.isEmpty()) {
             println("invalid configuration, no root projects found")
@@ -81,48 +75,97 @@ object BuildCmd: Cmd(
         }
 
         for (r in roots) {
-            propagateStatus(r, bi)
+            findCycles(r, bp) {
+                println("cycle detected: ${it.joinToString(", ")}")
+                exitProcess(1)
+            }
         }
 
-        println("build plan: ")
-        traverseProjects(roots, bi) { prefixPrinter(System.out, it)("${bi[it]!!.status}") }
-        println()
-
-        val buildDeps = bi.filter { e -> e.value.status == BuildStatus.BUILD }.mapValues { it.value.deps.toMutableSet() }
         runBlocking(Dispatchers.Default) {
             for (k in roots) {
+                bp.getBuildInfo(k).status.set(BuildStatus.PENDING)
                 launch {
-                    build(k, bi)
+                    build(this, k, bp)
                 }
             }
         }
 
     }
 
-    suspend fun build(k: String, bi: Map<String, BuildInfo>) {
+    suspend fun build(scope: CoroutineScope, k: String, bp: BuildParams) {
 
-        val pp = prefixPrinter(System.out, k)
-        if (bi[k]!!.status == BuildStatus.SKIP) {
-            traverseProjects(setOf(k), bi) { pp("skipping...") }
+        val i = bp.getBuildInfo(k)
+        val pp = PrefixPrinter(System.out, k)
+        val a = bp.getProjectArgs(k)
+
+        if (a.isNotEmpty() && a[0] == SKIP_BUILD_PROFILE) {
+            traverseProjects(setOf(k), bp) {
+                val expectStatus = if (it == k) BuildStatus.PENDING else BuildStatus.BUILD
+                if (bp.getBuildInfo(it).status.compareAndSet(expectStatus, BuildStatus.SKIP)) {
+                    if (it == k) {
+                        pp.withPrefix(it)("skipped")
+                    } else {
+                        pp.withPrefix(it)("skipped (due to $k is skipped)")
+                    }
+                }
+            }
             return
         }
+
+        val profile = if (a.isNotEmpty()) a[0] else DEFAULT_BUILD_PROFILE
+        val pcfg = bp.getProjectConfig(k)
+
+        val commands = pcfg.build ?: bp.cfg.build
+        val command = commands[profile] ?: commands[DEFAULT_BUILD_PROFILE]!!
 
         val status = withContext(Dispatchers.IO) {
             pp("building...")
-            delay(1000)
-            pp("finished")
-            BuildStatus.OK
+            val buildStart = System.nanoTime()
+
+            val logDir = Files.createDirectories(Path.of("log"))
+            val logFile = logDir.resolve("$k.log").toFile()
+            val exitCode = ProcessBuilder(command)
+                .directory(pcfg.dir.toFile())
+                .redirectOutput(logFile)
+                .redirectError(logFile)
+                .start()
+                .waitFor()
+
+            val duration = Duration.ofNanos(System.nanoTime() - buildStart)
+            if (exitCode == 0) {
+                pp("success (in ${duration.prettyPrint()})")
+                BuildStatus.SUCCESS
+            } else {
+                pp("failed (in ${duration.prettyPrint()})")
+                BuildStatus.ERROR
+            }
+
         }
 
-        if (status == BuildStatus.ERROR) {
-            traverseProjects(setOf(k), bi) { pp("build failed") }
+        if (status != BuildStatus.SUCCESS) {
+            traverseProjects(setOf(k), bp) {
+                val expectStatus = if (it == k) BuildStatus.PENDING else BuildStatus.BUILD
+                if (bp.getBuildInfo(it).status.compareAndSet(expectStatus, status) && it != k) {
+                    pp.withPrefix(it)("failed (due to $k is failed)")
+                }
+            }
             return
         }
 
-        for (d in bi[k]!!.dependants) {
+        for (d in i.dependants) {
+            val di = bp.getBuildInfo(d)
+            di.pendingDeps.remove(k)
+            if (!di.pendingDeps.isEmpty()) {
+                continue
+            }
 
+            if (!di.status.compareAndSet(BuildStatus.BUILD, BuildStatus.PENDING)) {
+                continue
+            }
 
-
+            scope.launch {
+                build(scope, d, bp)
+            }
         }
 
     }
