@@ -5,7 +5,7 @@ import kotlinx.coroutines.withContext
 import org.eclipse.jgit.api.errors.TransportException
 import ru.vm.mpb.config.MpbConfig
 import ru.vm.mpb.executor.parallelExecutor
-import ru.vm.mpb.util.PrefixPrinter
+import ru.vm.mpb.util.MessagePrinter
 import ru.vm.mpb.util.makeGit
 import ru.vm.mpb.util.parseKeyArgs
 
@@ -21,7 +21,7 @@ object CheckoutCmd: Cmd(
             val info = cfg.projects[p]!!
             val branch = if (list.isEmpty()) cfg.getDefaultBranch(p) else list[0]
 
-            val pp = PrefixPrinter(System.out, p)
+            val pp = MessagePrinter(cfg, p)
             withContext(Dispatchers.IO) {
 
                 val git = makeGit(info.dir)
@@ -30,7 +30,7 @@ object CheckoutCmd: Cmd(
                         pp("fetching ${remote.name}...")
                         git.fetch().setRemote(remote.name).call()
                     } catch (e: TransportException) {
-                        pp("unable to fetch ${remote.name}: ${e.message}")
+                        pp("unable to fetch ${remote.name}: ${e.message}", e)
                     }
                 }
 
@@ -47,7 +47,7 @@ object CheckoutCmd: Cmd(
                 try {
                     git.pull().call()
                 } catch (e: TransportException) {
-                    pp("unable to pull: ${e.message}")
+                    pp("unable to pull: ${e.message}", e)
                 }
                 if (stash != null) {
                     pp("restoring stash")

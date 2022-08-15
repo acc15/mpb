@@ -68,13 +68,13 @@ object BuildCmd: Cmd(
         val roots = cfg.projects.filter { e -> e.value.deps.isEmpty() }.keys
 
         if (roots.isEmpty()) {
-            println("invalid configuration, no root projects found")
+            cfg.print("invalid configuration, no root projects found")
             exitProcess(1)
         }
 
         for (r in roots) {
             findCycles(r, bp) {
-                println("cycle detected: ${it.joinToString(", ")}")
+                cfg.print("cycle detected: ${it.joinToString(", ")}")
                 exitProcess(1)
             }
         }
@@ -93,7 +93,7 @@ object BuildCmd: Cmd(
     suspend fun build(scope: CoroutineScope, k: String, bp: BuildParams) {
 
         val i = bp.getBuildInfo(k)
-        val pp = PrefixPrinter(System.out, k)
+        val pp = bp.cfg.print.withPrefix(k)
         val a = bp.args[k]
         if (a == null) {
             traverseProjects(setOf(k), bp) {

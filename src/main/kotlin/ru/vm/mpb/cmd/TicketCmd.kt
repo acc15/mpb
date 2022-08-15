@@ -1,6 +1,7 @@
 package ru.vm.mpb.cmd
 
 import ru.vm.mpb.config.MpbConfig
+import ru.vm.mpb.util.MessagePrinter
 import ru.vm.mpb.util.deepMove
 import ru.vm.mpb.util.parseJiraTicket
 import java.nio.file.Files
@@ -42,7 +43,8 @@ object TicketCmd: Cmd(
                 deepMove(d, targetDir)
             }
         }
-        println(targetDir)
+
+        cfg.print(targetDir)
 
     }
 }
