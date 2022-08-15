@@ -7,7 +7,7 @@ import ru.vm.mpb.config.MpbConfig
 import ru.vm.mpb.executor.parallelExecutor
 import ru.vm.mpb.util.PrefixPrinter
 import ru.vm.mpb.util.makeGit
-import ru.vm.mpb.util.parseProjectArgs
+import ru.vm.mpb.util.parseKeyArgs
 
 object CheckoutCmd: Cmd(
     setOf("c", "co", "checkout"),
@@ -16,11 +16,9 @@ object CheckoutCmd: Cmd(
 ) {
     override fun execute(cfg: MpbConfig, args: List<String>) {
 
-        val pargs = parseProjectArgs(cfg, args)
-        parallelExecutor(cfg) { p ->
+        parallelExecutor(parseKeyArgs(cfg, args)) { p, list ->
 
             val info = cfg.projects[p]!!
-            val list = pargs[p]
             val branch = if (list.isEmpty()) cfg.getDefaultBranch(p) else list[0]
 
             val pp = PrefixPrinter(System.out, p)

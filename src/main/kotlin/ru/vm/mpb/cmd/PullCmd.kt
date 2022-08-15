@@ -10,6 +10,7 @@ import ru.vm.mpb.executor.parallelExecutor
 import ru.vm.mpb.util.PrefixPrinter
 import ru.vm.mpb.util.makeGit
 import ru.vm.mpb.util.parseJiraTicket
+import ru.vm.mpb.util.parseKeyArgs
 import java.awt.Desktop
 import java.net.URI
 
@@ -19,7 +20,7 @@ object PullCmd: Cmd(
     ""
 ) {
     override fun execute(cfg: MpbConfig, args: List<String>) {
-        parallelExecutor(cfg) { p ->
+        parallelExecutor(parseKeyArgs(cfg, args)) { p, _ ->
             val info = cfg.projects[p]!!
             val pp = PrefixPrinter(System.out, p)
             withContext(Dispatchers.IO) {

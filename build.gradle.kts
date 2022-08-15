@@ -22,6 +22,7 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
     implementation("org.eclipse.jgit:org.eclipse.jgit:6.2.0.202206071550-r")
     implementation("org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:6.2.0.202206071550-r")
+    implementation("org.slf4j:slf4j-nop:1.7.36")
     testImplementation(kotlin("test"))
 }
 

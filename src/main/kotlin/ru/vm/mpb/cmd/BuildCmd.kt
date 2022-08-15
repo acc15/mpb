@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.system.exitProcess
 
-const val SKIP_BUILD_PROFILE = "skip"
 const val DEFAULT_BUILD_PROFILE = "default"
 
 enum class BuildStatus {
@@ -39,11 +38,10 @@ data class BuildParams(
 ) {
     fun getProjectConfig(k: String) = cfg.projects[k]!!
     fun getBuildInfo(k: String): BuildInfo = bi[k]!!
-    fun getProjectArgs(k: String): List<String> = args[k]
 }
 
 fun findCycles(key: String, bp: BuildParams, handler: (List<String>) -> Unit) {
-    dfs(key, { bp.getBuildInfo(it).dependants }, onCycle = { it ->
+    dfs(key, { bp.getBuildInfo(it).dependants }, onCycle = {
         handler(it)
         false
     })
@@ -66,7 +64,7 @@ object BuildCmd: Cmd(
 
     override fun execute(cfg: MpbConfig, args: List<String>) {
 
-        val bp = BuildParams(cfg, parseProjectArgs(cfg, args))
+        val bp = BuildParams(cfg, parseKeyArgs(cfg, args))
         val roots = cfg.projects.filter { e -> e.value.deps.isEmpty() }.keys
 
         if (roots.isEmpty()) {
@@ -96,9 +94,8 @@ object BuildCmd: Cmd(
 
         val i = bp.getBuildInfo(k)
         val pp = PrefixPrinter(System.out, k)
-        val a = bp.getProjectArgs(k)
-
-        if (a.isNotEmpty() && a[0] == SKIP_BUILD_PROFILE) {
+        val a = bp.args[k]
+        if (a == null) {
             traverseProjects(setOf(k), bp) {
                 val expectStatus = if (it == k) BuildStatus.PENDING else BuildStatus.BUILD
                 if (bp.getBuildInfo(it).status.compareAndSet(expectStatus, BuildStatus.SKIP)) {

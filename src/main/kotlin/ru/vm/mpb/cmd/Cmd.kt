@@ -20,7 +20,6 @@ abstract class Cmd(
 
     abstract fun execute(cfg: MpbConfig, args: List<String>)
 
-
     fun printUsageAndExit(): Nothing {
         println(usage)
         exitProcess(1)
