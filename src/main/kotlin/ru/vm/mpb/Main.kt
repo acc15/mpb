@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import ru.vm.mpb.cmd.BuildCmd
-import ru.vm.mpb.cmd.CheckoutCmd
-import ru.vm.mpb.cmd.JiraCmd
-import ru.vm.mpb.cmd.TicketCmd
+import ru.vm.mpb.cmd.*
 import ru.vm.mpb.config.MpbConfig
 import java.io.File
 import kotlin.system.exitProcess
@@ -18,7 +15,8 @@ val ALL_CMDS = listOf(
     JiraCmd,
     TicketCmd,
     CheckoutCmd,
-    BuildCmd
+    BuildCmd,
+    PullCmd
 )
 
 val ALL_CMDS_MAP = ALL_CMDS.flatMap { c -> c.names.map { it to c } }.toMap()

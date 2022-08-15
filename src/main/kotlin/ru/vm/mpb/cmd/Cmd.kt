@@ -16,7 +16,7 @@ abstract class Cmd(
         get() = "${sortedNames.joinToString(", ")} - ${description}. $usage"
 
     val usage: String
-        get() = "Usage: $PROGRAM_NAME ${sortedNames[0]} $argDescription"
+        get() = "Usage: $PROGRAM_NAME ${sortedNames[0]}" + if (argDescription.isEmpty()) "" else " $argDescription"
 
     abstract fun execute(cfg: MpbConfig, args: List<String>)
 

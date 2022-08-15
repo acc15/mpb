@@ -2,12 +2,11 @@ package ru.vm.mpb.cmd
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.api.errors.TransportException
 import ru.vm.mpb.config.MpbConfig
 import ru.vm.mpb.executor.parallelExecutor
 import ru.vm.mpb.util.PrefixPrinter
+import ru.vm.mpb.util.makeGit
 import ru.vm.mpb.util.parseProjectArgs
 
 object CheckoutCmd: Cmd(
@@ -27,7 +26,7 @@ object CheckoutCmd: Cmd(
             val pp = PrefixPrinter(System.out, p)
             withContext(Dispatchers.IO) {
 
-                val git = Git(FileRepositoryBuilder().setWorkTree(info.dir.toFile()).findGitDir().build())
+                val git = makeGit(info.dir)
                 for (remote in git.remoteList().call()) {
                     try {
                         pp("fetching ${remote.name}...")
