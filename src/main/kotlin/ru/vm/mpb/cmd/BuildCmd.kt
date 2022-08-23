@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.system.exitProcess
 
-const val DEFAULT_BUILD_PROFILE = "default"
+const val DEFAULT_KEY = "default"
 
 enum class BuildStatus {
     BUILD,
@@ -109,11 +109,12 @@ object BuildCmd: Cmd(
             return
         }
 
-        val profile = if (a.isNotEmpty()) a[0] else DEFAULT_BUILD_PROFILE
+        val profile = if (a.isNotEmpty()) a[0] else DEFAULT_KEY
         val pcfg = bp.getProjectConfig(k)
 
-        val commands = pcfg.build ?: bp.cfg.build
-        val command = commands[profile] ?: commands[DEFAULT_BUILD_PROFILE]!!
+        val buildName = pcfg.build ?: DEFAULT_KEY
+        val buildConfig = bp.cfg.build[buildName] ?: bp.cfg.build[DEFAULT_KEY]!!
+        val command = buildConfig.profiles[profile] ?: buildConfig.profiles[DEFAULT_KEY]!!
 
         val status = withContext(Dispatchers.IO) {
             pp("building: ${command.joinToString(" ")}")
@@ -121,12 +122,17 @@ object BuildCmd: Cmd(
 
             val logDir = Files.createDirectories(Path.of("log"))
             val logFile = logDir.resolve("$k.log").toFile()
-            val exitCode = ProcessBuilder(command)
+
+            val pb = ProcessBuilder(command)
                 .directory(pcfg.dir.toFile())
                 .redirectOutput(logFile)
                 .redirectError(logFile)
-                .start()
-                .waitFor()
+
+            if (buildConfig.env != null) {
+                pb.environment().putAll(buildConfig.env)
+            }
+
+            val exitCode = pb.start().waitFor()
 
             val duration = Duration.ofNanos(System.nanoTime() - buildStart)
             if (exitCode == 0) {
