@@ -80,22 +80,3 @@ fun <K> bfsFirstVisitOnly(
         onNode = { k -> visitedSet.add(k) && (onNode == null || onNode(k)) }
     )
 }
-
-fun <K> bfsLastVisitOnly(
-    keys: Set<K>,
-    links: (K) -> Iterable<K>,
-    depCount: (K) -> Int,
-    onNode: ((K) -> Boolean)? = null,
-    onEdge: ((K, K) -> Boolean)? = null,
-) {
-    val visitCountMap = mutableMapOf<K, Int>()
-    bfs(
-        keys,
-        links,
-        onEdge = onEdge,
-        onNode = { k ->
-            val count = visitCountMap.compute(k) { _, count -> (count ?: 0) + 1 }!!
-            count == maxOf(depCount(k), 1) && (onNode == null || onNode(k))
-        }
-    )
-}

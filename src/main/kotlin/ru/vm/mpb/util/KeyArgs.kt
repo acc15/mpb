@@ -10,12 +10,12 @@ const val EXCLUDE_PREFIX = "-"
 
 fun parseKeyArgs(cfg: MpbConfig, args: List<String>): KeyArgs {
     val map = HashMap<String?, MutableList<String>>()
-    var currentKeys: Set<String> = emptySet()
+    var currentKeys: Set<String> = cfg.projects.keys
     val includes = mutableSetOf<String>()
     val excludes = mutableSetOf<String>()
 
     for (a in args) {
-        runAfterPrefix(a, KEY_PREFIX, cfg, true) { currentKeys = it } ?: continue
+        runAfterPrefix(a, KEY_PREFIX, cfg, true) { currentKeys = it.ifEmpty { cfg.projects.keys } } ?: continue
         if (currentKeys.isEmpty()) {
             runAfterPrefix(a, INCLUDE_PREFIX, cfg) { includes.addAll(it) } ?: continue
             runAfterPrefix(a, EXCLUDE_PREFIX, cfg) { excludes.addAll(it) } ?: continue

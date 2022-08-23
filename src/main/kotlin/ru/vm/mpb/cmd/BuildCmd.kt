@@ -102,7 +102,7 @@ object BuildCmd: Cmd(
                     if (it == k) {
                         pp.withPrefix(it)("skipped")
                     } else {
-                        pp.withPrefix(it)("skipped (due to $k is skipped)")
+                        pp.withPrefix(it)("skipped due to $k is skipped")
                     }
                 }
             }
@@ -116,7 +116,7 @@ object BuildCmd: Cmd(
         val command = commands[profile] ?: commands[DEFAULT_BUILD_PROFILE]!!
 
         val status = withContext(Dispatchers.IO) {
-            pp("building...")
+            pp("building: ${command.joinToString(" ")}")
             val buildStart = System.nanoTime()
 
             val logDir = Files.createDirectories(Path.of("log"))
@@ -130,10 +130,10 @@ object BuildCmd: Cmd(
 
             val duration = Duration.ofNanos(System.nanoTime() - buildStart)
             if (exitCode == 0) {
-                pp("success (in ${duration.prettyPrint()})")
+                pp("success in ${duration.prettyPrint()}")
                 BuildStatus.SUCCESS
             } else {
-                pp("failed (in ${duration.prettyPrint()})")
+                pp("failed in ${duration.prettyPrint()}")
                 BuildStatus.ERROR
             }
 
@@ -143,7 +143,7 @@ object BuildCmd: Cmd(
             traverseProjects(setOf(k), bp) {
                 val expectStatus = if (it == k) BuildStatus.PENDING else BuildStatus.BUILD
                 if (bp.getBuildInfo(it).status.compareAndSet(expectStatus, status) && it != k) {
-                    pp.withPrefix(it)("failed (due to $k is failed)")
+                    pp.withPrefix(it)("failed due to $k is failed")
                 }
             }
             return
