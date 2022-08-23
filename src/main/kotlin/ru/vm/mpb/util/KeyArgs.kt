@@ -9,46 +9,44 @@ const val INCLUDE_PREFIX = "+"
 const val EXCLUDE_PREFIX = "-"
 
 fun parseKeyArgs(cfg: MpbConfig, args: List<String>): KeyArgs {
-    val map = HashMap<String?, MutableList<String>>()
-    var currentKeys: Set<String> = cfg.projects.keys
+    val map = mutableMapOf<String, MutableList<String>>()
+    var currentKeys: Set<String> = emptySet()
     val includes = mutableSetOf<String>()
     val excludes = mutableSetOf<String>()
 
     for (a in args) {
-        runAfterPrefix(a, KEY_PREFIX, cfg, true) { currentKeys = it.ifEmpty { cfg.projects.keys } } ?: continue
-        if (currentKeys.isEmpty()) {
-            runAfterPrefix(a, INCLUDE_PREFIX, cfg) { includes.addAll(it) } ?: continue
-            runAfterPrefix(a, EXCLUDE_PREFIX, cfg) { excludes.addAll(it) } ?: continue
+        if (runAfterPrefix(a, KEY_PREFIX, cfg, true) { currentKeys = it }) {
+            continue
         }
-        for (k in currentKeys) {
+        if (currentKeys.isEmpty()) {
+            if (runAfterPrefix(a, INCLUDE_PREFIX, cfg) { includes.addAll(it) }) {
+                continue
+            }
+            if (runAfterPrefix(a, EXCLUDE_PREFIX, cfg) { excludes.addAll(it) }) {
+                continue
+            }
+        }
+        for (k in currentKeys.ifEmpty { cfg.projects.keys }) {
             map.computeIfAbsent(k) { ArrayList() }.add(a)
         }
     }
-
-    val result = mutableMapOf<String, List<String>>()
-    for (p in cfg.projects.keys) {
-        if (includes.isNotEmpty() && !includes.contains(p)) {
-            continue
-        }
-        if (excludes.isNotEmpty() && excludes.contains(p)) {
-            continue
-        }
-        result[p] = map[p] ?: map[null] ?: emptyList()
-    }
-    return result
+    return cfg.projects.keys
+        .filter { includes.isEmpty() || includes.contains(it) }
+        .filter { excludes.isEmpty() || !excludes.contains(it) }
+        .associateWith { (map[it] ?: emptyList()) }
 }
 
-fun runAfterPrefix(a: String, prefix: String, cfg: MpbConfig, allowEmpty: Boolean = false, fn: (Set<String>) -> Unit): Unit? {
+fun runAfterPrefix(a: String, prefix: String, cfg: MpbConfig, allowEmpty: Boolean = false, fn: (Set<String>) -> Unit): Boolean {
     if (!a.startsWith(prefix)) {
-        return Unit
+        return false
     }
     val k = a.substring(prefix.length)
     val keys = k.split(",").filter { cfg.projects.containsKey(it) }.toSet()
     if (keys.isEmpty() && !allowEmpty) {
-        return Unit
+        return false
     }
     fn(keys)
-    return null
+    return true
 }
 
 

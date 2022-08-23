@@ -13,7 +13,7 @@ import kotlin.system.exitProcess
 const val DEFAULT_KEY = "default"
 
 enum class BuildStatus {
-    BUILD,
+    INIT,
     PENDING,
     SKIP,
     SUCCESS,
@@ -23,7 +23,7 @@ enum class BuildStatus {
 data class BuildInfo(
     val pendingDeps: ConcurrentHashMap<String, Unit>,
     val dependants: Set<String>,
-    var status: AtomicReference<BuildStatus> = AtomicReference(BuildStatus.BUILD)
+    var status: AtomicReference<BuildStatus> = AtomicReference(BuildStatus.INIT)
 )
 
 data class BuildParams(
@@ -47,14 +47,12 @@ fun findCycles(key: String, bp: BuildParams, handler: (List<String>) -> Unit) {
     })
 }
 
-
 fun traverseProjects(keys: Set<String>, bp: BuildParams, handler: (String) -> Unit) {
     bfsFirstVisitOnly(keys, { bp.getBuildInfo(it).dependants }, onNode = {
         handler(it)
         true
     })
 }
-
 
 object BuildCmd: Cmd(
     setOf("b", "build"),
@@ -94,10 +92,11 @@ object BuildCmd: Cmd(
 
         val i = bp.getBuildInfo(k)
         val pp = bp.cfg.print.withPrefix(k)
+
         val a = bp.args[k]
         if (a == null) {
             traverseProjects(setOf(k), bp) {
-                val expectStatus = if (it == k) BuildStatus.PENDING else BuildStatus.BUILD
+                val expectStatus = if (it == k) BuildStatus.PENDING else BuildStatus.INIT
                 if (bp.getBuildInfo(it).status.compareAndSet(expectStatus, BuildStatus.SKIP)) {
                     if (it == k) {
                         pp.withPrefix(it)("skipped")
@@ -109,11 +108,11 @@ object BuildCmd: Cmd(
             return
         }
 
-        val profile = if (a.isNotEmpty()) a[0] else DEFAULT_KEY
+        val profile = a.firstOrNull() ?: DEFAULT_KEY
         val pcfg = bp.getProjectConfig(k)
 
-        val buildName = pcfg.build ?: DEFAULT_KEY
-        val buildConfig = bp.cfg.build[buildName] ?: bp.cfg.build[DEFAULT_KEY]!!
+        val name = pcfg.build ?: DEFAULT_KEY
+        val buildConfig = bp.cfg.build[name] ?: bp.cfg.build[DEFAULT_KEY]!!
         val command = buildConfig.profiles[profile] ?: buildConfig.profiles[DEFAULT_KEY]!!
 
         val status = withContext(Dispatchers.IO) {
@@ -147,7 +146,7 @@ object BuildCmd: Cmd(
 
         if (status != BuildStatus.SUCCESS) {
             traverseProjects(setOf(k), bp) {
-                val expectStatus = if (it == k) BuildStatus.PENDING else BuildStatus.BUILD
+                val expectStatus = if (it == k) BuildStatus.PENDING else BuildStatus.INIT
                 if (bp.getBuildInfo(it).status.compareAndSet(expectStatus, status) && it != k) {
                     pp.withPrefix(it)("failed due to $k is failed")
                 }
@@ -158,11 +157,11 @@ object BuildCmd: Cmd(
         for (d in i.dependants) {
             val di = bp.getBuildInfo(d)
             di.pendingDeps.remove(k)
-            if (!di.pendingDeps.isEmpty()) {
+            if (di.pendingDeps.isNotEmpty()) {
                 continue
             }
 
-            if (!di.status.compareAndSet(BuildStatus.BUILD, BuildStatus.PENDING)) {
+            if (!di.status.compareAndSet(BuildStatus.INIT, BuildStatus.PENDING)) {
                 continue
             }
 
