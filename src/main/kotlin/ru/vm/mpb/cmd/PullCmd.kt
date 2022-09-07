@@ -11,7 +11,7 @@ import ru.vm.mpb.util.parseKeyArgs
 
 object PullCmd: Cmd(
     setOf("p", "pull"),
-    "pulls all repos",
+    "pull all repos",
     ""
 ) {
     override fun execute(cfg: MpbConfig, args: List<String>) {

@@ -1,7 +1,8 @@
 package ru.vm.mpb.config
 
 import java.io.File
-import java.nio.file.Path
+
+const val DEFAULT_KEY = "default"
 
 class MpbConfig {
     var debug: Boolean = false
@@ -31,6 +32,6 @@ class TicketConfig {
 class ProjectConfig {
     var dir = File("").absoluteFile!!
     var deps = emptySet<String>()
-    var build = "default"
+    var build = DEFAULT_KEY
     var defaultBranch: String? = null
 }

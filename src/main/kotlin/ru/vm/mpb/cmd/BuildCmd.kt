@@ -1,6 +1,7 @@
 package ru.vm.mpb.cmd
 
 import kotlinx.coroutines.*
+import ru.vm.mpb.config.DEFAULT_KEY
 import ru.vm.mpb.config.MpbConfig
 import ru.vm.mpb.util.*
 import java.nio.file.Files
@@ -10,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.system.exitProcess
 
-const val DEFAULT_KEY = "default"
 
 enum class BuildStatus {
     INIT,
@@ -109,8 +109,7 @@ object BuildCmd: Cmd(
         val profile = a.firstOrNull() ?: DEFAULT_KEY
         val pcfg = bp.getProjectConfig(k)
 
-        val name = pcfg.build ?: DEFAULT_KEY
-        val buildConfig = bp.cfg.build[name] ?: bp.cfg.build[DEFAULT_KEY]!!
+        val buildConfig = bp.cfg.build[pcfg.build]!!
         val command = buildConfig.profiles[profile] ?: buildConfig.profiles[DEFAULT_KEY]!!
 
         val status = withContext(Dispatchers.IO) {
@@ -121,13 +120,10 @@ object BuildCmd: Cmd(
             val logFile = logDir.resolve("$k.log").toFile()
 
             val pb = ProcessBuilder(command)
-                .directory(pcfg.dir.toFile())
+                .directory(pcfg.dir)
                 .redirectOutput(logFile)
                 .redirectError(logFile)
-
-            if (buildConfig.env != null) {
-                pb.environment().putAll(buildConfig.env)
-            }
+            pb.environment().putAll(buildConfig.env)
 
             val exitCode = pb.start().waitFor()
 
