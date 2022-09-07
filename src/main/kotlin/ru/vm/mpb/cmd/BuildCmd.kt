@@ -65,14 +65,16 @@ object BuildCmd: Cmd(
         val bp = BuildParams(cfg, parseKeyArgs(cfg, args))
         val roots = cfg.projects.filter { e -> e.value.deps.isEmpty() }.keys
 
+        val p = MessagePrinter(cfg)
+
         if (roots.isEmpty()) {
-            cfg.print("invalid configuration, no root projects found")
+            p.print("invalid configuration, no root projects found")
             exitProcess(1)
         }
 
         for (r in roots) {
             findCycles(r, bp) {
-                cfg.print("cycle detected: ${it.joinToString(", ")}")
+                p.print("cycle detected: ${it.joinToString(", ")}")
                 exitProcess(1)
             }
         }
@@ -91,18 +93,14 @@ object BuildCmd: Cmd(
     suspend fun build(scope: CoroutineScope, k: String, bp: BuildParams) {
 
         val i = bp.getBuildInfo(k)
-        val pp = bp.cfg.print.withPrefix(k)
+        val pp = MessagePrinter(bp.cfg, k)
 
         val a = bp.args[k]
         if (a == null) {
             traverseProjects(setOf(k), bp) {
                 val expectStatus = if (it == k) BuildStatus.PENDING else BuildStatus.INIT
                 if (bp.getBuildInfo(it).status.compareAndSet(expectStatus, BuildStatus.SKIP)) {
-                    if (it == k) {
-                        pp.withPrefix(it)("skipped")
-                    } else {
-                        pp.withPrefix(it)("skipped due to $k is skipped")
-                    }
+                    pp.print(if (it == k) "skipped" else "skipped due to $k is skipped", prefix = it)
                 }
             }
             return
@@ -116,7 +114,7 @@ object BuildCmd: Cmd(
         val command = buildConfig.profiles[profile] ?: buildConfig.profiles[DEFAULT_KEY]!!
 
         val status = withContext(Dispatchers.IO) {
-            pp("building: ${command.joinToString(" ")}")
+            pp.print("building: ${command.joinToString(" ")}")
             val buildStart = System.nanoTime()
 
             val logDir = Files.createDirectories(Path.of("log"))
@@ -135,10 +133,10 @@ object BuildCmd: Cmd(
 
             val duration = Duration.ofNanos(System.nanoTime() - buildStart)
             if (exitCode == 0) {
-                pp("success in ${duration.prettyPrint()}")
+                pp.print("success in ${duration.prettyPrint()}")
                 BuildStatus.SUCCESS
             } else {
-                pp("failed in ${duration.prettyPrint()}")
+                pp.print("failed in ${duration.prettyPrint()}")
                 BuildStatus.ERROR
             }
 
@@ -148,7 +146,7 @@ object BuildCmd: Cmd(
             traverseProjects(setOf(k), bp) {
                 val expectStatus = if (it == k) BuildStatus.PENDING else BuildStatus.INIT
                 if (bp.getBuildInfo(it).status.compareAndSet(expectStatus, status) && it != k) {
-                    pp.withPrefix(it)("failed due to $k is failed")
+                    pp.print("failed due to $k is failed", prefix = it)
                 }
             }
             return

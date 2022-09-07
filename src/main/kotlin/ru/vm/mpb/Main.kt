@@ -1,12 +1,9 @@
 package ru.vm.mpb
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.yaml.snakeyaml.Yaml
 import ru.vm.mpb.cmd.*
 import ru.vm.mpb.config.MpbConfig
-import java.io.File
+import java.io.FileReader
 import kotlin.system.exitProcess
 
 const val PROGRAM_NAME = "mpb"
@@ -41,7 +38,8 @@ fun printHelp(msg: String = "") {
 
 fun main(args: Array<String>) {
 
-    val cfg = ObjectMapper(YAMLFactory()).registerKotlinModule().readValue<MpbConfig>(File("mpb.yaml"))
+    val cfgPath = System.getenv("MPB_CONFIG") ?: "mpb.yaml"
+    val cfg = FileReader(cfgPath).use { Yaml().loadAs(it, MpbConfig::class.java) }
 
     if (args.isEmpty()) {
         printHelp()

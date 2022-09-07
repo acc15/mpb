@@ -27,34 +27,34 @@ object CheckoutCmd: Cmd(
                 val git = makeGit(info.dir)
                 for (remote in git.remoteList().call()) {
                     try {
-                        pp("fetching ${remote.name}...")
+                        pp.print("fetching ${remote.name}...")
                         git.fetch().setRemote(remote.name).call()
                     } catch (e: TransportException) {
-                        pp("unable to fetch ${remote.name}: ${e.message}", e)
+                        pp.print("unable to fetch ${remote.name}: ${e.message}", e)
                     }
                 }
 
                 val status = git.status().call()
                 val stash = if (status.hasUncommittedChanges()) {
-                    pp("stashing")
+                    pp.print("stashing")
                     git.stashCreate().call()
                 } else null
 
-                pp("checkout to $branch")
+                pp.print("checkout to $branch")
                 git.checkout().setName(branch).call()
 
-                pp("pulling...")
+                pp.print("pulling...")
                 try {
                     git.pull().call()
                 } catch (e: TransportException) {
-                    pp("unable to pull: ${e.message}", e)
+                    pp.print("unable to pull: ${e.message}", e)
                 }
                 if (stash != null) {
-                    pp("restoring stash")
+                    pp.print("restoring stash")
                     git.stashApply().setStashRef(stash.name).call()
                 }
             }
-            pp("done")
+            pp.print("done")
 
         }
 

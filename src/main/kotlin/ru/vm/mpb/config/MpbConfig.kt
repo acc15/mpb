@@ -1,37 +1,36 @@
 package ru.vm.mpb.config
 
-import ru.vm.mpb.util.MessagePrinter
+import java.io.File
 import java.nio.file.Path
 
-data class MpbConfig(
-    val defaultBranch: String,
-    val debug: Boolean,
-    val projects: Map<String, ProjectConfig>,
-    val jira: JiraConfig,
-    val ticket: TicketConfig,
-    val build: Map<String, BuildConfig>
-) {
-    val print = MessagePrinter(this)
-    fun getDefaultBranch(proj: String): String = projects[proj]?.defaultBranch ?: defaultBranch
+class MpbConfig {
+    var debug: Boolean = false
+    var defaultBranch: String = "master"
+    var projects: Map<String, ProjectConfig> = emptyMap()
+    var jira = JiraConfig()
+    var ticket = TicketConfig()
+    var build: Map<String, BuildConfig> = emptyMap()
+
+    fun getDefaultBranch(proj: String) = projects[proj]?.defaultBranch ?: defaultBranch
 }
 
-data class BuildConfig(
-    val profiles: Map<String, List<String>>,
-    val env: Map<String, String>?
-)
+class BuildConfig {
+    var profiles = emptyMap<String, List<String>>()
+    var env = emptyMap<String, String>()
+}
 
-data class JiraConfig(
-    val url: String,
-    val project: String
-)
+class JiraConfig {
+    var url = ""
+    var project = ""
+}
 
-data class TicketConfig(
-    val dir: Path
-)
+class TicketConfig {
+    var dir = File("tickets")
+}
 
-data class ProjectConfig(
-    val dir: Path,
-    val deps: Set<String> = emptySet(),
-    val build: String?,
-    val defaultBranch: String?,
-)
+class ProjectConfig {
+    var dir = File("").absoluteFile!!
+    var deps = emptySet<String>()
+    var build = "default"
+    var defaultBranch: String? = null
+}

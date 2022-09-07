@@ -20,12 +20,13 @@ object TicketCmd: Cmd(
 
         val desc = args.subList(if (overwrite) 2 else 1, args.size).joinToString(" ").replace(' ', '_').ifBlank { null }
 
-        val suggestedDir = cfg.ticket.dir.resolve(desc?.let { "${t.id}_${it}" } ?: t.id)
+        val ticketDir = cfg.ticket.dir.toPath()
+        val suggestedDir = ticketDir.resolve(desc?.let { "${t.id}_${it}" } ?: t.id)
 
         val ticketDirs = HashSet<Path>()
         ticketDirs.add(suggestedDir)
 
-        Files.list(cfg.ticket.dir)
+        Files.list(ticketDir)
             .filter { Files.isDirectory(it) }
             .filter { it.name.startsWith(t.id) }
             .forEach(ticketDirs::add)
@@ -43,8 +44,7 @@ object TicketCmd: Cmd(
                 deepMove(d, targetDir)
             }
         }
-
-        cfg.print(targetDir)
+        MessagePrinter(cfg).print(targetDir)
 
     }
 }
