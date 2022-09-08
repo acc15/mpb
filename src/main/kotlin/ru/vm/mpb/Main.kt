@@ -40,6 +40,9 @@ fun main(args: Array<String>) {
 
     val cfgPath = System.getenv("MPB_CONFIG") ?: "mpb.yaml"
     val cfg = FileReader(cfgPath).use { Yaml().loadAs(it, MpbConfig::class.java) }
+    if (System.getenv("MPB_DEBUG")?.let { it.toBoolean() } == true) {
+        cfg.debug = true
+    }
 
     if (args.isEmpty()) {
         printHelp()
