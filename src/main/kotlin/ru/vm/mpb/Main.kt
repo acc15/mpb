@@ -3,6 +3,7 @@ package ru.vm.mpb
 import org.yaml.snakeyaml.Yaml
 import ru.vm.mpb.cmd.*
 import ru.vm.mpb.config.MpbConfig
+import java.io.File
 import java.io.FileReader
 import kotlin.system.exitProcess
 
@@ -38,8 +39,21 @@ fun printHelp(msg: String = "") {
 
 fun main(args: Array<String>) {
 
-    val cfgPath = System.getenv("MPB_CONFIG") ?: "mpb.yaml"
+    val cfgPath = File(System.getenv("MPB_CONFIG") ?: "mpb.yaml").absoluteFile
     val cfg = FileReader(cfgPath).use { Yaml().loadAs(it, MpbConfig::class.java) }
+    if (cfg.baseDir == null) {
+        cfg.baseDir = cfgPath.parentFile
+    }
+
+    val baseDir = cfg.baseDir!!
+    for ((p, pc) in cfg.projects) {
+        if (pc.dir == null) {
+            pc.dir = File(p)
+        }
+        pc.dir = baseDir.resolve(pc.dir!!)
+    }
+    cfg.ticket.dir = baseDir.resolve(cfg.ticket.dir)
+
     if (System.getenv("MPB_DEBUG")?.let { it.toBoolean() } == true) {
         cfg.debug = true
     }

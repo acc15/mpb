@@ -11,6 +11,7 @@ class MpbConfig {
     var jira = JiraConfig()
     var ticket = TicketConfig()
     var build: Map<String, BuildConfig> = emptyMap()
+    var baseDir: File? = null
 
     fun getDefaultBranch(proj: String) = projects[proj]?.defaultBranch ?: defaultBranch
 }
@@ -30,7 +31,7 @@ class TicketConfig {
 }
 
 class ProjectConfig {
-    var dir = File("").absoluteFile!!
+    var dir: File? = null
     var deps = emptySet<String>()
     var build = DEFAULT_KEY
     var defaultBranch: String? = null
