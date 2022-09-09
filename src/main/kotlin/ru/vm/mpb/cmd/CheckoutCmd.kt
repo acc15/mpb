@@ -13,7 +13,7 @@ object CheckoutCmd: Cmd(
     "[branch]"
 ) {
 
-    private suspend fun checkoutAndPull(cfg: MpbConfig, info: ProjectConfig, pp: MessagePrinter, branch: String) {
+    private fun checkoutAndPull(cfg: MpbConfig, info: ProjectConfig, pp: MessagePrinter, branch: String) {
 
         pp.print("checkout to $branch")
         if (!runProcess(listOf("git", "checkout", branch), info.dir, redirectErrorsIf(cfg.debug))) {
