@@ -2,12 +2,12 @@ package ru.vm.mpb.cmd
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.eclipse.jgit.api.errors.TransportException
 import ru.vm.mpb.config.MpbConfig
 import ru.vm.mpb.executor.parallelExecutor
 import ru.vm.mpb.util.MessagePrinter
-import ru.vm.mpb.util.makeGit
 import ru.vm.mpb.util.parseKeyArgs
+import ru.vm.mpb.util.redirectErrorsIf
+import ru.vm.mpb.util.runProcess
 
 object PullCmd: Cmd(
     setOf("p", "pull"),
@@ -19,14 +19,10 @@ object PullCmd: Cmd(
             val info = cfg.projects[p]!!
             val pp = MessagePrinter(cfg, p)
             withContext(Dispatchers.IO) {
-                val git = makeGit(info.dir)
                 pp.print("pulling...")
-                try {
-                    git.pull().call()
-                    pp.print("done")
-                } catch (e: TransportException) {
-                    pp.print("unable to pull: ${e.message}", e)
-                }
+
+                val success = runProcess(listOf("git", "pull", "--rebase"), info.dir, redirectErrorsIf(cfg.debug))
+                pp.print(if (success) "done" else "error")
             }
         }
     }

@@ -11,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.system.exitProcess
 
-
 enum class BuildStatus {
     INIT,
     PENDING,
@@ -119,20 +118,18 @@ object BuildCmd: Cmd(
             val logDir = Files.createDirectories(Path.of("log"))
             val logFile = logDir.resolve("$k.log").toFile()
 
-            val pb = ProcessBuilder(command)
-                .directory(pcfg.dir)
-                .redirectOutput(logFile)
-                .redirectError(logFile)
-            pb.environment().putAll(buildConfig.env)
-
-            val exitCode = pb.start().waitFor()
+            val success = runProcess(command, pcfg.dir) { it
+                    .redirectOutput(logFile)
+                    .redirectError(logFile)
+                    .environment().putAll(buildConfig.env)
+            }
 
             val duration = Duration.ofNanos(System.nanoTime() - buildStart)
-            if (exitCode == 0) {
+            if (success) {
                 pp.print("success in ${duration.prettyPrint()}")
                 BuildStatus.SUCCESS
             } else {
-                pp.print("failed in ${duration.prettyPrint()}")
+                pp.print("error in ${duration.prettyPrint()}")
                 BuildStatus.ERROR
             }
 

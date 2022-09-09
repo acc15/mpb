@@ -2,18 +2,33 @@ package ru.vm.mpb.cmd
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.eclipse.jgit.api.errors.TransportException
 import ru.vm.mpb.config.MpbConfig
+import ru.vm.mpb.config.ProjectConfig
 import ru.vm.mpb.executor.parallelExecutor
-import ru.vm.mpb.util.MessagePrinter
-import ru.vm.mpb.util.makeGit
-import ru.vm.mpb.util.parseKeyArgs
+import ru.vm.mpb.util.*
 
 object CheckoutCmd: Cmd(
     setOf("c", "co", "checkout"),
     "checkout to specific commit/branch/tag",
     "[branch]"
 ) {
+
+    private suspend fun checkoutAndPull(cfg: MpbConfig, info: ProjectConfig, pp: MessagePrinter, branch: String) {
+
+        pp.print("checkout to $branch")
+        if (!runProcess(listOf("git", "checkout", branch), info.dir, redirectErrorsIf(cfg.debug))) {
+            pp.print("unable to checkout to $branch")
+            return
+        }
+
+        pp.print("pulling")
+        if (!runProcess(listOf("git", "pull"), info.dir, redirectErrorsIf(cfg.debug))) {
+            pp.print("unable to pull")
+            return
+        }
+
+    }
+
     override fun execute(cfg: MpbConfig, args: List<String>) {
 
         parallelExecutor(parseKeyArgs(cfg, args)) { p, list ->
@@ -24,37 +39,33 @@ object CheckoutCmd: Cmd(
             val pp = MessagePrinter(cfg, p)
             withContext(Dispatchers.IO) {
 
-                val git = makeGit(info.dir)
-                for (remote in git.remoteList().call()) {
-                    try {
-                        pp.print("fetching ${remote.name}...")
-                        git.fetch().setRemote(remote.name).call()
-                    } catch (e: TransportException) {
-                        pp.print("unable to fetch ${remote.name}: ${e.message}", e)
+                pp.print("fetching all remotes...")
+                if (!runProcess(listOf("git", "fetch", "--all"), info.dir, redirectErrorsIf(cfg.debug))) {
+                    pp.print("unable to fetch")
+                    return@withContext
+                }
+
+                val hasChanges = !runProcess(listOf("git", "diff", "--quiet"), info.dir)
+                if (hasChanges) {
+                    pp.print("stashing")
+                    if (!runProcess(listOf("git", "stash"), info.dir, redirectErrorsIf(cfg.debug))){
+                        pp.print("unable to stash")
+                        return@withContext
                     }
                 }
 
-                val status = git.status().call()
-                val stash = if (status.hasUncommittedChanges()) {
-                    pp.print("stashing")
-                    git.stashCreate().call()
-                } else null
-
-                pp.print("checkout to $branch")
-                git.checkout().setName(branch).call()
-
-                pp.print("pulling...")
-                try {
-                    git.pull().call()
-                } catch (e: TransportException) {
-                    pp.print("unable to pull: ${e.message}", e)
-                }
-                if (stash != null) {
+                checkoutAndPull(cfg, info, pp, branch)
+                if (hasChanges) {
                     pp.print("restoring stash")
-                    git.stashApply().setStashRef(stash.name).call()
+                    if (!runProcess(listOf("git", "stash", "pop"), info.dir, redirectErrorsIf(cfg.debug))) {
+                        pp.print("unable to restore from stash")
+                        return@withContext
+                    }
                 }
+
+                pp.print("done")
+
             }
-            pp.print("done")
 
         }
 
