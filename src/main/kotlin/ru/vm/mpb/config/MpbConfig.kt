@@ -48,9 +48,9 @@ data class ProjectConfig(
 )
 
 fun parseConfig(args: List<String>): MpbConfig {
-    val argMap = parseArgs(args)
-    val cfgPath = (ConfigValues(argMap).getFile("config") ?: File("mpb.yaml")).absoluteFile
-    val configMap = loadConfig(cfgPath)
-    val config = ConfigValues(mergeConfigMaps(listOf(configMap, argMap)))
-    return convertConfig(cfgPath, config)
+    val argMap = ConfigMap.parseArgs(args)
+    val cfgPath = (argMap.getFile("config") ?: File("mpb.yaml")).absoluteFile
+    val configMap = ConfigMap.loadYaml(cfgPath)
+    val mergedConfigMap = configMap.merge(argMap)
+    return ConfigConverter.config(cfgPath, mergedConfigMap)
 }

@@ -1,7 +1,6 @@
 package ru.vm.mpb
 
 import ru.vm.mpb.cmd.*
-import ru.vm.mpb.config.loadConfig
 import ru.vm.mpb.config.parseConfig
 import kotlin.system.exitProcess
 

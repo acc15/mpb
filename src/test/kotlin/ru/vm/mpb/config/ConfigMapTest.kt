@@ -2,9 +2,8 @@ package ru.vm.mpb.config
 
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 
-internal class ArgParserKtTest {
+internal class ConfigMapTest {
 
     private val testArgs = listOf(
         "pull",
@@ -15,35 +14,31 @@ internal class ArgParserKtTest {
 
     @Test
     fun parseKeys() {
-        assertEquals(emptyList(), parseKeys("--"))
-        assertEquals(listOf("a", "b", "c"), parseKeys("--a.b.c"))
+        assertEquals(emptyList(), ConfigMap.parseKeys(""))
+        assertEquals(listOf("a", "b", "c"), ConfigMap.parseKeys("a.b.c"))
     }
 
     @Test
     fun canParseArgs() {
         assertEquals(
             mapOf(
-                "debug" to emptyList<String>(),
-                "args" to mapOf(
-                    "" to listOf("pull"),
-                    "fb" to listOf("a", "b")
-                ),
+                "args" to mapOf("" to listOf("pull"), "a" to listOf("a", "b")),
                 "config" to listOf("abc"),
                 "projects" to mapOf(
-                    "fb" to mapOf(
-                        "deps" to listOf("sf", "ff")
+                    "d" to mapOf(
+                        "deps" to listOf("a", "b")
                     )
                 )
             ),
-            parseArgs(testArgs)
+            ConfigMap.parseArgs(testArgs).map
         )
     }
 
     @Test
     fun nonOptMappedAsArgs() {
         assertEquals(
-            mapOf("args" to mapOf("" to listOf("non", "opt"))),
-            parseArgs(listOf("non", "opt"))
+            mapOf("args" to listOf("non", "opt")),
+            ConfigMap.parseArgs(listOf("non", "opt")).map
         )
     }
 
@@ -51,17 +46,17 @@ internal class ArgParserKtTest {
     fun canParseFlagOption() {
         assertEquals(
             mapOf(
-                "debug" to emptyList<String>(),
-                "args" to mapOf("" to emptyList<String>())),
-            parseArgs(listOf("--debug"))
+                "debug" to emptyList<String>()
+            ),
+            ConfigMap.parseArgs(listOf("--debug")).map
         )
     }
 
     @Test
     fun canParseOptionList() {
         assertEquals(
-            mapOf("args" to mapOf("" to listOf("a", "b"))),
-            parseArgs(listOf("--args", "a", "b")),
+            mapOf("args" to listOf("a", "b")),
+            ConfigMap.parseArgs(listOf("--args", "a", "b")).map,
         )
     }
 
@@ -72,10 +67,10 @@ internal class ArgParserKtTest {
                 "" to listOf("a", "b"),
                 "fb" to listOf("x", "y")
             )),
-            parseArgs(listOf(
+            ConfigMap.parseArgs(listOf(
                 "--args", "a", "b",
                 "--args.fb", "x", "y"
-            ))
+            )).map
         )
     }
 
@@ -86,25 +81,24 @@ internal class ArgParserKtTest {
                 "" to listOf("a", "b"),
                 "fb" to listOf("x", "y")
             )),
-            parseArgs(listOf(
+            ConfigMap.parseArgs(listOf(
                 "--args.fb", "x", "y",
                 "--args", "a", "b"
-            ))
+            )).map
         )
     }
 
     @Test
     fun canParseConfig() {
-        val cfg = loadConfig(ArgParserKtTest::class.java.getResourceAsStream("test-config.yaml")!!)
-        assertIs<Map<String, Any>>(cfg)
+        ConfigMap.loadYaml(ConfigMapTest::class.java.getResourceAsStream("test-config.yaml")!!)
     }
 
     @Test
     fun canMergeConfigMaps() {
-        val m1 = loadConfig(ArgParserKtTest::class.java.getResourceAsStream("test-config.yaml")!!)
-        val m2 = parseArgs(testArgs)
+        val m1 = ConfigMap.loadYaml(ConfigMapTest::class.java.getResourceAsStream("test-config.yaml")!!)
+        val m2 = ConfigMap.parseArgs(testArgs)
 
-        val mm = mergeConfigMaps(listOf(m1, m2))
+        val mm = m1.merge(m2)
         println(mm)
     }
 
