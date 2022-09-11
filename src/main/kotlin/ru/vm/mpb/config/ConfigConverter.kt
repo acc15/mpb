@@ -39,7 +39,7 @@ object ConfigConverter {
     fun project(key: String, baseDir: File, cfg: ConfigMap) = ProjectConfig(
         baseDir.resolve(cfg.getFile("dir") ?: File(key)),
         cfg.getStringSet("deps"),
-        cfg.getString("build") ?: "default",
+        cfg.getString("build") ?: DEFAULT_KEY,
         cfg.getString("defaultBranch")
     )
 

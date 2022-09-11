@@ -12,15 +12,27 @@ class ConfigMap(val map: Map<String, Any>) {
     )
 
     fun getStringList(key: String): List<String>? = map[key]?.let {
-        it as? List<String> ?: (it as? Map<String, Any>)?.get("") as? List<String>
+        var resolved: Any? = it
+        if (resolved is Map<*, *>) {
+            resolved = (resolved as Map<String, Any>)[""]
+        }
+        resolved as? List<String> ?: resolved?.let { listOf(resolved as String) }
+    }
+
+    fun getString(key: String): String? = map[key]?.let {
+        var resolved: Any? = it
+        if (resolved is Map<*, *>) {
+            resolved = (resolved as Map<String, Any>)[""]
+        }
+        if (resolved is List<*>) {
+            resolved = (resolved as List<String>).firstOrNull()
+        }
+        resolved as? String
     }
 
     fun getStringSet(key: String) = getStringList(key).orEmpty().toSet()
     fun getBoolean(key: String) = getStringList(key)?.let { it.isEmpty() || it.first().toBoolean() } ?: false
-
-    fun <T> getValue(key: String, converter: (String) -> T) = getStringList(key)?.firstOrNull()?.let(converter)
-    fun getString(key: String) = getValue(key) { it }
-    fun getFile(key: String) = getValue(key) { File(it) }
+    fun getFile(key: String) = getString(key)?.let { File(it) }
 
     fun merge(other: ConfigMap) = ConfigMap(deepMerge(map, other.map))
 
@@ -40,18 +52,14 @@ class ConfigMap(val map: Map<String, Any>) {
                 val v1 = m1[k]
                 val v2 = m2[k]
 
-                val m = if (v1 is Map<*, *>)
-                    if (v2 is Map<*, *>)
-                        deepMerge(v1 as Map<String, Any>, v2 as Map<String, Any>)
-                    else if (v2 != null)
-                        v1 + ("" to wrapList(v2))
-                    else
-                        v1
-                else if (v1 != null && v2 is Map<*, *> && !v2.containsKey(""))
-                    v2 + ("" to wrapList(v1))
-                else (v2 ?: v1)!!
+                result[k] = when {
+                    v1 is Map<*, *> && v2 is Map<*, *> -> deepMerge(v1 as Map<String, Any>, v2 as Map<String, Any>)
+                    v1 is Map<*, *> && v2 != null -> v1 + ("" to wrapList(v2))
+                    v1 is Map<*, *> -> v1
+                    v1 != null && v2 is Map<*, *> && !v2.containsKey("") -> v2 + ("" to wrapList(v1))
+                    else -> (v2 ?: v1)!!
+                }
 
-                result[k] = m
             }
             return result
         }
@@ -59,12 +67,12 @@ class ConfigMap(val map: Map<String, Any>) {
 
         fun parseKeys(opt: String): List<String> = if (opt.isEmpty()) emptyList() else opt.split(KEY_DELIM)
 
-        fun getValueList(keyPath: String, result: MutableMap<String, Any>): MutableList<String> {
+        private fun getValueList(keyPath: String, result: MutableMap<String, Any>): MutableList<String> {
+
             val keys = parseKeys(keyPath).ifEmpty { listOf("args") }
 
             var map = result
             for (k in keys.subList(0, keys.size - 1)) {
-                @Suppress("UNCHECKED_CAST")
                 map = map.compute(k) { _, v ->
                     when (v) {
                         is MutableList<*> -> mutableMapOf("" to v)
@@ -76,7 +84,6 @@ class ConfigMap(val map: Map<String, Any>) {
 
             val lastKey = keys.last()
 
-            @Suppress("UNCHECKED_CAST")
             return when (val v = map[lastKey]) {
                 is MutableList<*> -> v as MutableList<String>
                 is MutableMap<*, *> -> (v as MutableMap<String, Any>)
@@ -89,14 +96,13 @@ class ConfigMap(val map: Map<String, Any>) {
             var targetList: MutableList<String>? = null
             val result = mutableMapOf<String, Any>()
             for (a in args) {
-                if (!a.startsWith(OPT_PREFIX)) {
-                    if (targetList == null) {
-                        targetList = getValueList("", result)
-                    }
-                    targetList += a
-                    continue
+                val isOpt = a.startsWith(OPT_PREFIX)
+                if (targetList == null || isOpt) {
+                    targetList = getValueList(if (isOpt) a.substring(OPT_PREFIX.length) else "", result)
                 }
-                targetList = getValueList(a.substring(OPT_PREFIX.length), result)
+                if (!isOpt) {
+                    targetList += a
+                }
             }
             return ConfigMap(result)
         }
