@@ -1,0 +1,43 @@
+debug: false
+defaultBranch: master
+
+baseDir: /baseDir
+
+build:
+  default:
+    env:
+      ENV1: VALUE1
+    profiles: &p1
+      default: [c, d, e]
+      nt: [c, d, e, F]
+  java17:
+    env:
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk
+    profiles: *p1
+  yarn:
+    profiles:
+      default: [a, b]
+
+projects:
+  a:
+    dir: a
+  b:
+    dir: b
+    deps: [a]
+    build: java17
+  c:
+    dir: c
+    deps: [b]
+  d:
+    dir: d
+    build: yarn
+jira:
+  url: https://jira/browse
+  project: JIRA
+
+args:
+  d: [a, b, c]
+  "": [a, x]
+
+ticket:
+  dir: ticket

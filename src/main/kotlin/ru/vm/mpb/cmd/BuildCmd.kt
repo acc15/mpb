@@ -27,7 +27,7 @@ data class BuildInfo(
 
 data class BuildParams(
     val cfg: MpbConfig,
-    val args: KeyArgs,
+    val args: Map<String, List<String>>,
     val bi: Map<String, BuildInfo> = cfg.projects.mapValues { (k, i) ->
         BuildInfo(
             i.deps.associateWithTo(ConcurrentHashMap()) {},
@@ -59,9 +59,9 @@ object BuildCmd: Cmd(
     "[build profile | skip - to skip building]"
 ) {
 
-    override fun execute(cfg: MpbConfig, args: List<String>) {
+    override fun execute(cfg: MpbConfig) {
 
-        val bp = BuildParams(cfg, parseKeyArgs(cfg, args))
+        val bp = BuildParams(cfg, cfg.getActiveProjectArgs())
         val roots = cfg.projects.filter { e -> e.value.deps.isEmpty() }.keys
 
         val p = MessagePrinter(cfg)
@@ -118,7 +118,7 @@ object BuildCmd: Cmd(
             val logDir = Files.createDirectories(Path.of("log"))
             val logFile = logDir.resolve("$k.log").toFile()
 
-            val success = runProcess(command, pcfg.dir) { it
+            val success = runProcess(command, pcfg.dir!!) { it
                     .redirectOutput(logFile)
                     .redirectError(logFile)
                     .environment().putAll(buildConfig.env)

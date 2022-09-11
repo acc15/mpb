@@ -16,22 +16,22 @@ object CheckoutCmd: Cmd(
     private fun checkoutAndPull(cfg: MpbConfig, info: ProjectConfig, pp: MessagePrinter, branch: String) {
 
         pp.print("checkout to $branch")
-        if (!runProcess(listOf("git", "checkout", branch), info.dir!!, redirectErrorsIf(cfg.debug))) {
+        if (!runProcess(listOf("git", "checkout", branch), info.dir, redirectErrorsIf(cfg.debug))) {
             pp.print("unable to checkout to $branch")
             return
         }
 
         pp.print("pulling")
-        if (!runProcess(listOf("git", "pull"), info.dir!!, redirectErrorsIf(cfg.debug))) {
+        if (!runProcess(listOf("git", "pull"), info.dir, redirectErrorsIf(cfg.debug))) {
             pp.print("unable to pull")
             return
         }
 
     }
 
-    override fun execute(cfg: MpbConfig, args: List<String>) {
+    override fun execute(cfg: MpbConfig) {
 
-        parallelExecutor(parseKeyArgs(cfg, args)) { p, list ->
+        parallelExecutor(cfg.getActiveProjectArgs()) { p, list ->
 
             val info = cfg.projects[p]!!
             val branch = if (list.isEmpty()) cfg.getDefaultBranch(p) else list[0]
@@ -39,18 +39,16 @@ object CheckoutCmd: Cmd(
             val pp = MessagePrinter(cfg, p)
             withContext(Dispatchers.IO) {
 
-                val dir = info.dir!!
-
                 pp.print("fetching all remotes...")
-                if (!runProcess(listOf("git", "fetch", "--all"), dir, redirectErrorsIf(cfg.debug))) {
+                if (!runProcess(listOf("git", "fetch", "--all"), info.dir, redirectErrorsIf(cfg.debug))) {
                     pp.print("unable to fetch")
                     return@withContext
                 }
 
-                val hasChanges = !runProcess(listOf("git", "diff", "--quiet"), dir)
+                val hasChanges = !runProcess(listOf("git", "diff", "--quiet"), info.dir)
                 if (hasChanges) {
                     pp.print("stashing")
-                    if (!runProcess(listOf("git", "stash"), dir, redirectErrorsIf(cfg.debug))){
+                    if (!runProcess(listOf("git", "stash"), info.dir, redirectErrorsIf(cfg.debug))){
                         pp.print("unable to stash")
                         return@withContext
                     }
@@ -59,7 +57,7 @@ object CheckoutCmd: Cmd(
                 checkoutAndPull(cfg, info, pp, branch)
                 if (hasChanges) {
                     pp.print("restoring stash")
-                    if (!runProcess(listOf("git", "stash", "pop"), dir, redirectErrorsIf(cfg.debug))) {
+                    if (!runProcess(listOf("git", "stash", "pop"), info.dir, redirectErrorsIf(cfg.debug))) {
                         pp.print("unable to restore from stash")
                         return@withContext
                     }

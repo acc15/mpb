@@ -2,7 +2,6 @@ package ru.vm.mpb.util
 
 import java.time.Duration
 
-
 enum class DurationTimeUnit(
     val suffix: String,
     val div: Long = 1,

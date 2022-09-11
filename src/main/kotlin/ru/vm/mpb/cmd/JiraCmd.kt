@@ -10,14 +10,14 @@ object JiraCmd: Cmd(
     "opens jira issue in browser",
     "<issueid or url...>"
 ) {
-    override fun execute(cfg: MpbConfig, args: List<String>) {
+    override fun execute(cfg: MpbConfig) {
         if (!Desktop.isDesktopSupported()) {
             println("AWT desktop not supported. Unable to open URLs")
             return
         }
 
         val d = Desktop.getDesktop()
-        for (arg in args) {
+        for (arg in cfg.getCommonArgs()) {
             val t = parseJiraTicket(cfg, arg)
             if (t != null) {
                 val fullUri = URI.create(t.fullUrl)

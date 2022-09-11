@@ -4,35 +4,53 @@ import java.io.File
 
 const val DEFAULT_KEY = "default"
 
-class MpbConfig {
-    var debug: Boolean = false
-    var defaultBranch: String = "master"
-    var projects: Map<String, ProjectConfig> = emptyMap()
-    var jira = JiraConfig()
-    var ticket = TicketConfig()
-    var build: Map<String, BuildConfig> = emptyMap()
-    var baseDir: File? = null
-
+data class MpbConfig(
+    val config: File,
+    val debug: Boolean,
+    val defaultBranch: String,
+    val projects: Map<String, ProjectConfig>,
+    val jira: JiraConfig,
+    val ticket: TicketConfig,
+    val build: Map<String, BuildConfig>,
+    val baseDir: File,
+    val include: Set<String>,
+    val exclude: Set<String>,
+    val args: Map<String, List<String>>,
+    val command: String
+) {
     fun getDefaultBranch(proj: String) = projects[proj]?.defaultBranch ?: defaultBranch
+    fun getCommonArgs() = args[""] ?: emptyList()
+    fun getActiveProjectArgs(): Map<String, List<String>> = projects.filterKeys {
+        (include.isEmpty() || include.contains(it)) && (exclude.isEmpty() || !exclude.contains(it))
+    }.mapValues {  args[it.key] ?: getCommonArgs() }
 }
 
-class BuildConfig {
-    var profiles = emptyMap<String, List<String>>()
-    var env = emptyMap<String, String>()
-}
+data class BuildConfig(
+    val profiles: Map<String, List<String>>,
+    val env: Map<String, String>
+)
 
-class JiraConfig {
-    var url = ""
-    var project = ""
-}
+data class JiraConfig(
+    val url: String,
+    val project: String
+)
 
-class TicketConfig {
-    var dir = File("tickets")
-}
+data class TicketConfig(
+    val dir: File,
+    val overwrite: Boolean
+)
 
-class ProjectConfig {
-    var dir: File? = null
-    var deps = emptySet<String>()
-    var build = DEFAULT_KEY
-    var defaultBranch: String? = null
+data class ProjectConfig(
+    val dir: File,
+    val deps: Set<String>,
+    val build: String,
+    val defaultBranch: String?
+)
+
+fun parseConfig(args: List<String>): MpbConfig {
+    val argMap = parseArgs(args)
+    val cfgPath = (ConfigValues(argMap).getFile("config") ?: File("mpb.yaml")).absoluteFile
+    val configMap = loadConfig(cfgPath)
+    val config = ConfigValues(mergeConfigMaps(listOf(configMap, argMap)))
+    return convertConfig(cfgPath, config)
 }

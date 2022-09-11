@@ -13,12 +13,13 @@ object TicketCmd: Cmd(
     "make ticket dir",
     "<ticket id> [-o | --overwrite (overwrite directory using new description)] [description...]"
 ) {
-    override fun execute(cfg: MpbConfig, args: List<String>) {
+    override fun execute(cfg: MpbConfig) {
 
-        val t = (if (args.isNotEmpty()) args[0] else null)?.let { parseJiraTicket(cfg, it) } ?: printUsageAndExit()
-        val overwrite = args.size >= 2 && args[1] in setOf("-o", "--overwrite")
+        val args = cfg.getCommonArgs()
+        val t = args.firstOrNull()?.let { parseJiraTicket(cfg, it) } ?: printUsageAndExit()
+        val overwrite = cfg.ticket.overwrite
 
-        val desc = args.subList(if (overwrite) 2 else 1, args.size).joinToString(" ").replace(' ', '_').ifBlank { null }
+        val desc = args.subList(1, args.size).joinToString(" ").replace(' ', '_').ifBlank { null }
 
         val ticketDir = cfg.ticket.dir.toPath()
         val suggestedDir = ticketDir.resolve(desc?.let { "${t.id}_${it}" } ?: t.id)
