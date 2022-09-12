@@ -118,7 +118,7 @@ object BuildCmd: Cmd(
             val logDir = Files.createDirectories(Path.of("log"))
             val logFile = logDir.resolve("$k.log").toFile()
 
-            val success = runProcess(command, pcfg.dir!!) { it
+            val success = runProcess(command, pcfg.dir) { it
                     .redirectOutput(logFile)
                     .redirectError(logFile)
                     .environment().putAll(buildConfig.env)
