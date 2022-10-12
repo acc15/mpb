@@ -1,27 +1,14 @@
 package ru.vm.mpb.cmd
 
-import ru.vm.mpb.PROGRAM_NAME
-import ru.vm.mpb.config.MpbConfig
+import ru.vm.mpb.cmd.ctx.CmdContext
 import kotlin.system.exitProcess
 
-abstract class Cmd(
-    val names: Set<String>,
-    val description: String,
-    val argDescription: String,
-) {
+abstract class Cmd(val desc: CmdDesc) {
 
-    val sortedNames: List<String> = names.sortedBy { it.length }
-
-    val help: String
-        get() = "${sortedNames.joinToString(", ")} - ${description}. $usage"
-
-    val usage: String
-        get() = "Usage: $PROGRAM_NAME ${sortedNames[0]}" + if (argDescription.isEmpty()) "" else " $argDescription"
-
-    abstract fun execute(cfg: MpbConfig)
+    abstract fun execute(ctx: CmdContext)
 
     fun printUsageAndExit(): Nothing {
-        println(usage)
+        println(desc.usage)
         exitProcess(1)
     }
 

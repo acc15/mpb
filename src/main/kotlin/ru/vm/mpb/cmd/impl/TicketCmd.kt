@@ -1,27 +1,29 @@
-package ru.vm.mpb.cmd
+package ru.vm.mpb.cmd.impl
 
-import ru.vm.mpb.config.MpbConfig
-import ru.vm.mpb.util.MessagePrinter
+import ru.vm.mpb.cmd.Cmd
+import ru.vm.mpb.cmd.CmdDesc
+import ru.vm.mpb.cmd.ctx.CmdContext
+import ru.vm.mpb.util.JiraTicket
 import ru.vm.mpb.util.deepMove
-import ru.vm.mpb.util.parseJiraTicket
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
 
-object TicketCmd: Cmd(
+private val DESC = CmdDesc(
     setOf("t", "ticket"),
     "make ticket dir",
     "<ticket id> [-o | --overwrite (overwrite directory using new description)] [description...]"
-) {
-    override fun execute(cfg: MpbConfig) {
+)
 
-        val args = cfg.getCommonArgs()
-        val t = args.firstOrNull()?.let { parseJiraTicket(cfg, it) } ?: printUsageAndExit()
-        val overwrite = cfg.ticket.overwrite
+object TicketCmd: Cmd(DESC) {
+    override fun execute(ctx: CmdContext) {
 
-        val desc = args.subList(1, args.size).joinToString(" ").replace(' ', '_').ifBlank { null }
+        val t = ctx.args.firstOrNull()?.let { JiraTicket.parse(ctx.cfg, it) } ?: printUsageAndExit()
+        val overwrite = ctx.cfg.ticket.overwrite
 
-        val ticketDir = cfg.ticket.dir.toPath()
+        val desc = ctx.args.drop(1).joinToString(" ").replace(' ', '_').ifBlank { null }
+
+        val ticketDir = ctx.cfg.ticket.dir.toPath()
         val suggestedDir = ticketDir.resolve(desc?.let { "${t.id}_${it}" } ?: t.id)
 
         val ticketDirs = HashSet<Path>()
@@ -45,7 +47,7 @@ object TicketCmd: Cmd(
                 deepMove(d, targetDir)
             }
         }
-        MessagePrinter(cfg).print(targetDir)
+        ctx.print(targetDir)
 
     }
 }

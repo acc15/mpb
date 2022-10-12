@@ -1,6 +1,7 @@
 package ru.vm.mpb
 
-import ru.vm.mpb.cmd.*
+import ru.vm.mpb.cmd.ctx.CmdContext
+import ru.vm.mpb.cmd.impl.*
 import ru.vm.mpb.config.parseConfig
 import kotlin.system.exitProcess
 
@@ -14,7 +15,7 @@ val ALL_CMDS = listOf(
     PullCmd
 )
 
-val ALL_CMDS_MAP = ALL_CMDS.flatMap { c -> c.names.map { it to c } }.toMap()
+val ALL_CMDS_MAP = ALL_CMDS.flatMap { c -> c.desc.names.map { it to c } }.toMap()
 
 fun printHelp(msg: String = "") {
 
@@ -29,7 +30,7 @@ fun printHelp(msg: String = "") {
     println()
 
     for (cmd in ALL_CMDS) {
-        println(cmd.help)
+        println(cmd.desc.help)
     }
 
 }
@@ -48,6 +49,6 @@ fun main(args: Array<String>) {
         printHelp("Unknown command: $cfg.command")
         exitProcess(1)
     }
-    cmd.execute(cfg)
+    cmd.execute(CmdContext(cfg))
 }
 

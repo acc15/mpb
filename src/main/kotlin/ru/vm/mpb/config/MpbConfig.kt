@@ -19,10 +19,12 @@ data class MpbConfig(
     val command: String
 ) {
     fun getDefaultBranch(proj: String) = projects[proj]?.defaultBranch ?: defaultBranch
-    fun getCommonArgs() = args[""] ?: emptyList()
-    fun getActiveProjectArgs(): Map<String, List<String>> = projects.filterKeys {
+
+    val commonArgs = args[""] ?: emptyList()
+    val activeArgs = projects.filterKeys {
         (include.isEmpty() || include.contains(it)) && (exclude.isEmpty() || !exclude.contains(it))
-    }.mapValues {  args[it.key] ?: getCommonArgs() }
+    }.mapValues { args[it.key] ?: commonArgs }
+
 }
 
 data class BuildConfig(
