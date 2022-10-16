@@ -3,6 +3,10 @@ defaultBranch: master
 
 baseDir: /baseDir
 
+branchPatterns:
+  - pattern: 'origin/rc/3.${input}*'
+    index: last
+
 build:
   default:
     env:
@@ -28,6 +32,9 @@ projects:
   c:
     dir: c
     deps: [b]
+    branchPatterns:
+      - pattern: 'base/test/*'
+        index: first
   d:
     dir: d
     build: yarn

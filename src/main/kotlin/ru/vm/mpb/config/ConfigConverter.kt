@@ -1,56 +1,66 @@
 package ru.vm.mpb.config
 
+import ru.vm.mpb.config.state.ConfigState
 import java.io.File
 
 object ConfigConverter {
 
-    fun config(configFile: File, cfg: ConfigMap): MpbConfig {
-        val baseDir = cfg.getFile("baseDir") ?: configFile.parentFile
+    fun config(configFile: File, cfg: ConfigState): MpbConfig {
+        val baseDir = cfg.get("baseDir").file ?: configFile.parentFile
         return MpbConfig(
             configFile,
-            cfg.getBoolean("debug"),
-            cfg.getString("defaultBranch") ?: "master",
-            map(cfg.getConfig("projects")) { c, k -> project(k, baseDir, c.getConfig(k)) },
-            jira(cfg.getConfig("jira")),
-            ticket(baseDir, cfg.getConfig("ticket")),
-            map(cfg.getConfig("build")) { c, k -> build(c.getConfig(k)) },
+            cfg.get("debug").flag,
+            cfg.get("defaultBranch").string ?: "master",
+            convertList(cfg.get("branchPatterns"), ::branchPattern),
+            convertMap(cfg.get("projects")) { c, k -> project(k, baseDir, c) },
+            jira(cfg.get("jira")),
+            ticket(baseDir, cfg.get("ticket")),
+            convertMap(cfg.get("build")) { c, _ -> build(c) },
             baseDir,
-            cfg.getStringSet("include"),
-            cfg.getStringSet("exclude"),
-            map(cfg.getConfig("args")) { c, k ->
-                c.getStringList(k).orEmpty().let {
-                    if (it.isEmpty() || k.isNotEmpty()) it else it.subList(1, it.size)
-                }
-            },
-            cfg.getString("args").orEmpty()
+            cfg.get("include").stringSet,
+            cfg.get("exclude").stringSet,
+            convertMap(cfg.get("args")) { c, k -> c.stringList.let { if (k.isNotEmpty()) it else it.drop(1) } },
+            cfg.get("args").string.orEmpty()
         )
     }
 
-    fun ticket(baseDir: File, cfg: ConfigMap) = TicketConfig(
-        baseDir.resolve(cfg.getFile("dir") ?: File("tickets")),
-        cfg.getBoolean("overwrite")
+    fun ticket(baseDir: File, cfg: ConfigState) = TicketConfig(
+        baseDir.resolve(cfg.get("dir").file ?: File("tickets")),
+        cfg.get("overwrite").flag
     )
 
-    fun jira(cfg: ConfigMap) = JiraConfig(
-        cfg.getString("url").orEmpty(),
-        cfg.getString("project").orEmpty()
+    fun jira(cfg: ConfigState) = JiraConfig(
+        cfg.get("url").string.orEmpty(),
+        cfg.get("project").string.orEmpty()
     )
 
-    fun project(key: String, baseDir: File, cfg: ConfigMap) = ProjectConfig(
-        baseDir.resolve(cfg.getFile("dir") ?: File(key)),
-        cfg.getStringSet("deps"),
-        cfg.getString("build") ?: DEFAULT_KEY,
-        cfg.getString("defaultBranch")
+    fun project(key: String, baseDir: File, cfg: ConfigState) = ProjectConfig(
+        baseDir.resolve(cfg.get("dir").file ?: File(key)),
+        cfg.get("deps").stringSet,
+        cfg.get("build").string ?: DEFAULT_KEY,
+        cfg.get("defaultBranch").string,
+        convertList(cfg.get("branchPatterns"), this::branchPattern)
     )
 
-    fun build(cfg: ConfigMap) = BuildConfig(
-        map(cfg.getConfig("profiles")) { c, k -> c.getStringList(k).orEmpty() },
-        map(cfg.getConfig("env")) { c, k -> c.getString(k).orEmpty() }
+    fun build(cfg: ConfigState) = BuildConfig(
+        convertMap(cfg.get("profiles")) { c, _ -> c.stringList },
+        convertMap(cfg.get("env")) { c, _ -> c.string.orEmpty() }
     )
 
-    fun <V> map(cfg: ConfigMap, valueConverter: (ConfigMap, String) -> V): Map<String, V> = cfg.map.mapValues {
-        valueConverter(cfg, it.key)
+    fun branchPattern(cfg: ConfigState) = BranchPattern(
+        cfg.get("pattern").string.orEmpty(),
+        parseIndex(cfg.get("index").string.orEmpty()) ?: 0
+    )
+
+    fun parseIndex(idx: String): Int? = when {
+        idx.equals("first", true) -> 0
+        idx.equals("last", true) -> -1
+        else -> idx.toIntOrNull()
     }
+
+    fun <V> convertList(cfg: ConfigState, mapper: (ConfigState) -> V): List<V> = cfg.indices.map { mapper(cfg.get(it)) }
+    fun <V> convertMap(cfg: ConfigState, mapper: (ConfigState, String) -> V): Map<String, V> = cfg.keys
+        .associateWith { mapper(cfg.get(it), it) }
 
 }
 

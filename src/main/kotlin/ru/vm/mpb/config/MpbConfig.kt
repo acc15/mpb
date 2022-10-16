@@ -1,5 +1,8 @@
 package ru.vm.mpb.config
 
+import ru.vm.mpb.config.state.ConfigMutableMapState
+import ru.vm.mpb.config.state.loadConfigYaml
+import ru.vm.mpb.config.state.parseConfigArgs
 import java.io.File
 
 const val DEFAULT_KEY = "default"
@@ -8,6 +11,7 @@ data class MpbConfig(
     val config: File,
     val debug: Boolean,
     val defaultBranch: String,
+    val branchPatterns: List<BranchPattern>,
     val projects: Map<String, ProjectConfig>,
     val jira: JiraConfig,
     val ticket: TicketConfig,
@@ -42,17 +46,23 @@ data class TicketConfig(
     val overwrite: Boolean
 )
 
+data class BranchPattern(
+    val pattern: String,
+    val index: Int
+)
+
 data class ProjectConfig(
     val dir: File,
     val deps: Set<String>,
     val build: String,
-    val defaultBranch: String?
+    val defaultBranch: String?,
+    val branchPatterns: List<BranchPattern>
 )
 
-fun parseConfig(args: List<String>): MpbConfig {
-    val argMap = ConfigMap.parseArgs(args)
-    val cfgPath = (argMap.getFile("config") ?: File("mpb.yaml")).absoluteFile
-    val configMap = ConfigMap.loadYaml(cfgPath)
-    val mergedConfigMap = configMap.merge(argMap)
-    return ConfigConverter.config(cfgPath, mergedConfigMap)
+fun parseArgsAndLoadConfig(args: List<String>, yamlLoader: (File) -> ConfigMutableMapState = ::loadConfigYaml): MpbConfig {
+    val argState = parseConfigArgs(args)
+    val configFile = (argState.get("config").file ?: File("mpb.yaml")).absoluteFile
+    val configState = yamlLoader(configFile)
+    configState.merge(argState.map)
+    return ConfigConverter.config(configFile, configState)
 }
