@@ -22,10 +22,14 @@ object CheckoutCmd: ParallelCmd(DESC) {
         val subject = ctx.args.firstOrNull() ?: return pb.default ?: gb.default ?: "master"
 
         val patterns = pb.filters + gb.filters
+        if (patterns.isEmpty()) {
+            return subject
+        }
+
+        val branches = ctx.exec("git", "branch", "-r").lines().map { it.substring(2) }
         for (p in patterns) {
 
             val regex = Regex(p.regex.replace("\${branch}", Regex.escape(subject)))
-            val branches = ctx.exec("git", "branch", "-r").lines().map { it.substring(2) }
             val matches = branches
                 .mapNotNull { regex.matchEntire(it) }
                 .map { it.groupValues.getOrNull(1) ?: it.value }
