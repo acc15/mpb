@@ -12,12 +12,9 @@ repositories {
     mavenCentral()
 }
 
-val jacksonVersion = "2.13.3"
-val coroutinesVersion = "1.6.4"
 dependencies {
     implementation("org.yaml:snakeyaml:1.33")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-    implementation("org.slf4j:slf4j-nop:2.0.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     testImplementation(kotlin("test"))
 }
 
