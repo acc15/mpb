@@ -118,11 +118,10 @@ object BuildCmd: Cmd(
             val logDir = Files.createDirectories(Path.of("log"))
             val logFile = logDir.resolve("${ctx.key}.log").toFile()
 
-            val success = ctx.exec(command) { it
-                    .redirectOutput(logFile)
-                    .redirectError(logFile)
-                    .environment().putAll(buildConfig.env)
-            }
+            val success = ctx.exec(command)
+                .redirectTo(logFile)
+                .env(buildConfig.env)
+                .success()
 
             val duration = Duration.ofNanos(System.nanoTime() - buildStart)
             if (success) {

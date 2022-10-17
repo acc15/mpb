@@ -6,12 +6,14 @@ import kotlin.test.assertEquals
 
 val testConfig get() = mapOf(
     "debug" to false,
-    "defaultBranch" to "master",
     "baseDir" to "/baseDir",
-    "branchPatterns" to listOf(
-        mapOf(
-            "pattern" to "origin/rc/3.\${input}*",
-            "index" to "last"
+    "branch" to mapOf(
+        "default" to "master",
+        "filters" to listOf(
+            mapOf(
+                "regex" to "^origin/(rc/3\\.\${branch}\\..*-sf)\$",
+                "index" to "last"
+            )
         )
     ),
     "build" to mapOf(
@@ -43,10 +45,12 @@ val testConfig get() = mapOf(
         "c" to mapOf(
             "dir" to "c",
             "deps" to listOf("b"),
-            "branchPatterns" to listOf(
-                mapOf(
-                    "pattern" to "base/test/*",
-                    "index" to "first"
+            "branch" to mapOf(
+                "filters" to listOf(
+                    mapOf(
+                        "regex" to "base/test/*",
+                        "index" to "first"
+                    )
                 )
             )
         ),
@@ -58,32 +62,33 @@ val testConfig get() = mapOf(
     ),
     "args" to mapOf(
         "d" to listOf("a", "b", "c"),
-        "" to listOf("a", "x")
+        "" to listOf("x", "y")
     ),
     "ticket" to mapOf("dir" to "ticket")
 )
 
-class MpbConfigKtTest {
+
+class MpbConfigTest {
 
     @Test
-    fun canParseAndLoadConfigs() {
+    fun parse() {
 
-        val config = parseArgsAndLoadConfig(listOf(
+        val config = MpbConfig.parse(arrayOf(
             "pull",
             "--debug",
             "--", "a", "b",
             "--args.a", "args.a",
             "--args.b", "args.b",
-            "--branchPatterns[1].pattern", "p2",
-            "--branchPatterns[1].index", "last"
-        )) { ConfigMutableMapState(testConfig.asMutableMap()) {} }
+            "--branch.filters[1].regex", "p2",
+            "--branch.filters[1].index", "last"
+        )) { ConfigRoot(testConfig) }
 
         assertEquals(true, config.debug)
         assertEquals("pull", config.command)
         assertEquals(listOf("a", "b"), config.commonArgs)
         assertEquals(listOf("args.a"), config.args["a"])
         assertEquals(listOf("args.b"), config.args["b"])
-        assertEquals(BranchPattern("p2", -1), config.branchPatterns[1])
+        assertEquals(BranchFilter("p2", -1), config.branch.filters[1])
 
     }
 

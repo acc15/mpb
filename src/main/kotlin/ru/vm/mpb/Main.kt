@@ -2,7 +2,7 @@ package ru.vm.mpb
 
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.impl.*
-import ru.vm.mpb.config.parseArgsAndLoadConfig
+import ru.vm.mpb.config.MpbConfig
 import kotlin.system.exitProcess
 
 const val PROGRAM_NAME = "mpb"
@@ -36,9 +36,7 @@ fun printHelp(msg: String = "") {
 }
 
 fun main(args: Array<String>) {
-
-    val cfg = parseArgsAndLoadConfig(args.toList())
-
+    val cfg = MpbConfig.parse(args)
     if (cfg.command.isEmpty()) {
         printHelp()
         exitProcess(1)

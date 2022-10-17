@@ -1,15 +1,15 @@
 package ru.vm.mpb.config.state
 
-class ConfigPlainState(override val value: Any?, mutate: ConfigStateMutator): ConfigImmutableState(mutate) {
+class ConfigPlain(
+    override val value: Any?,
+    mutate: ConfigMutator
+): Config(mutate) {
 
-    override val indices: IntRange = IntRange.EMPTY
-    override val keys: Set<String> = emptySet()
-
-    override fun get(key: String) = toConfigState(null) { newState ->
+    override fun get(key: String) = toConfig(null) { newState ->
         set(putNonNull(mutableMapOf(), "" to value, key to newState))
     }
 
-    override fun get(index: Int) = toConfigState(null) { newState ->
+    override fun get(index: Int) = toConfig(null) { newState ->
         set(putNonNull(mutableListOf(), 0 to value, index to newState))
     }
 
@@ -22,5 +22,7 @@ class ConfigPlainState(override val value: Any?, mutate: ConfigStateMutator): Co
     }
 
     override val list: List<Any?> get() = if (value != null) listOf(value) else emptyList()
+    override val map: Map<String, Any> get() = putNonNull(mutableMapOf(), "" to value)
     override val plain: Any? get() = value
+
 }

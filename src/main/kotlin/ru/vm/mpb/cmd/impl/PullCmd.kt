@@ -18,7 +18,7 @@ object PullCmd: ParallelCmd(DESC) {
         withContext(Dispatchers.IO) {
             ctx.print("pulling...")
 
-            val success = ctx.exec("git", "pull", "--rebase")
+            val success = ctx.exec("git", "pull", "--rebase").success()
             ctx.print(if (success) "done" else "error")
         }
     }

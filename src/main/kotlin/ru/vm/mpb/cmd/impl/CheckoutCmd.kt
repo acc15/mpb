@@ -14,50 +14,78 @@ private val DESC = CmdDesc(
 
 object CheckoutCmd: ParallelCmd(DESC) {
 
-    private fun checkoutAndPull(ctx: ProjectContext) {
-        val branch = ctx.args.firstOrNull() ?: ctx.cfg.getDefaultBranch(ctx.key)
+    private fun resolveBranch(ctx: ProjectContext): String {
+
+        val pb = ctx.info.branch
+        val gb = ctx.cfg.branch
+
+        val subject = ctx.args.firstOrNull() ?: return pb.default ?: gb.default ?: "master"
+
+        val patterns = pb.filters + gb.filters
+        for (p in patterns) {
+
+            val regex = Regex(p.regex.replace("\${branch}", Regex.escape(subject)))
+            val branches = ctx.exec("git", "branch", "-r").lines().map { it.substring(2) }
+            val matches = branches
+                .mapNotNull { regex.matchEntire(it) }
+                .map { it.groupValues.getOrNull(1) ?: it.value }
+
+            when {
+                p.index < 0 && matches.isNotEmpty() -> return matches.last()
+                p.index >= 0 && p.index < matches.size -> return matches[p.index]
+            }
+        }
+
+        return subject
+    }
+
+    private fun checkoutAndPull(ctx: ProjectContext): Boolean {
+
+        val branch = resolveBranch(ctx)
 
         ctx.print("checkout to $branch")
-        if (!ctx.exec("git", "checkout", branch)) {
+        if (!ctx.exec("git", "checkout", branch).success()) {
             ctx.print("unable to checkout to $branch")
-            return
+            return false
         }
 
         ctx.print("pulling")
-        if (!ctx.exec("git", "pull")) {
+        if (!ctx.exec("git", "pull", "--rebase").success()) {
             ctx.print("unable to pull")
-            return
+            return false
         }
-
+        return true
     }
 
     override suspend fun parallelExecute(ctx: ProjectContext) = withContext(Dispatchers.IO) {
 
         ctx.print("fetching all remotes...")
-        if (!ctx.exec("git", "fetch", "--all")) {
+        if (!ctx.exec("git", "fetch", "--all").success()) {
             ctx.print("unable to fetch")
             return@withContext
         }
 
-        val hasChanges = !ctx.exec("git", "diff", "--quiet")
+        val hasChanges = !ctx.exec("git", "diff", "--quiet").success()
         if (hasChanges) {
             ctx.print("stashing")
-            if (!ctx.exec("git", "stash")) {
+            if (!ctx.exec("git", "stash").success()) {
                 ctx.print("unable to stash")
                 return@withContext
             }
         }
 
-        checkoutAndPull(ctx)
+        val success = checkoutAndPull(ctx)
         if (hasChanges) {
             ctx.print("restoring stash")
-            if (!ctx.exec("git", "stash", "pop")) {
+            if (!ctx.exec("git", "stash", "pop").success()) {
                 ctx.print("unable to restore from stash")
                 return@withContext
             }
         }
 
-        ctx.print("done")
+        if (success) {
+            ctx.print("done")
+        }
 
     }
 

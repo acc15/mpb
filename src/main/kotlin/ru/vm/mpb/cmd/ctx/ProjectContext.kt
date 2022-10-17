@@ -13,10 +13,7 @@ data class ProjectContext(
 
     fun print(str: Any?, e: Throwable? = null) = cmd.print(str, e, key)
 
-    fun exec(vararg cmdline: String, customizer: (ProcessBuilder) -> Unit = cmd::defaultCustomizer) =
-        cmd.exec(info.dir, *cmdline, customizer = customizer)
-
-    fun exec(cmdline: List<String>, customizer: (ProcessBuilder) -> Unit = cmd::defaultCustomizer) =
-        cmd.exec(info.dir, cmdline, customizer)
+    fun exec(vararg cmdline: String) = cmd.exec(*cmdline).dir(info.dir)
+    fun exec(cmdline: List<String>) = cmd.exec(cmdline).dir(info.dir)
 
 }

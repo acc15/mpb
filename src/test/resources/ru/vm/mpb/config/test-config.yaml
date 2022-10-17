@@ -1,12 +1,10 @@
 debug: false
-defaultBranch: master
-
 baseDir: /baseDir
-
-branchPatterns:
-  - pattern: 'origin/rc/3.${input}*'
-    index: last
-
+branch:
+  default: master
+  filters:
+    - regex: '^origin/(rc/3\.${branch}\..*-sf)$'
+      index: last
 build:
   default:
     env:
@@ -21,7 +19,6 @@ build:
   yarn:
     profiles:
       default: [a, b]
-
 projects:
   a:
     dir: a
@@ -32,9 +29,10 @@ projects:
   c:
     dir: c
     deps: [b]
-    branchPatterns:
-      - pattern: 'base/test/*'
-        index: first
+    branch:
+      filters:
+        - regex: 'base/test/*'
+          index: first
   d:
     dir: d
     build: yarn
@@ -44,7 +42,7 @@ jira:
 
 args:
   d: [a, b, c]
-  "": [a, x]
+  "": [x, y]
 
 ticket:
   dir: ticket
