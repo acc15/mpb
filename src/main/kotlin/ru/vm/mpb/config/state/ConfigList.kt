@@ -7,11 +7,11 @@ class ConfigList(
 
     override val value: List<Any?> = list
 
-    override fun get(key: String) = toConfig(null) {
+    override fun get(key: String) = of(null) {
         set(mutableMapOf("" to list, key to it))
     }
 
-    override fun get(index: Int) = toConfig(list.getOrNull(index)) {
+    override fun get(index: Int) = of(list.getOrNull(index)) {
         putNonNull(mutateList(list), index to it)
     }
 
@@ -31,7 +31,7 @@ class ConfigList(
         )
     }
 
-    override val plain: Any? get() = list.firstOrNull()
+    override val plain: Any? get() = get(0).plain
     override val map: Map<String, Any> get() = mapOf("" to list)
 
     private fun <T> mutateList(list: List<T>): ArrayList<T> =

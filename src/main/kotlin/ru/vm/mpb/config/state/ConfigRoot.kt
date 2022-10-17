@@ -5,7 +5,7 @@ class ConfigRoot(
     mutator: ConfigMutator = {}
 ): Config(mutator) {
 
-    var state: Config = toConfig(value, this::set)
+    var state: Config = of(value, this::set)
         private set
 
     override fun get(key: String) = state.get(key)
@@ -15,7 +15,7 @@ class ConfigRoot(
     override fun set(value: Any) {
         super.set(value)
         this.value = value
-        this.state = toConfig(this.value, this::set)
+        this.state = of(this.value, this::set)
     }
 
     override val list: List<Any?> get() = state.list

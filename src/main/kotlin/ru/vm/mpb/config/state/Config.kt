@@ -33,46 +33,50 @@ typealias ConfigMutator = (Any) -> Unit
 
 abstract class Config(private val mutator: ConfigMutator) {
 
+    // State management
+
     abstract val value: Any?
     abstract fun get(key: String): Config
     abstract fun get(index: Int): Config
     abstract fun add(value: Any)
     abstract fun merge(value: Any)
 
-    abstract val list: List<Any?>
-    abstract val map: Map<String, Any>
-    abstract val plain: Any?
-
     open fun set(value: Any) {
         mutator(value)
     }
 
+    // Path functions
+
     fun path(p: String) = path(parsePath(p))
     fun path(p: List<Any>) = p.fold(this) { s, k -> if (k is Int) s.get(k) else s.get(k as String) }
 
+    // Converting functions
+
+    abstract val list: List<Any?>
+    abstract val map: Map<String, Any>
+    abstract val plain: Any?
     val string: String? get() = plain?.toString()
-    val stringList: List<String> get() = list.mapNotNull { toImmutableConfig(it).string }
+    val stringList: List<String> get() = list.mapNotNull { ofImmutable(it).string }
     val stringSet: Set<String> get() = stringList.toSet()
     val flag: Boolean get() = plain?.let {
         it as? Boolean ?:
-        (it as? Int)?.let { i -> i != 0 } ?:
+        (it as? Number)?.let { i -> i.toInt() != 0 } ?:
         (it as? String)?.let { s -> s.toBoolean() }
     } ?: false
     val file: File? get() = string?.let { File(it) }
-
-    val configList: List<Config> get() = list.map { toImmutableConfig(it) }
-    val configMap: Map<String, Config> get() = map.mapValues { toImmutableConfig(it.value) }
+    val configList: List<Config> get() = list.map { ofImmutable(it) }
+    val configMap: Map<String, Config> get() = map.mapValues { ofImmutable(it.value) }
 
     companion object {
 
         @JvmStatic
-        fun toImmutableConfig(value: Any?) = toConfig(value) { throw UnsupportedOperationException() }
+        fun ofImmutable(value: Any?) = of(value) { throw UnsupportedOperationException() }
 
         @JvmStatic
-        fun toConfig(value: Any?, mutate: ConfigMutator) = mapValueByType(value,
-            { map -> ConfigMap(map, mutate) },
-            { list -> ConfigList(list, mutate) },
-            { plain -> ConfigPlain(plain, mutate) }
+        fun of(value: Any?, mutator: ConfigMutator) = mapValueByType(value,
+            { map -> ConfigMap(map, mutator) },
+            { list -> ConfigList(list, mutator) },
+            { plain -> ConfigPlain(plain, mutator) }
         )
 
         @JvmStatic

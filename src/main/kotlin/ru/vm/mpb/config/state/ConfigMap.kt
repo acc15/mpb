@@ -7,7 +7,7 @@ class ConfigMap(
 
     override val value: Map<String, Any> = map
 
-    override fun get(key: String) = toConfig(map[key]) { mutateMap(map)[key] = it }
+    override fun get(key: String) = of(map[key]) { mutateMap(map)[key] = it }
     override fun get(index: Int) = get("").get(index)
 
     override fun add(value: Any) {
