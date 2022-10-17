@@ -130,7 +130,7 @@ abstract class Config(private val mutator: ConfigMutator) {
         fun parseArgs(args: Array<String>): Config {
             val optPrefix = "--"
             val defaultPath = parsePath("args")
-            val state = ConfigRoot(mutableMapOf<String, Any>())
+            val state = ConfigMap(mutableMapOf()) {}
 
             val values = mutableListOf<String>()
             var path = defaultPath
@@ -161,7 +161,7 @@ abstract class Config(private val mutator: ConfigMutator) {
         }
 
         @JvmStatic
-        fun parseYaml(loader: (Yaml) -> Map<String, Any>): Config = ConfigRoot(loader(Yaml()))
+        fun parseYaml(loader: (Yaml) -> Map<String, Any>): Config = ConfigMap(loader(Yaml()).toMutableMap()) {}
 
         @JvmStatic
         fun parseYaml(stream: InputStream) = parseYaml { yaml -> yaml.load(stream) }
@@ -183,8 +183,8 @@ abstract class Config(private val mutator: ConfigMutator) {
             listHandler: (List<Any?>) -> T,
             plainHandler: (Any?) -> T
         ) = (value as? Map<String, Any>)?.let { mapHandler(it) } ?:
-        (value as? List<Any?>)?.let { listHandler(it) } ?:
-        plainHandler(value)
+            (value as? List<Any?>)?.let { listHandler(it) } ?:
+            plainHandler(value)
 
         @JvmStatic
         fun putNonNull(list: MutableList<Any?>, vararg values: Pair<Int, Any?>): MutableList<Any?> {
