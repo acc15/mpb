@@ -69,17 +69,14 @@ abstract class Config(private val mutator: ConfigMutator) {
 
     companion object {
 
-        @JvmStatic
         fun ofImmutable(value: Any?) = of(value) { throw UnsupportedOperationException() }
 
-        @JvmStatic
         fun of(value: Any?, mutator: ConfigMutator) = mapValueByType(value,
             { map -> ConfigMap(map, mutator) },
             { list -> ConfigList(list, mutator) },
             { plain -> ConfigPlain(plain, mutator) }
         )
 
-        @JvmStatic
         fun parsePath(str: String): List<Any> {
 
             val segments = mutableListOf<Any>()
@@ -126,7 +123,6 @@ abstract class Config(private val mutator: ConfigMutator) {
             return segments
         }
 
-        @JvmStatic
         fun parseArgs(args: Array<String>): Config {
             val optPrefix = "--"
             val defaultPath = parsePath("args")
@@ -160,22 +156,12 @@ abstract class Config(private val mutator: ConfigMutator) {
             return state
         }
 
-        @JvmStatic
         fun parseYaml(loader: (Yaml) -> Map<String, Any>): Config = ConfigMap(loader(Yaml()).toMutableMap()) {}
-
-        @JvmStatic
         fun parseYaml(stream: InputStream) = parseYaml { yaml -> yaml.load(stream) }
-
-        @JvmStatic
         fun parseYaml(reader: Reader) = parseYaml { yaml -> yaml.load(reader) }
-
-        @JvmStatic
         fun parseYaml(file: File) = FileReader(file).use { parseYaml(it) }
-
-        @JvmStatic
         fun parseYaml(url: URL) = url.openStream().use { parseYaml(it) }
 
-        @JvmStatic
         @Suppress("UNCHECKED_CAST")
         fun <T> mapValueByType(
             value: Any?,
@@ -186,7 +172,6 @@ abstract class Config(private val mutator: ConfigMutator) {
             (value as? List<Any?>)?.let { listHandler(it) } ?:
             plainHandler(value)
 
-        @JvmStatic
         fun putNonNull(list: MutableList<Any?>, vararg values: Pair<Int, Any?>): MutableList<Any?> {
             for (v in values) {
                 if (v.second == null) {
@@ -200,7 +185,6 @@ abstract class Config(private val mutator: ConfigMutator) {
             return list
         }
 
-        @JvmStatic
         fun putNonNull(map: MutableMap<String, Any>, vararg values: Pair<String, Any?>): MutableMap<String, Any> {
             for (v in values) {
                 map[v.first] = v.second ?: continue
