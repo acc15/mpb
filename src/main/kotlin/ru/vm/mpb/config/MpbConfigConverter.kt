@@ -9,6 +9,7 @@ object MpbConfigConverter {
         val baseDir = cfg.get("baseDir").file ?: configFile.parentFile
         return MpbConfig(
             configFile,
+            cfg.get("cd").file ?: File(System.getProperty("java.io.tmpdir")).resolve("mpb_cd.txt"),
             cfg.get("debug").flag,
             branch(cfg.get("branch")),
             cfg.get("projects").configMap.mapValues { (k, c) -> project(k, baseDir, c) },

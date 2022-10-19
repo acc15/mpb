@@ -7,6 +7,7 @@ const val DEFAULT_KEY = "default"
 
 data class MpbConfig(
     val config: File,
+    val cd: File,
     val debug: Boolean,
     val branch: BranchConfig,
     val projects: Map<String, ProjectConfig>,

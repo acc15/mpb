@@ -74,6 +74,10 @@
       "type": "string",
       "description": "Base directory"
     },
+    "cd": {
+      "description": "Temporary file to store file for changing current directory",
+      "type": "string"
+    },
     "branch": {
       "$ref": "#/$defs/branch",
       "description": "Common branch configuration"

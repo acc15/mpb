@@ -28,5 +28,5 @@ tasks.withType<KotlinCompile> {
 val copyLibs by tasks.registering(Copy::class) {
     from(tasks.jar)
     from(configurations.runtimeClasspath)
-    into("build/dist")
+    into("${System.getProperty("user.home")}/.local/lib/mpb")
 }

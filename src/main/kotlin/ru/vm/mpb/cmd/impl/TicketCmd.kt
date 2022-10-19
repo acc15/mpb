@@ -47,7 +47,9 @@ object TicketCmd: Cmd(DESC) {
                 deepMove(d, targetDir)
             }
         }
-        ctx.print(targetDir)
+
+        ctx.print("Ticket directory: $targetDir")
+        ctx.cfg.cd.writeText(targetDir.toString())
 
     }
 }

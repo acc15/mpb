@@ -17,7 +17,7 @@ private val DESC = CmdDesc(
 object  JiraCmd: Cmd(DESC) {
     override fun execute(ctx: CmdContext) {
         if (!Desktop.isDesktopSupported()) {
-            println("AWT desktop not supported. Unable to open URLs")
+            ctx.print("AWT desktop not supported. Unable to open URLs")
             return
         }
 
