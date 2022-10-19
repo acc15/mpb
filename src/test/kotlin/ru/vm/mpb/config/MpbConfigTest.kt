@@ -60,10 +60,6 @@ val testConfig get() = mapOf(
         "url" to "https://jira/browse",
         "project" to "JIRA"
     ),
-    "args" to mapOf(
-        "d" to listOf("a", "b", "c"),
-        "" to listOf("x", "y")
-    ),
     "ticket" to mapOf("dir" to "ticket")
 )
 

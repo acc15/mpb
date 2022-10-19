@@ -62,6 +62,10 @@ object BuildCmd: Cmd(
 ) {
 
     override fun execute(ctx: CmdContext) {
+        if (ctx.cfg.build.isEmpty()) {
+            ctx.print("build configuration not specified")
+            exitProcess(1)
+        }
 
         val bi: BuildInfoMap = ctx.cfg.projects.mapValues { (k, i) ->
             BuildInfo(

@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "branch": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "string",
+          "description": "Default branch"
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "description": "Branch filter",
+            "type": "object",
+            "properties": {
+              "regex": {
+                "description": "Used to filter remote branch names",
+                "type": "string"
+              },
+              "index": {
+                "description": "Index of branch to use when branches found by regex",
+                "oneOf": [ { "type": "integer" }, { "enum": ["first", "last"] } ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "required": ["profiles"],
+      "properties": {
+        "env": {
+          "description": "Environment variables",
+          "type": "object",
+          "additionalProperties": {
+            "description": "Environment variable value",
+            "type": "string"
+          }
+        },
+        "profiles": {
+          "description": "Command-line profiles",
+          "type": "object",
+          "required": ["default"],
+          "properties": {
+            "default": {
+              "description": "Default command-line profile",
+              "$ref": "#/$defs/stringArray"
+            }
+          },
+          "additionalProperties": {
+            "description": "Command-line profile",
+            "$ref": "#/$defs/stringArray"
+          }
+        }
+      }
+    }
+  },
+  "title": "mpb",
+  "description": "mpb configuration",
+  "type": "object",
+  "required": ["projects"],
+  "properties": {
+    "debug": {
+      "type": "boolean",
+      "description": "Enables output of executed commands"
+    },
+    "baseDir": {
+      "type": "string",
+      "description": "Base directory"
+    },
+    "branch": {
+      "$ref": "#/$defs/branch",
+      "description": "Common branch configuration"
+    },
+    "build": {
+      "description": "Build configurations",
+      "type": "object",
+      "required": ["default"],
+      "properties": {
+        "": {
+          "description": "Default build configuration",
+          "$ref": "#/$defs/build"
+        }
+      },
+      "additionalProperties": {
+        "description": "Build configuration",
+        "$ref": "#/$defs/build"
+      }
+    },
+    "projects": {
+      "description": "Project definitions",
+      "type": "object",
+      "additionalProperties": {
+        "description": "Project definition",
+        "type": "object",
+        "required": ["dir"],
+        "properties": {
+          "dir": {
+            "description": "Project directory (relative to baseDir)",
+            "type": "string"
+          },
+          "deps": {
+            "description": "Project dependencies",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "build": {
+            "description": "Build configuration",
+            "type": "string"
+          },
+          "branch": {
+            "$ref": "#/$defs/branch",
+            "description": "Project branch configuration"
+          }
+        }
+      }
+    },
+    "jira": {
+      "type": "object",
+      "required": ["url", "project"],
+      "properties": {
+        "url": {
+          "description": "URL to JIRA",
+          "type": "string"
+        },
+        "project": {
+          "description": "Project code",
+          "type": "string"
+        }
+      }
+    },
+    "ticket": {
+      "type": "object",
+      "required": ["dir"],
+      "properties": {
+        "dir": {
+          "description": "Directory for JIRA ticket information",
+          "type": "string"
+        },
+        "overwrite": {
+          "description": "Whether to overwrite ticket directory name if it already exists",
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

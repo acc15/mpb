@@ -40,9 +40,5 @@ jira:
   url: https://jira/browse
   project: JIRA
 
-args:
-  d: [a, b, c]
-  "": [x, y]
-
 ticket:
   dir: ticket

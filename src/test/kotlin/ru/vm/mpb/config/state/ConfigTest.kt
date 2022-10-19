@@ -253,7 +253,7 @@ class ConfigTest {
 
     @Test
     fun parseYaml() {
-        val state = Config.parseYaml(MpbConfigTest::class.java.getResource("test-config.yaml")!!)
+        val state = Config.parseYaml(MpbConfigTest::class.java.getResource("config.mpb.yaml")!!)
         assertEquals(testConfig, state.value)
     }
 
