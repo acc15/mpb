@@ -25,7 +25,7 @@ tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "17"
 }
 
-val copyLibs by tasks.registering(Copy::class) {
+val dist by tasks.registering(Copy::class) {
     from(tasks.jar)
     from(configurations.runtimeClasspath)
     into("${System.getProperty("user.home")}/.local/lib/mpb")
