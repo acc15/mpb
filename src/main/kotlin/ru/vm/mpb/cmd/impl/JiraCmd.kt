@@ -1,5 +1,9 @@
 package ru.vm.mpb.cmd.impl
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import ru.vm.mpb.cmd.Cmd
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
@@ -19,13 +23,10 @@ fun openUrlCmd(url: String) = System.getProperty("os.name")!!.let {
     }
 }
 
-object  JiraCmd: Cmd(DESC) {
-    override fun execute(ctx: CmdContext) {
-        for (arg in ctx.args) {
-            val t = JiraTicket.parse(ctx.cfg, arg)
-            if (t != null) {
-                ctx.exec(openUrlCmd(t.fullUrl)).start()
-            }
-        }
+object JiraCmd: Cmd(DESC) {
+    override suspend fun execute(ctx: CmdContext): Boolean = coroutineScope {
+        ctx.args.mapNotNull { JiraTicket.parse(ctx.cfg, it) }.map {
+            async { ctx.exec(openUrlCmd(it.fullUrl)).success() }
+        }.awaitAll().all { it }
     }
 }

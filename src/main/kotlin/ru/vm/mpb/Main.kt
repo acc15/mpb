@@ -1,5 +1,7 @@
 package ru.vm.mpb
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.impl.*
 import ru.vm.mpb.config.MpbConfig
@@ -18,7 +20,6 @@ val ALL_CMDS = listOf(
 val ALL_CMDS_MAP = ALL_CMDS.flatMap { c -> c.desc.names.map { it to c } }.toMap()
 
 fun printHelp(msg: String = "") {
-
     if (msg.isNotEmpty()) {
         println(msg)
         println()
@@ -32,21 +33,23 @@ fun printHelp(msg: String = "") {
     for (cmd in ALL_CMDS) {
         println(cmd.desc.help)
     }
-
 }
 
 fun main(args: Array<String>) {
-    val cfg = MpbConfig.parse(args)
-    if (cfg.command.isEmpty()) {
-        printHelp()
-        exitProcess(1)
-    }
+    val success = runBlocking(Dispatchers.Default) {
+        val cfg = MpbConfig.parse(args)
+        if (cfg.command.isEmpty()) {
+            printHelp()
+            return@runBlocking false
+        }
 
-    val cmd = ALL_CMDS_MAP[cfg.command]
-    if (cmd == null) {
-        printHelp("Unknown command: $cfg.command")
-        exitProcess(1)
+        val cmd = ALL_CMDS_MAP[cfg.command]
+        if (cmd == null) {
+            printHelp("Unknown command: $cfg.command")
+            return@runBlocking false
+        }
+        cmd.execute(CmdContext(cfg))
     }
-    cmd.execute(CmdContext(cfg))
+    exitProcess(if (success) 0 else 1)
 }
 

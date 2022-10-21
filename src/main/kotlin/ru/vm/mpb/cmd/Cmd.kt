@@ -5,11 +5,11 @@ import kotlin.system.exitProcess
 
 abstract class Cmd(val desc: CmdDesc) {
 
-    abstract fun execute(ctx: CmdContext)
+    abstract suspend fun execute(ctx: CmdContext): Boolean
 
-    fun printUsageAndExit(): Nothing {
+    fun printUsageAndExit(): Boolean {
         println(desc.usage)
-        exitProcess(1)
+        return false
     }
 
 }

@@ -61,12 +61,12 @@ object CheckoutCmd: ParallelCmd(DESC) {
         return true
     }
 
-    override suspend fun parallelExecute(ctx: ProjectContext) = withContext(Dispatchers.IO) {
+    override suspend fun parallelExecute(ctx: ProjectContext): Boolean = withContext(Dispatchers.IO) {
 
         ctx.print("fetching all remotes...")
         if (!ctx.exec("git", "fetch", "--all").success()) {
             ctx.print("unable to fetch")
-            return@withContext
+            return@withContext false
         }
 
         val hasChanges = !ctx.exec("git", "diff", "--quiet").success()
@@ -74,7 +74,7 @@ object CheckoutCmd: ParallelCmd(DESC) {
             ctx.print("stashing")
             if (!ctx.exec("git", "stash").success()) {
                 ctx.print("unable to stash")
-                return@withContext
+                return@withContext false
             }
         }
 
@@ -83,13 +83,14 @@ object CheckoutCmd: ParallelCmd(DESC) {
             ctx.print("restoring stash")
             if (!ctx.exec("git", "stash", "pop").success()) {
                 ctx.print("unable to restore from stash")
-                return@withContext
+                return@withContext false
             }
         }
 
         if (success) {
             ctx.print("done")
         }
+        success
 
     }
 

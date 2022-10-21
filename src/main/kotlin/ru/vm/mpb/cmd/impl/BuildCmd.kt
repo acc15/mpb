@@ -12,7 +12,6 @@ import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.system.exitProcess
 
 enum class BuildStatus {
     INIT,
@@ -30,11 +29,14 @@ data class BuildInfo(
 
 typealias BuildInfoMap = Map<String, BuildInfo>
 
-fun findCycles(key: String, bi: BuildInfoMap, handler: (List<String>) -> Unit) {
+fun findCycles(key: String, bi: BuildInfoMap, handler: (List<String>) -> Unit): Boolean {
+    var hasCycles = false
     dfs(key, { bi.getValue(it).dependants }, onCycle = {
+        hasCycles = true
         handler(it)
         false
     })
+    return hasCycles
 }
 
 fun traverseProjects(keys: Set<String>, bi: BuildInfoMap, handler: (String) -> Unit) {
@@ -61,10 +63,10 @@ object BuildCmd: Cmd(
 )
 ) {
 
-    override fun execute(ctx: CmdContext) {
+    override suspend fun execute(ctx: CmdContext): Boolean = coroutineScope {
         if (ctx.cfg.build.isEmpty()) {
             ctx.print("build configuration not specified")
-            exitProcess(1)
+            return@coroutineScope false
         }
 
         val bi: BuildInfoMap = ctx.cfg.projects.mapValues { (k, i) ->
@@ -77,25 +79,23 @@ object BuildCmd: Cmd(
         val roots = ctx.cfg.projects.filter { e -> e.value.deps.isEmpty() }.keys
         if (roots.isEmpty()) {
             ctx.print("invalid configuration, no root projects found")
-            exitProcess(1)
+            return@coroutineScope false
         }
 
         for (r in roots) {
-            findCycles(r, bi) {
-                ctx.print("cycle detected: ${it.joinToString(", ")}")
-                exitProcess(1)
+            if (findCycles(r, bi) { ctx.print("cycle detected: ${it.joinToString(", ")}") }) {
+                return@coroutineScope false
             }
         }
 
-        runBlocking(Dispatchers.Default) {
-            for (r in roots) {
-                bi.getValue(r).status.set(BuildStatus.PENDING)
-                launch {
-                    build(this, ctx.projectContext(r), bi)
-                }
+        for (r in roots) {
+            bi.getValue(r).status.set(BuildStatus.PENDING)
+            launch {
+                build(this, ctx.projectContext(r), bi)
             }
         }
 
+        return@coroutineScope true
     }
 
     suspend fun build(scope: CoroutineScope, ctx: ProjectContext, bi: BuildInfoMap) {
@@ -135,7 +135,6 @@ object BuildCmd: Cmd(
                 ctx.print("error in ${duration.prettyPrint()}")
                 BuildStatus.ERROR
             }
-
         }
 
         if (status != BuildStatus.SUCCESS) {

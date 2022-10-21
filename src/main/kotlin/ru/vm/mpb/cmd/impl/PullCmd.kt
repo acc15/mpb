@@ -14,13 +14,13 @@ private val DESC = CmdDesc(
 
 object PullCmd: ParallelCmd(DESC) {
 
-    override suspend fun parallelExecute(ctx: ProjectContext) {
-        withContext(Dispatchers.IO) {
-            ctx.print("pulling...")
+    override suspend fun parallelExecute(ctx: ProjectContext): Boolean = withContext(Dispatchers.IO) {
+        ctx.print("pulling...")
 
-            val success = ctx.exec("git", "pull", "--rebase").success()
-            ctx.print(if (success) "done" else "error")
-        }
+        val success = ctx.exec("git", "pull", "--rebase").success()
+        ctx.print(if (success) "done" else "error")
+
+        success
     }
 
 }
