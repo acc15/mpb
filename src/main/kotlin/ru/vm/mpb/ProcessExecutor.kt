@@ -34,8 +34,8 @@ class ProcessExecutor(val builder: ProcessBuilder) {
         return this
     }
 
-    fun exitCode() = builder.start().waitFor()
-    fun success() = exitCode() == 0
+    fun start() = builder.start().waitFor()
+    fun success() = start() == 0
     fun lines(): List<String> {
         val p = builder.start()
         val exitCode = p.waitFor()

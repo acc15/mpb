@@ -8,8 +8,8 @@ class ProcessExecutorTest {
 
     @Test
     fun exitCode() {
-        assertEquals(0, ProcessExecutor(ProcessBuilder("echo", "l1\nl2")).exitCode())
-        assertEquals(1, ProcessExecutor(ProcessBuilder("cat", "/tmp/__nonexist__")).exitCode())
+        assertEquals(0, ProcessExecutor(ProcessBuilder("echo", "l1\nl2")).start())
+        assertEquals(1, ProcessExecutor(ProcessBuilder("cat", "/tmp/__nonexist__")).start())
     }
 
     @Test

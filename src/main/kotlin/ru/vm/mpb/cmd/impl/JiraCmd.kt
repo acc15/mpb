@@ -3,10 +3,7 @@ package ru.vm.mpb.cmd.impl
 import ru.vm.mpb.cmd.Cmd
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
-import ru.vm.mpb.config.MpbConfig
 import ru.vm.mpb.util.JiraTicket
-import java.awt.Desktop
-import java.net.URI
 
 private val DESC = CmdDesc(
     setOf("j", "jira"),
@@ -14,21 +11,21 @@ private val DESC = CmdDesc(
     "<issueid or url...>"
 )
 
+fun openUrlCmd(url: String) = System.getProperty("os.name")!!.let {
+    when {
+        it.startsWith("Windows") -> listOf("explorer", url)
+        it.startsWith("Mac") -> listOf("open", url)
+        else -> listOf("xdg-open", url)
+    }
+}
+
 object  JiraCmd: Cmd(DESC) {
     override fun execute(ctx: CmdContext) {
-        if (!Desktop.isDesktopSupported()) {
-            ctx.print("AWT desktop not supported. Unable to open URLs")
-            return
-        }
-
-        val d = Desktop.getDesktop()
         for (arg in ctx.args) {
             val t = JiraTicket.parse(ctx.cfg, arg)
             if (t != null) {
-                val fullUri = URI.create(t.fullUrl)
-                d.browse(fullUri)
+                ctx.exec(openUrlCmd(t.fullUrl)).start()
             }
         }
     }
-
 }
