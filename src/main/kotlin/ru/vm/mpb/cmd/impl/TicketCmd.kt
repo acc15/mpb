@@ -8,8 +8,6 @@ import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.util.JiraTicket
 import ru.vm.mpb.util.deepMove
 import java.nio.file.Files
-import java.nio.file.Path
-import java.util.Collections
 import java.util.stream.Collectors
 import kotlin.io.path.*
 
@@ -23,7 +21,12 @@ object TicketCmd: Cmd(DESC) {
 
     override suspend fun execute(ctx: CmdContext): Boolean {
 
-        val t = ctx.args.firstOrNull()?.let { JiraTicket.parse(ctx.cfg, it) } ?: return printUsageAndExit()
+        val t = ctx.args.firstOrNull()?.let { JiraTicket.parse(ctx.cfg, it) }
+        if (t == null) {
+            printUsage()
+            return false
+        }
+
         val overwrite = ctx.cfg.ticket.overwrite
 
         val desc = ctx.args.drop(1).joinToString(" ").replace(' ', '_').ifBlank { null }
