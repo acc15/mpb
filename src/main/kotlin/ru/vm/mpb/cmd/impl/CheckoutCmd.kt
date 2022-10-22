@@ -15,32 +15,18 @@ private val DESC = CmdDesc(
 object CheckoutCmd: ParallelCmd(DESC) {
 
     private fun resolveBranch(ctx: ProjectContext): String {
-
         val pb = ctx.info.branch
         val gb = ctx.cfg.branch
 
         val subject = ctx.args.firstOrNull() ?: return pb.default ?: gb.default ?: "master"
 
-        val patterns = pb.filters + gb.filters
+        val patterns = pb.patterns + gb.patterns
         if (patterns.isEmpty()) {
             return subject
         }
 
         val branches = ctx.exec("git", "branch", "-r").lines().map { it.substring(2) }
-        for (p in patterns) {
-
-            val regex = Regex(p.regex.replace("\${branch}", Regex.escape(subject)))
-            val matches = branches
-                .mapNotNull { regex.matchEntire(it) }
-                .map { it.groupValues.getOrNull(1) ?: it.value }
-
-            when {
-                p.index < 0 && matches.isNotEmpty() -> return matches.last()
-                p.index >= 0 && p.index < matches.size -> return matches[p.index]
-            }
-        }
-
-        return subject
+        return patterns.firstNotNullOfOrNull { it.findBranch(subject, branches) } ?: subject
     }
 
     private fun checkoutAndPull(ctx: ProjectContext): Boolean {

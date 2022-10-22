@@ -12,14 +12,18 @@
           "type": "string",
           "description": "Default branch"
         },
-        "filters": {
+        "patterns": {
           "type": "array",
           "items": {
             "description": "Branch filter",
             "type": "object",
             "properties": {
-              "regex": {
-                "description": "Used to filter remote branch names",
+              "input": {
+                "description": "Used to match against user input",
+                "type": "string"
+              },
+              "branch": {
+                "description": "Used to filter remote branch names. May contain references to groups from input regex",
                 "type": "string"
               },
               "index": {

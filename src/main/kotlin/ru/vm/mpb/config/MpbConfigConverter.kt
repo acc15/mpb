@@ -51,9 +51,10 @@ object MpbConfigConverter {
 
     fun branch(cfg: Config) = BranchConfig(
         cfg.get("default").string,
-        cfg.get("filters").configList.map {
-            BranchFilter(
-                it.get("regex").string.orEmpty(),
+        cfg.get("patterns").configList.map {
+            BranchPattern(
+                Regex(it.get("input").string.orEmpty()),
+                it.get("branch").string.orEmpty(),
                 parseIndex(it.get("index").string.orEmpty()) ?: 0
             )
         }

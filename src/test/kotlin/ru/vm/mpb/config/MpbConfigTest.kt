@@ -3,15 +3,17 @@ package ru.vm.mpb.config
 import org.junit.jupiter.api.Test
 import ru.vm.mpb.config.state.*
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 val testConfig get() = mapOf(
     "debug" to false,
     "baseDir" to "/baseDir",
     "branch" to mapOf(
         "default" to "master",
-        "filters" to listOf(
+        "patterns" to listOf(
             mapOf(
-                "regex" to "^origin/(rc/3\\.\${branch}\\..*-sf)\$",
+                "input" to "^(\\d+)\$",
+                "branch" to "^origin/(rc/3\\.\$1\\..*-sf)\$",
                 "index" to "last"
             )
         )
@@ -46,9 +48,10 @@ val testConfig get() = mapOf(
             "dir" to "c",
             "deps" to listOf("b"),
             "branch" to mapOf(
-                "filters" to listOf(
+                "patterns" to listOf(
                     mapOf(
-                        "regex" to "base/test/*",
+                        "input" to "^test-(\\d+)\$",
+                        "regex" to "^origin/(base/test/\$1)\$",
                         "index" to "first"
                     )
                 )
@@ -63,6 +66,10 @@ val testConfig get() = mapOf(
     "ticket" to mapOf("dir" to "ticket")
 )
 
+fun equalBranchPattern(b1: BranchPattern, b2: BranchPattern) =
+    b1.input.pattern == b2.input.pattern &&
+    b1.branch == b2.branch &&
+    b1.index == b2.index
 
 class MpbConfigTest {
 
@@ -75,8 +82,9 @@ class MpbConfigTest {
             "--", "a", "b",
             "--args.a", "args.a",
             "--args.b", "args.b",
-            "--branch.filters[1].regex", "p2",
-            "--branch.filters[1].index", "last"
+            "--branch.patterns[1].input", "i2",
+            "--branch.patterns[1].branch", "p2",
+            "--branch.patterns[1].index", "last"
         )) { ConfigRoot(testConfig) }
 
         assertEquals(true, config.debug)
@@ -84,7 +92,7 @@ class MpbConfigTest {
         assertEquals(listOf("a", "b"), config.commonArgs)
         assertEquals(listOf("args.a"), config.args["a"])
         assertEquals(listOf("args.b"), config.args["b"])
-        assertEquals(BranchFilter("p2", -1), config.branch.filters[1])
+        assertTrue(equalBranchPattern(BranchPattern(Regex("i2"), "p2", -1), config.branch.patterns[1]))
 
     }
 

@@ -60,13 +60,37 @@ data class TicketConfig(
 
 data class BranchConfig(
     val default: String?,
-    val filters: List<BranchFilter>
+    val patterns: List<BranchPattern>
 )
 
-data class BranchFilter(
-    val regex: String,
+data class BranchPattern(
+    val input: Regex,
+    val branch: String,
     val index: Int
-)
+) {
+
+    companion object {
+        val REPLACE_ESCAPE_REGEX = Regex("(\\\\|\\\$(?!\\d|\\{.+}))")
+        fun escapeReplacement(replacement: String): String {
+            return REPLACE_ESCAPE_REGEX.replace(replacement, "\\\\$1")
+        }
+    }
+
+    fun findBranch(input: String, list: List<String>): String? {
+        val escapedBranch = escapeReplacement(branch)
+        val replacedBranch = this.input.replace(input, escapedBranch)
+        val branchRegex = Regex(replacedBranch)
+        val matches = list
+            .mapNotNull { branchRegex.matchEntire(it) }
+            .map { it.groupValues.getOrNull(1) ?: it.value }
+
+        return when {
+            index < 0 && matches.isNotEmpty() -> return matches.last()
+            index >= 0 && index < matches.size -> return matches[index]
+            else -> null
+        }
+    }
+}
 
 data class ProjectConfig(
     val dir: File,

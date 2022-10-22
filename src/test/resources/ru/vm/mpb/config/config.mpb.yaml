@@ -2,8 +2,9 @@ debug: false
 baseDir: /baseDir
 branch:
   default: master
-  filters:
-    - regex: '^origin/(rc/3\.${branch}\..*-sf)$'
+  patterns:
+    - input: '^(\d+)$'
+      branch: '^origin/(rc/3\.$1\..*-sf)$'
       index: last
 build:
   default:
@@ -30,8 +31,9 @@ projects:
     dir: c
     deps: [b]
     branch:
-      filters:
-        - regex: 'base/test/*'
+      patterns:
+        - input: '^test-(\d+)$'
+          regex: '^origin/(base/test/$1)$'
           index: first
   d:
     dir: d
