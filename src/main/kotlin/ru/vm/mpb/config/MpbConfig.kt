@@ -15,16 +15,18 @@ data class MpbConfig(
     val ticket: TicketConfig,
     val build: Map<String, BuildConfig>,
     val baseDir: File,
+    val logDir: File,
     val include: Set<String>,
     val exclude: Set<String>,
     val args: Map<String, List<String>>,
     val command: String
 ) {
 
+    fun isActiveKey(key: String) = (include.isEmpty() || include.contains(key))
+        && (exclude.isEmpty() || !exclude.contains(key))
+
     val commonArgs = args[""] ?: emptyList()
-    val activeArgs = projects.filterKeys {
-        (include.isEmpty() || include.contains(it)) && (exclude.isEmpty() || !exclude.contains(it))
-    }.mapValues { args[it.key] ?: commonArgs }
+    val activeArgs = projects.filterKeys(::isActiveKey).mapValues { args[it.key] ?: commonArgs }
 
     companion object {
 
@@ -70,6 +72,7 @@ data class ProjectConfig(
     val dir: File,
     val deps: Set<String>,
     val build: String,
-    val branch: BranchConfig
+    val branch: BranchConfig,
+    val logFile: File
 )
 

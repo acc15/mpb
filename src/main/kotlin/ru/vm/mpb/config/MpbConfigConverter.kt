@@ -7,16 +7,18 @@ object MpbConfigConverter {
 
     fun config(configFile: File, cfg: Config): MpbConfig {
         val baseDir = cfg.get("baseDir").file ?: configFile.parentFile
+        val logDir = cfg.get("logDir").file ?: File("log")
         return MpbConfig(
             configFile,
             cfg.get("cd").file ?: File(System.getProperty("java.io.tmpdir")).resolve("mpb_cd.txt"),
             cfg.get("debug").flag,
             branch(cfg.get("branch")),
-            cfg.get("projects").configMap.mapValues { (k, c) -> project(k, baseDir, c) },
+            cfg.get("projects").configMap.mapValues { (k, c) -> project(k, baseDir, logDir, c) },
             jira(cfg.get("jira")),
             ticket(cfg.get("ticket"), baseDir),
             cfg.get("build").configMap.mapValues { (_, c) -> build(c) },
             baseDir,
+            logDir,
             cfg.get("include").stringSet,
             cfg.get("exclude").stringSet,
             cfg.get("args").configMap.mapValues { (k, c) -> c.stringList.let { if (k.isNotEmpty()) it else it.drop(1) } },
@@ -34,11 +36,12 @@ object MpbConfigConverter {
         cfg.get("project").string.orEmpty()
     )
 
-    fun project(key: String, baseDir: File, cfg: Config) = ProjectConfig(
+    fun project(key: String, baseDir: File, logDir: File, cfg: Config) = ProjectConfig(
         baseDir.resolve(cfg.get("dir").file ?: File(key)),
         cfg.get("deps").stringSet,
         cfg.get("build").string ?: DEFAULT_KEY,
-        branch(cfg.get("branch"))
+        branch(cfg.get("branch")),
+        cfg.get("logFile").file ?: logDir.resolve("$key.log")
     )
 
     fun build(cfg: Config) = BuildConfig(

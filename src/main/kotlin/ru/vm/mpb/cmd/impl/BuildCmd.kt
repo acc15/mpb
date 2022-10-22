@@ -7,8 +7,6 @@ import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.config.DEFAULT_KEY
 import ru.vm.mpb.util.*
-import java.nio.file.Files
-import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
@@ -29,138 +27,136 @@ data class BuildInfo(
 
 typealias BuildInfoMap = Map<String, BuildInfo>
 
-fun findCycles(key: String, bi: BuildInfoMap, handler: (List<String>) -> Unit): Boolean {
-    var hasCycles = false
-    dfs(key, { bi.getValue(it).dependants }, onCycle = {
-        hasCycles = true
-        handler(it)
-        false
-    })
-    return hasCycles
-}
-
-fun traverseProjects(keys: Set<String>, bi: BuildInfoMap, handler: (String) -> Unit) {
-    bfsFirstVisitOnly(keys, { bi.getValue(it).dependants }, onNode = {
-        handler(it)
-        true
-    })
-}
-
-fun updateChildrenStatus(ctx: ProjectContext, bi: BuildInfoMap, status: BuildStatus, callback: (String) -> Unit) {
-    traverseProjects(setOf(ctx.key), bi) {
-        val expectStatus = if (it == ctx.key) BuildStatus.PENDING else BuildStatus.INIT
-        if (bi.getValue(it).status.compareAndSet(expectStatus, status)) {
-            callback(it)
-        }
-    }
-}
-
-object BuildCmd: Cmd(
-    CmdDesc(
+private val DESC = CmdDesc(
     setOf("b", "build"),
     "build all projects",
     "[build profile]"
 )
-) {
 
-    override suspend fun execute(ctx: CmdContext): Boolean = coroutineScope {
+object BuildCmd: Cmd(DESC) {
+
+    override suspend fun execute(ctx: CmdContext): Boolean {
         if (ctx.cfg.build.isEmpty()) {
             ctx.print("build configuration not specified")
-            return@coroutineScope false
+            return false
         }
 
-        val bi: BuildInfoMap = ctx.cfg.projects.mapValues { (k, i) ->
-            BuildInfo(
-                i.deps.associateWithTo(ConcurrentHashMap()) {},
-                ctx.cfg.projects.filter { e -> e.value.deps.contains(k) }.keys
-            )
-        }
-
-        val roots = ctx.cfg.projects.filter { e -> e.value.deps.isEmpty() }.keys
+        val roots = getRootKeys(ctx)
         if (roots.isEmpty()) {
             ctx.print("invalid configuration, no root projects found")
-            return@coroutineScope false
+            return false
         }
 
-        for (r in roots) {
-            if (findCycles(r, bi) { ctx.print("cycle detected: ${it.joinToString(", ")}") }) {
-                return@coroutineScope false
-            }
+        val bi: BuildInfoMap = createBuildInfoMap(ctx)
+        if (findCycles(roots, ctx, bi)) {
+            return false
         }
 
-        for (r in roots) {
-            bi.getValue(r).status.set(BuildStatus.PENDING)
-            launch {
-                build(this, ctx.projectContext(r), bi)
-            }
-        }
-
-        return@coroutineScope true
+        launchBuilds(roots, null, ctx, bi)
+        return true
     }
 
-    suspend fun build(scope: CoroutineScope, ctx: ProjectContext, bi: BuildInfoMap) {
-
-        val i = bi.getValue(ctx.key)
-
-        val a = ctx.cfg.activeArgs[ctx.key]
-        if (a == null) {
-            updateChildrenStatus(ctx, bi, BuildStatus.SKIP) {
-                ctx.cmd.print(if (it == ctx.key) "skipped" else "skipped due to ${ctx.key} is skipped", key = it)
+    private suspend fun launchBuilds(
+        keys: Iterable<String>,
+        parentKey: String?,
+        ctx: CmdContext,
+        bi: BuildInfoMap
+    ) = coroutineScope {
+        for (k in keys) {
+            val b = bi.getValue(k)
+            if (parentKey != null) {
+                b.pendingDeps.remove(parentKey)
             }
-            return
+            if (b.pendingDeps.isNotEmpty()) {
+                continue
+            }
+            if (!b.status.compareAndSet(BuildStatus.INIT, BuildStatus.PENDING)) {
+                continue
+            }
+            launch {
+                build(ctx.projectContext(k), bi)
+            }
+        }
+    }
+
+    suspend fun build(ctx: ProjectContext, bi: BuildInfoMap) {
+        val args = ctx.cfg.activeArgs[ctx.key]
+        val status = if (args != null) {
+            withContext(Dispatchers.IO) {
+                runBuild(ctx, args)
+            }
+        } else {
+            ctx.print("skipped")
+            BuildStatus.SKIP
         }
 
-        val profile = a.firstOrNull() ?: DEFAULT_KEY
-
-        val buildConfig = ctx.cfg.build[ctx.info.build]!!
-        val command = buildConfig.profiles[profile] ?: buildConfig.profiles[DEFAULT_KEY]!!
-
-        val status = withContext(Dispatchers.IO) {
-            ctx.print("building: ${command.joinToString(" ")}")
-            val buildStart = System.nanoTime()
-
-            val logDir = Files.createDirectories(Path.of("log"))
-            val logFile = logDir.resolve("${ctx.key}.log").toFile()
-
-            val success = ctx.exec(command)
-                .redirectTo(logFile)
-                .env(buildConfig.env)
-                .success()
-
-            val duration = Duration.ofNanos(System.nanoTime() - buildStart)
-            if (success) {
-                ctx.print("success in ${duration.prettyPrint()}")
-                BuildStatus.SUCCESS
-            } else {
-                ctx.print("error in ${duration.prettyPrint()}")
-                BuildStatus.ERROR
-            }
+        val b = bi.getValue(ctx.key)
+        if (!b.status.compareAndSet(BuildStatus.PENDING, status)) {
+            ctx.print("can't update build status")
         }
 
         if (status != BuildStatus.SUCCESS) {
-            updateChildrenStatus(ctx, bi, status) {
-                if (it != ctx.key) {
-                    ctx.cmd.print("failed due to ${ctx.key} is failed", key = it)
-                }
-            }
-            return
+            updateChildrenStatus(ctx, bi)
+        } else {
+            launchBuilds(b.dependants, ctx.key, ctx.cmd, bi)
         }
-
-        for (d in i.dependants) {
-            val di = bi.getValue(d)
-            di.pendingDeps.remove(ctx.key)
-            if (di.pendingDeps.isNotEmpty()) {
-                continue
-            }
-
-            if (!di.status.compareAndSet(BuildStatus.INIT, BuildStatus.PENDING)) {
-                continue
-            }
-
-            scope.launch {
-                build(scope, ctx.cmd.projectContext(d), bi)
-            }
-        }
-
     }
+
+    private fun updateChildrenStatus(ctx: ProjectContext, bi: BuildInfoMap) {
+        val b = bi.getValue(ctx.key)
+        val status = b.status.get()
+        bfsFirstVisitOnly(b.dependants, { bi.getValue(it).dependants }, onNode = {
+            if (!bi.getValue(it).status.compareAndSet(BuildStatus.INIT, status)) {
+                return@bfsFirstVisitOnly false
+            }
+
+            val action = if (status == BuildStatus.SKIP) "skipped" else "failed"
+            ctx.cmd.print("$action due to ${ctx.key} is $action", key = it)
+            true
+        })
+    }
+
+    private fun runBuild(ctx: ProjectContext, args: List<String>): BuildStatus {
+        val command = args.firstOrNull()?.let { ctx.build.profiles[it] } ?: ctx.build.profiles.getValue(DEFAULT_KEY)
+
+        ctx.print("building: ${command.joinToString(" ")}")
+        val buildStart = System.nanoTime()
+
+        ctx.info.logFile.parentFile.mkdirs()
+        val success = ctx.exec(command)
+            .redirectTo(ctx.info.logFile)
+            .env(ctx.build.env)
+            .success()
+
+        val duration = Duration.ofNanos(System.nanoTime() - buildStart)
+        return if (success) {
+            ctx.print("success in ${duration.prettyPrint()}")
+            BuildStatus.SUCCESS
+        } else {
+            ctx.print("error in ${duration.prettyPrint()}")
+            BuildStatus.ERROR
+        }
+    }
+
+    private fun createBuildInfoMap(ctx: CmdContext): BuildInfoMap = ctx.cfg.projects.mapValues { (k, i) ->
+        BuildInfo(
+            i.deps.associateWithTo(ConcurrentHashMap()) {},
+            ctx.cfg.projects.filter { e -> e.value.deps.contains(k) }.keys
+        )
+    }
+
+    private fun getRootKeys(ctx: CmdContext) = ctx.cfg.projects.filter { e -> e.value.deps.isEmpty() }.keys
+
+    private fun findCycles(keys: Iterable<String>, ctx: CmdContext, bi: BuildInfoMap): Boolean {
+        var hasCycles = false
+        for (k in keys) {
+            dfs(k, { bi.getValue(it).dependants }, onCycle = {
+                hasCycles = true
+                ctx.print("cycle detected: ${it.joinToString(", ")}")
+                false
+            })
+        }
+        return hasCycles
+    }
+
 }

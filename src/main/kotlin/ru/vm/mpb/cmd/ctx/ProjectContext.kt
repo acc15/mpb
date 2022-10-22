@@ -10,6 +10,7 @@ data class ProjectContext(
     val cfg = cmd.cfg
     val info: ProjectConfig = cfg.projects.getValue(key)
     val args = cfg.activeArgs[key].orEmpty()
+    val build = cfg.build.getValue(info.build)
 
     fun print(str: Any?, e: Throwable? = null) = cmd.print(str, e, key)
 
