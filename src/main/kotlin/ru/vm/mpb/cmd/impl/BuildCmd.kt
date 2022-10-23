@@ -51,9 +51,7 @@ object BuildCmd: Cmd(DESC) {
         if (findCycles(roots, ctx, bi)) {
             return false
         }
-
-        launchBuilds(roots, null, ctx, bi)
-        return true
+        return launchBuilds(roots, null, ctx, bi)
     }
 
     private suspend fun launchBuilds(
@@ -61,25 +59,21 @@ object BuildCmd: Cmd(DESC) {
         parentKey: String?,
         ctx: CmdContext,
         bi: BuildInfoMap
-    ) = coroutineScope {
-        for (k in keys) {
-            val b = bi.getValue(k)
-            if (parentKey != null) {
-                b.pendingDeps.remove(parentKey)
+    ): Boolean = coroutineScope {
+        keys.map { it to bi.getValue(it) }
+            .onEach { (_, b) ->
+                if (parentKey != null) {
+                    b.pendingDeps.remove(parentKey)
+                }
             }
-            if (b.pendingDeps.isNotEmpty()) {
-                continue
-            }
-            if (!b.status.compareAndSet(BuildStatus.INIT, BuildStatus.PENDING)) {
-                continue
-            }
-            launch {
-                build(ctx.projectContext(k), bi)
-            }
-        }
+            .filter { (_, b) -> b.pendingDeps.isEmpty() }
+            .filter { (_, b) -> b.status.compareAndSet(BuildStatus.INIT, BuildStatus.PENDING) }
+            .map { (k, _) -> async { build(ctx.projectContext(k), bi) } }
+            .awaitAll()
+            .all { it }
     }
 
-    suspend fun build(ctx: ProjectContext, bi: BuildInfoMap) {
+    suspend fun build(ctx: ProjectContext, bi: BuildInfoMap): Boolean {
         val args = ctx.cfg.activeArgs[ctx.key]
         val status = if (args != null) {
             withContext(Dispatchers.IO) {
@@ -95,11 +89,12 @@ object BuildCmd: Cmd(DESC) {
             ctx.print("can't update build status")
         }
 
-        if (status != BuildStatus.SUCCESS) {
-            updateChildrenStatus(ctx, bi)
-        } else {
-            launchBuilds(b.dependants, ctx.key, ctx.cmd, bi)
+        if (status == BuildStatus.SUCCESS) {
+            return launchBuilds(b.dependants, ctx.key, ctx.cmd, bi)
         }
+
+        updateChildrenStatus(ctx, bi)
+        return status == BuildStatus.SKIP
     }
 
     private fun updateChildrenStatus(ctx: ProjectContext, bi: BuildInfoMap) {
