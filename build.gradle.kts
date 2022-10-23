@@ -14,6 +14,7 @@ repositories {
 dependencies {
     implementation("org.yaml:snakeyaml:1.33")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.fusesource.jansi:jansi:2.4.0")
     testImplementation(kotlin("test"))
 }
 
@@ -26,7 +27,8 @@ tasks.withType<KotlinCompile> {
 }
 
 val dist by tasks.registering(Copy::class) {
+    val dir = project.properties["dir"] ?: "${System.getProperty("user.home")}/.local/lib/mpb"
     from(tasks.jar)
     from(configurations.runtimeClasspath)
-    into("${System.getProperty("user.home")}/.local/lib/mpb")
+    into(dir)
 }
