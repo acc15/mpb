@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 val testConfig get() = mapOf(
+    "name" to "test",
     "debug" to false,
     "baseDir" to "/baseDir",
     "branch" to mapOf(

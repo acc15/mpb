@@ -9,6 +9,7 @@ object MpbConfigConverter {
         val baseDir = cfg.get("baseDir").file ?: configFile.parentFile
         val logDir = cfg.get("logDir").file ?: File("log")
         return MpbConfig(
+            cfg.get("name").string ?: "mpb",
             configFile,
             cfg.get("cd").file ?: File(System.getProperty("java.io.tmpdir")).resolve("mpb_cd.txt"),
             cfg.get("debug").flag,

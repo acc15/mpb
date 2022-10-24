@@ -23,7 +23,7 @@ object TicketCmd: Cmd(DESC) {
 
         val t = ctx.args.firstOrNull()?.let { JiraTicket.parse(ctx.cfg, it) }
         if (t == null) {
-            printUsage()
+            printUsage(ctx.cfg)
             return false
         }
 
@@ -34,6 +34,7 @@ object TicketCmd: Cmd(DESC) {
         val ticketDir = ctx.cfg.ticket.dir.toPath()
         val suggestedDir = ticketDir.resolve(desc?.let { "${t.id}_${it}" } ?: t.id)
 
+        ctx.print("looking for same ticket dirs")
         val ticketDirs = withContext(Dispatchers.IO) {
             Files.list(ticketDir)
                 .filter { Files.isDirectory(it) }
@@ -47,16 +48,18 @@ object TicketCmd: Cmd(DESC) {
 
         if (ticketDirs.isEmpty()) {
             if (!targetDir.isDirectory()) {
+                ctx.print("creating $targetDir")
                 targetDir.deleteIfExists()
                 targetDir.createDirectory()
             }
         } else {
             for (d in ticketDirs) {
+                ctx.print("moving $d to $targetDir")
                 deepMove(d, targetDir)
             }
         }
 
-        ctx.print("Ticket directory: $targetDir")
+        ctx.print("done: $targetDir")
         ctx.cfg.cd.writeText(targetDir.toString())
 
         return true

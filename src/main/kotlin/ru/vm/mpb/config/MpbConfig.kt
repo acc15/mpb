@@ -6,6 +6,7 @@ import java.io.File
 const val DEFAULT_KEY = "default"
 
 data class MpbConfig(
+    val name: String,
     val config: File,
     val cd: File,
     val debug: Boolean,

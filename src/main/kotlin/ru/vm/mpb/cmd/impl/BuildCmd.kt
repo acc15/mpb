@@ -43,7 +43,7 @@ object BuildCmd: Cmd(DESC) {
 
         val roots = getRootKeys(ctx)
         if (roots.isEmpty()) {
-            ctx.print("invalid configuration, no root projects found")
+            ctx.print("no root projects found - please check configuration")
             return false
         }
 
@@ -86,7 +86,7 @@ object BuildCmd: Cmd(DESC) {
 
         val b = bi.getValue(ctx.key)
         if (!b.status.compareAndSet(BuildStatus.PENDING, status)) {
-            ctx.print("can't update build status")
+            ctx.print("can't update build status to $status")
         }
 
         if (status == BuildStatus.SUCCESS) {
@@ -106,7 +106,7 @@ object BuildCmd: Cmd(DESC) {
             }
 
             val action = if (status == BuildStatus.SKIP) "skipped" else "failed"
-            ctx.cmd.print("$action due to ${ctx.key} is $action", key = it)
+            ctx.print("$action due to ${ctx.key} is $action", key = it)
             true
         })
     }
@@ -143,15 +143,20 @@ object BuildCmd: Cmd(DESC) {
     private fun getRootKeys(ctx: CmdContext) = ctx.cfg.projects.filter { e -> e.value.deps.isEmpty() }.keys
 
     private fun findCycles(keys: Iterable<String>, ctx: CmdContext, bi: BuildInfoMap): Boolean {
-        var hasCycles = false
+        val cycles = mutableListOf<List<String>>()
         for (k in keys) {
             dfs(k, { bi.getValue(it).dependants }, onCycle = {
-                hasCycles = true
-                ctx.print("cycle detected: ${it.joinToString(", ")}")
+                cycles.add(it)
                 false
             })
         }
-        return hasCycles
+
+        if (cycles.isEmpty()) {
+            return false
+        }
+
+        ctx.print("cycles detected: $cycles")
+        return true
     }
 
 }

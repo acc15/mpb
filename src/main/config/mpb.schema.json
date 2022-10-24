@@ -70,6 +70,10 @@
   "type": "object",
   "required": ["projects"],
   "properties": {
+    "name": {
+      "type": "string",
+      "description": "Script or final executable name - used in help printing, defaults to mpb"
+    },
     "debug": {
       "type": "boolean",
       "description": "Enables output of executed commands"

@@ -1,6 +1,6 @@
 package ru.vm.mpb.cmd
 
-import ru.vm.mpb.PROGRAM_NAME
+import ru.vm.mpb.config.MpbConfig
 
 data class CmdDesc(
     val names: Set<String>,
@@ -10,10 +10,8 @@ data class CmdDesc(
 
     val sortedNames: List<String> = names.sortedBy { it.length }
 
-    val help: String
-        get() = "${sortedNames.joinToString(", ")} - ${description}. $usage"
-
-    val usage: String
-        get() = "Usage: $PROGRAM_NAME ${sortedNames[0]}" + if (argDescription.isEmpty()) "" else " $argDescription"
+    fun help(cfg: MpbConfig) = "${sortedNames.joinToString(", ")} - ${description}. ${usage(cfg)}"
+    fun usage(cfg: MpbConfig) = "Usage: ${cfg.name} ${sortedNames[0]}" +
+            if (argDescription.isEmpty()) "" else " $argDescription"
 
 }

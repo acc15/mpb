@@ -1,3 +1,4 @@
+name: test
 debug: false
 baseDir: /baseDir
 branch:

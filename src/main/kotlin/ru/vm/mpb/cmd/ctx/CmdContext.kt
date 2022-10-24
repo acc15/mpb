@@ -8,8 +8,8 @@ data class CmdContext(val cfg: MpbConfig, val out: PrintStream = System.out) {
 
     val args = cfg.commonArgs
 
-    fun print(str: Any?, e: Throwable? = null, key: String? = null) {
-        out.println(key?.let { "[${it}] $str" } ?: str)
+    fun print(str: Any?, e: Throwable? = null, key: String = "") {
+        out.println(if (key.isEmpty()) str else "[$key] $str")
         if (cfg.debug && e != null) {
             e.printStackTrace(out)
         }
