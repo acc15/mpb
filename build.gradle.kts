@@ -14,7 +14,6 @@ repositories {
 dependencies {
     implementation("org.yaml:snakeyaml:1.33")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    implementation("org.fusesource.jansi:jansi:2.4.0")
     testImplementation(kotlin("test"))
 }
 
