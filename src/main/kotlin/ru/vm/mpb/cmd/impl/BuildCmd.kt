@@ -41,6 +41,10 @@ object BuildCmd: Cmd(DESC) {
             return false
         }
 
+        if (findCycles(ctx)) {
+            return false
+        }
+
         val roots = getRootKeys(ctx)
         if (roots.isEmpty()) {
             ctx.print("no root projects found - please check configuration")
@@ -48,9 +52,6 @@ object BuildCmd: Cmd(DESC) {
         }
 
         val bi: BuildInfoMap = createBuildInfoMap(ctx)
-        if (findCycles(roots, ctx, bi)) {
-            return false
-        }
         return launchBuilds(roots, null, ctx, bi)
     }
 
@@ -100,9 +101,9 @@ object BuildCmd: Cmd(DESC) {
     private fun updateChildrenStatus(ctx: ProjectContext, bi: BuildInfoMap) {
         val b = bi.getValue(ctx.key)
         val status = b.status.get()
-        bfsFirstVisitOnly(b.dependants, { bi.getValue(it).dependants }, onNode = {
+        bfs(b.dependants, { bi.getValue(it).dependants }, onNode = {
             if (!bi.getValue(it).status.compareAndSet(BuildStatus.INIT, status)) {
-                return@bfsFirstVisitOnly false
+                return@bfs false
             }
 
             val action = if (status == BuildStatus.SKIP) "skipped" else "failed"
@@ -142,21 +143,14 @@ object BuildCmd: Cmd(DESC) {
 
     private fun getRootKeys(ctx: CmdContext) = ctx.cfg.projects.filter { e -> e.value.deps.isEmpty() }.keys
 
-    private fun findCycles(keys: Iterable<String>, ctx: CmdContext, bi: BuildInfoMap): Boolean {
+    private fun findCycles(ctx: CmdContext): Boolean {
+        val projects = ctx.cfg.projects
         val cycles = mutableListOf<List<String>>()
-        for (k in keys) {
-            dfs(k, { bi.getValue(it).dependants }, onCycle = {
-                cycles.add(it)
-                false
-            })
+        dfs(projects.keys, { projects.getValue(it).deps }, onCycle = cycles::add)
+        return if (cycles.isEmpty()) false else {
+            ctx.print("cycles detected: $cycles")
+            true
         }
-
-        if (cycles.isEmpty()) {
-            return false
-        }
-
-        ctx.print("cycles detected: $cycles")
-        return true
     }
 
 }

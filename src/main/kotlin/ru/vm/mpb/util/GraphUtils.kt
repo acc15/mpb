@@ -3,80 +3,76 @@ package ru.vm.mpb.util
 import java.util.LinkedList
 
 typealias FetchEdgesFunction<K> = (K) -> Iterable<K>
-typealias NodeFunction<K> = (K) -> Boolean
-typealias EdgeFunction<K> = (K, K) -> Boolean
-typealias PathFunction<K> = (List<K>) -> Boolean
+typealias NodePredicate<K> = (K) -> Boolean
+typealias EdgePredicate<K> = (K, K) -> Boolean
+typealias PathCallback<K> = (List<K>) -> Unit
 
 fun <K> dfs(
-    root: K,
+    keys: Iterable<K>,
     links: FetchEdgesFunction<K>,
-    onNode: NodeFunction<K>? = null,
-    onEdge: EdgeFunction<K>? = null,
-    onCycle: PathFunction<K>? = null
+    onNode: NodePredicate<K> = { true },
+    onEdge: EdgePredicate<K> = { _, _ -> true },
+    onCycle: PathCallback<K> = {}
 ) {
 
-    val q = OrderedHashMap<K, Iterator<K>?>()
-    q[root] = null
+    val visited = mutableSetOf<K>()
+    val queue = OrderedHashMap<K, Iterator<K>?>()
 
-    while (q.isNotEmpty()) {
+    for (k in keys) {
+        if (visited.contains(k)) {
+            continue
+        }
 
-        val e = q.lastEntry!!
-        val k = e.key
-        var iter = e.value
-        if (iter == null) {
-            if (onNode != null && !onNode(k)) {
+        queue[k] = null
+        while (queue.isNotEmpty()) {
+            val e = queue.lastEntry!!
+            val node = e.key
+
+            val iter: Iterator<K>? = e.value ?: if (visited.add(node) && onNode(node))
+                links(node).iterator().also { e.setValue(it) } else null
+
+            if (iter == null || !iter.hasNext()) {
+                queue.removeLast()
                 continue
             }
-            iter = links(k).iterator()
-            e.setValue(iter)
+
+            val link = iter.next()
+            if (queue.containsKey(link)) {
+                onCycle(queue.subListOf(link).map { it.key } + link)
+                continue
+            }
+
+            if (!onEdge(e.key, link)) {
+                continue
+            }
+            queue[link] = null
         }
 
-        if (!iter.hasNext()) {
-            q.removeLast()
-            continue
-        }
-
-        val l = iter.next()
-        if (q.containsKey(l) && (onCycle == null || !onCycle(q.subListOf(l).map { it.key }))) {
-            continue
-        }
-
-        if (onEdge != null && !onEdge(e.key, l)) {
-            continue
-        }
-        q[l] = null
     }
+
 }
 
-fun <K> bfs(keys: Set<K>, links: FetchEdgesFunction<K>, onNode: ((K) -> Boolean)? = null, onEdge: ((K, K) -> Boolean)? = null) {
-    val q = LinkedList(keys)
-    while (q.isNotEmpty()) {
-        val k = q.pop()
-        if (onNode != null && !onNode(k)) {
+fun <K> bfs(
+    keys: Iterable<K>,
+    links: FetchEdgesFunction<K>,
+    onNode: NodePredicate<K> = { true },
+    onEdge: EdgePredicate<K> = { _, _ -> true }
+) {
+    val visited = mutableSetOf<K>()
+    val queue = keys.toCollection(LinkedList())
+    while (queue.isNotEmpty()) {
+        val k = queue.pop()
+        if (!visited.add(k) || !onNode(k)) {
             continue
         }
         val it = links(k).iterator()
         while (it.hasNext()) {
             val l = it.next()
-            if (onEdge != null && !onEdge(k, l)) {
+            if (!onEdge(k, l)) {
                 continue
             }
-            q.addLast(l)
+            queue.add(l)
         }
     }
 }
 
-fun <K> bfsFirstVisitOnly(
-    keys: Set<K>,
-    links: FetchEdgesFunction<K>,
-    onNode: ((K) -> Boolean)? = null,
-    onEdge: ((K, K) -> Boolean)? = null,
-) {
-    val visitedSet = mutableSetOf<K>()
-    bfs(
-        keys,
-        links,
-        onEdge = onEdge,
-        onNode = { k -> visitedSet.add(k) && (onNode == null || onNode(k)) }
-    )
-}
