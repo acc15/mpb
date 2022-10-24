@@ -9,6 +9,7 @@ data class MpbConfig(
     val name: String,
     val config: File,
     val cd: File,
+    // val output: OutputConfig,
     val debug: Boolean,
     val branch: BranchConfig,
     val projects: Map<String, ProjectConfig>,
@@ -92,6 +93,12 @@ data class BranchPattern(
         }
     }
 }
+
+data class OutputConfig(
+    val status: Boolean,
+    val progress: Boolean,
+    val colors: Boolean
+)
 
 data class ProjectConfig(
     val dir: File,

@@ -2,15 +2,14 @@ package ru.vm.mpb.cmd.ctx
 
 import ru.vm.mpb.ProcessExecutor
 import ru.vm.mpb.config.MpbConfig
-import java.io.PrintStream
+import ru.vm.mpb.printer.Printer
+import ru.vm.mpb.printer.PrintData
 
-data class CmdContext(val cfg: MpbConfig, val out: PrintStream = System.out) {
+data class CmdContext(val cfg: MpbConfig, val printer: Printer) {
 
     val args = cfg.commonArgs
 
-    fun print(str: Any?, key: String = "") {
-        out.println(if (key.isEmpty()) str else "[$key] $str")
-    }
+    fun print(str: Any?, key: String = "") = printer.print(PrintData(str, key))
 
     fun projectContext(key: String) = ProjectContext(this, key)
 

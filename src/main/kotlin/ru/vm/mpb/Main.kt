@@ -5,6 +5,8 @@ import kotlinx.coroutines.runBlocking
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.impl.*
 import ru.vm.mpb.config.MpbConfig
+import ru.vm.mpb.printer.createPrinter
+import ru.vm.mpb.util.withJansi
 import kotlin.system.exitProcess
 
 val ALL_CMDS = listOf(
@@ -34,19 +36,25 @@ fun printHelp(cfg: MpbConfig, msg: String = "") {
 }
 
 fun main(args: Array<String>) {
-    val success = runBlocking(Dispatchers.Default) {
-        val cfg = MpbConfig.parse(args)
-        if (cfg.command.isEmpty()) {
-            printHelp(cfg)
-            return@runBlocking false
-        }
+    val success = withJansi {
+        runBlocking(Dispatchers.Default) {
 
-        val cmd = ALL_CMDS_MAP[cfg.command]
-        if (cmd == null) {
-            printHelp(cfg, "Unknown command: ${cfg.command}")
-            return@runBlocking false
+            val cfg = MpbConfig.parse(args)
+            if (cfg.command.isEmpty()) {
+                printHelp(cfg)
+                return@runBlocking false
+            }
+
+            val cmd = ALL_CMDS_MAP[cfg.command]
+            if (cmd == null) {
+                printHelp(cfg, "Unknown command: ${cfg.command}")
+                return@runBlocking false
+            }
+
+            createPrinter(cfg).use {
+                cmd.execute(CmdContext(cfg, it))
+            }
         }
-        cmd.execute(CmdContext(cfg))
     }
     exitProcess(if (success) 0 else 1)
 }

@@ -12,11 +12,6 @@ class ProcessExecutor(val builder: ProcessBuilder) {
         return this
     }
 
-    fun customize(customizer: (ProcessBuilder) -> Unit): ProcessExecutor {
-        customizer(builder)
-        return this
-    }
-
     fun redirectTo(file: File) = redirectTo(Redirect.to(file))
 
     fun redirectTo(redirect: Redirect): ProcessExecutor {
@@ -37,10 +32,15 @@ class ProcessExecutor(val builder: ProcessBuilder) {
     fun start() = builder.start()
     fun wait() = start().waitFor()
     fun success() = wait() == 0
-    fun lines(): List<String> {
-        val p = builder.start()
-        val exitCode = p.waitFor()
-        return if (exitCode == 0) InputStreamReader(p.inputStream).readLines() else emptyList()
+    fun lines(): List<String> = builder.start().let {
+        val exitCode = it.waitFor()
+        return if (exitCode == 0) InputStreamReader(it.inputStream).readLines() else emptyList()
+    }
+
+    fun readLines(handler: (String) -> Unit): Int {
+        return builder.start()
+            .also { InputStreamReader(it.inputStream).forEachLine(handler) }
+            .waitFor()
     }
 
 }

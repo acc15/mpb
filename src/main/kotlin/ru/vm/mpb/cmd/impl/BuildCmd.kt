@@ -6,6 +6,7 @@ import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.config.DEFAULT_KEY
+import ru.vm.mpb.printer.PrintData
 import ru.vm.mpb.util.*
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
@@ -98,21 +99,23 @@ object BuildCmd: Cmd(DESC) {
         return status == BuildStatus.SKIP
     }
 
-    private fun updateChildrenStatus(ctx: ProjectContext, bi: BuildInfoMap) {
+    private suspend fun updateChildrenStatus(ctx: ProjectContext, bi: BuildInfoMap) {
         val b = bi.getValue(ctx.key)
         val status = b.status.get()
         bfs(b.dependants, { bi.getValue(it).dependants }, onNode = {
             if (!bi.getValue(it).status.compareAndSet(BuildStatus.INIT, status)) {
                 return@bfs false
             }
-
             val action = if (status == BuildStatus.SKIP) "skipped" else "failed"
             ctx.print("$action due to ${ctx.key} is $action", key = it)
             true
         })
+        for (m in messages) {
+            ctx.print(m)
+        }
     }
 
-    private fun runBuild(ctx: ProjectContext, args: List<String>): BuildStatus {
+    private suspend fun runBuild(ctx: ProjectContext, args: List<String>): BuildStatus {
         val command = args.firstOrNull()?.let { ctx.build.profiles[it] } ?: ctx.build.profiles.getValue(DEFAULT_KEY)
 
         ctx.print("building: ${command.joinToString(" ")}")
@@ -150,7 +153,6 @@ object BuildCmd: Cmd(DESC) {
         return if (cycles.isEmpty()) false else {
             ctx.print("cycles detected: $cycles")
             true
-        }
     }
 
 }

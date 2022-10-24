@@ -53,6 +53,7 @@ object TicketCmd: Cmd(DESC) {
                 targetDir.createDirectory()
             }
         } else {
+            ctx.print("merging $ticketDirs to $targetDir...")
             for (d in ticketDirs) {
                 ctx.print("moving $d to $targetDir")
                 deepMove(d, targetDir)
