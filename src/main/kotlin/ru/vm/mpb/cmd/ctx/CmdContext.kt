@@ -8,11 +8,8 @@ data class CmdContext(val cfg: MpbConfig, val out: PrintStream = System.out) {
 
     val args = cfg.commonArgs
 
-    fun print(str: Any?, e: Throwable? = null, key: String = "") {
+    fun print(str: Any?, key: String = "") {
         out.println(if (key.isEmpty()) str else "[$key] $str")
-        if (cfg.debug && e != null) {
-            e.printStackTrace(out)
-        }
     }
 
     fun projectContext(key: String) = ProjectContext(this, key)

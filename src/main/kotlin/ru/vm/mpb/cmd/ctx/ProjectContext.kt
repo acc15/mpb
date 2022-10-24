@@ -12,7 +12,7 @@ data class ProjectContext(
     val args = cfg.activeArgs[key].orEmpty()
     val build = cfg.build.getValue(info.build)
 
-    fun print(str: Any?, e: Throwable? = null, key: String = this.key) = cmd.print(str, e, key)
+    fun print(str: Any?, key: String = this.key) = cmd.print(str, key)
 
     fun exec(vararg cmdline: String) = cmd.exec(*cmdline).dir(info.dir)
     fun exec(cmdline: List<String>) = cmd.exec(cmdline).dir(info.dir)
