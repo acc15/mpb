@@ -46,11 +46,6 @@ object BuildCmd: Cmd(DESC) {
         }
 
         val roots = getRootKeys(ctx)
-        if (roots.isEmpty()) {
-            ctx.print("no root projects found - please check configuration")
-            return false
-        }
-
         val bi: BuildInfoMap = createBuildInfoMap(ctx)
         return launchBuilds(roots, null, ctx, bi)
     }
