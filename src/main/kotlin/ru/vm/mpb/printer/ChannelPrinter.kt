@@ -1,10 +1,10 @@
 package ru.vm.mpb.printer
 
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 
-class ChannelPrinter(val channel: Channel<PrintData>): Printer {
-    override suspend fun print(data: PrintData) {
-        channel.send(data)
+class ChannelPrinter(val channel: SendChannel<PrintData>): Printer, AutoCloseable {
+    override fun print(data: PrintData) {
+        channel.trySend(data)
     }
 
     override fun close() {

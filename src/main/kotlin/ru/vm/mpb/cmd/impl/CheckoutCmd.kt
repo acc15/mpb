@@ -29,7 +29,7 @@ object CheckoutCmd: ParallelCmd(DESC) {
         return patterns.firstNotNullOfOrNull { it.findBranch(subject, branches) } ?: subject
     }
 
-    private suspend fun checkoutAndPull(ctx: ProjectContext): Boolean {
+    private fun checkoutAndPull(ctx: ProjectContext): Boolean {
 
         val branch = resolveBranch(ctx)
 

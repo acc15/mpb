@@ -14,7 +14,8 @@ val ALL_CMDS = listOf(
     TicketCmd,
     CheckoutCmd,
     BuildCmd,
-    PullCmd
+    PullCmd,
+    TestCmd
 )
 
 val ALL_CMDS_MAP = ALL_CMDS.flatMap { c -> c.desc.names.map { it to c } }.toMap()

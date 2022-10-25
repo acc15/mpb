@@ -12,6 +12,7 @@ object MpbConfigConverter {
             cfg.get("name").string ?: "mpb",
             configFile,
             cfg.get("cd").file ?: File(System.getProperty("java.io.tmpdir")).resolve("mpb_cd.txt"),
+            output(cfg.get("output")),
             cfg.get("debug").flag,
             branch(cfg.get("branch")),
             cfg.get("projects").configMap.mapValues { (k, c) -> project(k, baseDir, logDir, c) },
@@ -26,6 +27,11 @@ object MpbConfigConverter {
             cfg.get("args").string.orEmpty()
         )
     }
+
+    fun output(cfg: Config) = OutputConfig(
+        cfg.get("status").flag,
+        cfg.get("colors").flag
+    )
 
     fun ticket(cfg: Config, baseDir: File) = TicketConfig(
         baseDir.resolve(cfg.get("dir").file ?: File("tickets")),

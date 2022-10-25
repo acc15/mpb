@@ -7,22 +7,28 @@ import org.fusesource.jansi.AnsiConsole
 import org.fusesource.jansi.AnsiType
 import ru.vm.mpb.config.MpbConfig
 
-interface Printer: AutoCloseable {
-    suspend fun print(data: PrintData)
+interface Printer {
+    fun print(data: PrintData)
 }
 
-fun CoroutineScope.createPrinter(cfg: MpbConfig): Printer {
-    val channel = Channel<PrintData>()
+private val UNSUPPORTED_TYPES = setOf(
+    AnsiType.Unsupported,
+    AnsiType.Redirected
+)
 
+fun CoroutineScope.createPrinter(cfg: MpbConfig): ChannelPrinter {
+    val channel = Channel<PrintData>(1000)
     val out = AnsiConsole.out()
 
-    // TODO add opt-in for updating printer
-    val p = if (out.type == AnsiType.Unsupported || out.type == AnsiType.Redirected)
-        DefaultPrinter(out, cfg) else UpdatingPrinter(out, cfg)
+    val ansiSupported = !UNSUPPORTED_TYPES.contains(out.type)
+    val colors = !cfg.output.monochrome && ansiSupported
+    val formatter: PrintFormatter = { it.format(colors) }
+    val printer = if (!cfg.output.plain && ansiSupported)
+        StatusPrinter(out, formatter) else DefaultPrinter(out, formatter)
 
     launch {
         for (data in channel) {
-            p.print(data)
+            printer.print(data)
         }
     }
     return ChannelPrinter(channel)

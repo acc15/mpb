@@ -6,7 +6,6 @@ import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.config.DEFAULT_KEY
-import ru.vm.mpb.printer.PrintData
 import ru.vm.mpb.util.*
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
@@ -91,15 +90,15 @@ object BuildCmd: Cmd(DESC) {
             ctx.print("can't update build status to $status")
         }
 
-        if (status == BuildStatus.SUCCESS) {
-            return launchBuilds(b.dependants, ctx.key, ctx.cmd, bi)
+        return if (status == BuildStatus.SUCCESS) {
+            launchBuilds(b.dependants, ctx.key, ctx.cmd, bi)
+        } else {
+            updateChildrenStatus(ctx, bi)
+            status == BuildStatus.SKIP
         }
-
-        updateChildrenStatus(ctx, bi)
-        return status == BuildStatus.SKIP
     }
 
-    private suspend fun updateChildrenStatus(ctx: ProjectContext, bi: BuildInfoMap) {
+    private fun updateChildrenStatus(ctx: ProjectContext, bi: BuildInfoMap) {
         val b = bi.getValue(ctx.key)
         val status = b.status.get()
         bfs(b.dependants, { bi.getValue(it).dependants }, onNode = {
@@ -110,12 +109,9 @@ object BuildCmd: Cmd(DESC) {
             ctx.print("$action due to ${ctx.key} is $action", key = it)
             true
         })
-        for (m in messages) {
-            ctx.print(m)
-        }
     }
 
-    private suspend fun runBuild(ctx: ProjectContext, args: List<String>): BuildStatus {
+    private fun runBuild(ctx: ProjectContext, args: List<String>): BuildStatus {
         val command = args.firstOrNull()?.let { ctx.build.profiles[it] } ?: ctx.build.profiles.getValue(DEFAULT_KEY)
 
         ctx.print("building: ${command.joinToString(" ")}")
@@ -129,7 +125,7 @@ object BuildCmd: Cmd(DESC) {
 
         val duration = Duration.ofNanos(System.nanoTime() - buildStart)
         return if (success) {
-            ctx.print("success in ${duration.prettyPrint()}")
+            ctx.print("done in ${duration.prettyPrint()}")
             BuildStatus.SUCCESS
         } else {
             ctx.print("error in ${duration.prettyPrint()}")
@@ -153,6 +149,7 @@ object BuildCmd: Cmd(DESC) {
         return if (cycles.isEmpty()) false else {
             ctx.print("cycles detected: $cycles")
             true
+        }
     }
 
 }
