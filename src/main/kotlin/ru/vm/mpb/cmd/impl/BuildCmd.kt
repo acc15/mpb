@@ -46,7 +46,7 @@ object BuildCmd: Cmd(DESC) {
         }
 
         val roots = getRootKeys(ctx)
-        val bi: BuildInfoMap = createBuildInfoMap(ctx)
+        val bi = createBuildInfoMap(ctx)
         return launchBuilds(roots, null, ctx, bi)
     }
 
@@ -56,17 +56,21 @@ object BuildCmd: Cmd(DESC) {
         ctx: CmdContext,
         bi: BuildInfoMap
     ): Boolean = coroutineScope {
-        keys.map { it to bi.getValue(it) }
-            .onEach { (_, b) ->
-                if (parentKey != null) {
-                    b.pendingDeps.remove(parentKey)
-                }
+        val tasks = mutableListOf<Deferred<Boolean>>()
+        for (k in keys) {
+            val b = bi.getValue(k)
+            if (parentKey != null) {
+                b.pendingDeps.remove(parentKey)
             }
-            .filter { (_, b) -> b.pendingDeps.isEmpty() }
-            .filter { (_, b) -> b.status.compareAndSet(BuildStatus.INIT, BuildStatus.PENDING) }
-            .map { (k, _) -> async { build(ctx.projectContext(k), bi) } }
-            .awaitAll()
-            .all { it }
+            if (b.pendingDeps.isNotEmpty()) {
+                continue
+            }
+            if (!b.status.compareAndSet(BuildStatus.INIT, BuildStatus.PENDING)) {
+                continue
+            }
+            tasks += async { build(ctx.projectContext(k), bi) }
+        }
+        tasks.awaitAll().all { it }
     }
 
     suspend fun build(ctx: ProjectContext, bi: BuildInfoMap): Boolean {
