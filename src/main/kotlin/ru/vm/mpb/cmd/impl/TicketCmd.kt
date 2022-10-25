@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import ru.vm.mpb.cmd.Cmd
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
+import ru.vm.mpb.printer.PrintStatus
 import ru.vm.mpb.util.JiraTicket
 import ru.vm.mpb.util.deepMove
 import java.nio.file.Files
@@ -60,7 +61,7 @@ object TicketCmd: Cmd(DESC) {
             }
         }
 
-        ctx.print("done: $targetDir")
+        ctx.print("done: $targetDir", PrintStatus.SUCCESS)
         ctx.cfg.cd.writeText(targetDir.toString())
 
         return true

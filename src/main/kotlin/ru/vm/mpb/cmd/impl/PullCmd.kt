@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ParallelCmd
 import ru.vm.mpb.cmd.ctx.ProjectContext
+import ru.vm.mpb.printer.PrintStatus
 
 private val DESC = CmdDesc(
     setOf("p", "pull"),
@@ -18,8 +19,11 @@ object PullCmd: ParallelCmd(DESC) {
         ctx.print("pulling...")
 
         val success = ctx.exec("git", "pull", "--rebase").success()
-        ctx.print(if (success) "done" else "error")
-
+        if (success) {
+            ctx.print("done", PrintStatus.SUCCESS)
+        } else {
+            ctx.print("error", PrintStatus.ERROR)
+        }
         success
     }
 

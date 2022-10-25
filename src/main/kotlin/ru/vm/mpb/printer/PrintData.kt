@@ -4,6 +4,7 @@ import org.fusesource.jansi.Ansi
 
 data class PrintData(
     val msg: Any?,
+    val status: PrintStatus,
     val key: String
 ) {
     fun format(monochrome: Boolean): String {
@@ -14,7 +15,7 @@ data class PrintData(
             return "[$key] $msg"
         }
         return Ansi.ansi()
-            .bold().a('[').fgBrightGreen().a(key).fgDefault().a(']').boldOff()
-            .a(' ').a(msg).reset().toString()
+            .bold().a('[').also { status.ansiColor(it) }.a(key).fgDefault().a(']').reset()
+            .a(' ').a(msg).toString()
     }
 }

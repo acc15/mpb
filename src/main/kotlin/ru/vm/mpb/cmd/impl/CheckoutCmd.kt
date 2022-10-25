@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ParallelCmd
 import ru.vm.mpb.cmd.ctx.ProjectContext
+import ru.vm.mpb.printer.PrintStatus
 
 private val DESC = CmdDesc(
     setOf("c", "co", "checkout"),
@@ -29,19 +30,16 @@ object CheckoutCmd: ParallelCmd(DESC) {
         return patterns.firstNotNullOfOrNull { it.findBranch(subject, branches) } ?: subject
     }
 
-    private fun checkoutAndPull(ctx: ProjectContext): Boolean {
-
-        val branch = resolveBranch(ctx)
-
+    private fun checkoutAndPull(ctx: ProjectContext, branch: String): Boolean {
         ctx.print("checkout to $branch")
         if (!ctx.exec("git", "checkout", branch).success()) {
-            ctx.print("unable to checkout to $branch")
+            ctx.print("unable to checkout to $branch", PrintStatus.ERROR)
             return false
         }
 
         ctx.print("pulling")
         if (!ctx.exec("git", "pull", "--rebase").success()) {
-            ctx.print("unable to pull")
+            ctx.print("unable to pull", PrintStatus.ERROR)
             return false
         }
         return true
@@ -51,7 +49,7 @@ object CheckoutCmd: ParallelCmd(DESC) {
 
         ctx.print("fetching all remotes...")
         if (!ctx.exec("git", "fetch", "--all").success()) {
-            ctx.print("unable to fetch")
+            ctx.print("unable to fetch", PrintStatus.ERROR)
             return@withContext false
         }
 
@@ -59,22 +57,23 @@ object CheckoutCmd: ParallelCmd(DESC) {
         if (hasChanges) {
             ctx.print("stashing")
             if (!ctx.exec("git", "stash").success()) {
-                ctx.print("unable to stash")
+                ctx.print("unable to stash", PrintStatus.ERROR)
                 return@withContext false
             }
         }
 
-        val success = checkoutAndPull(ctx)
+        val branch = resolveBranch(ctx)
+        val success = checkoutAndPull(ctx, branch)
         if (hasChanges) {
             ctx.print("restoring stash")
             if (!ctx.exec("git", "stash", "pop").success()) {
-                ctx.print("unable to restore from stash")
+                ctx.print("unable to restore from stash", PrintStatus.ERROR)
                 return@withContext false
             }
         }
 
         if (success) {
-            ctx.print("done")
+            ctx.print("on $branch", PrintStatus.SUCCESS)
         }
         success
 

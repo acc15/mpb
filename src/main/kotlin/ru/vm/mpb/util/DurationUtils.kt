@@ -22,7 +22,7 @@ enum class DurationTimeUnit(
     }
 }
 
-fun Duration.prettyPrint(): String = DurationTimeUnit.values().reversed()
+val Duration.prettyString: String get() = DurationTimeUnit.values().reversed()
     .map { it.format(this) }
     .filter { it.isNotEmpty() }
     .joinToString(" ")

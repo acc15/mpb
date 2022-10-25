@@ -6,17 +6,24 @@ import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.config.DEFAULT_KEY
+import ru.vm.mpb.printer.PrintStatus
 import ru.vm.mpb.util.*
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
-enum class BuildStatus {
-    INIT,
-    PENDING,
-    SKIP,
-    SUCCESS,
-    ERROR
+enum class BuildStatus(val action: String, val printStatus: PrintStatus) {
+
+    INIT("initializing", PrintStatus.MESSAGE),
+    PENDING("pending", PrintStatus.MESSAGE),
+    SKIP("skipped", PrintStatus.WARN),
+    SUCCESS("done", PrintStatus.SUCCESS),
+    ERROR("failed", PrintStatus.ERROR);
+
+    companion object {
+        fun fromBoolean(v: Boolean) = if (v) SUCCESS else ERROR
+    }
+
 }
 
 data class BuildInfo(
@@ -37,7 +44,7 @@ object BuildCmd: Cmd(DESC) {
 
     override suspend fun execute(ctx: CmdContext): Boolean {
         if (ctx.cfg.build.isEmpty()) {
-            ctx.print("build configuration not specified")
+            ctx.print("build configuration not specified", PrintStatus.ERROR)
             return false
         }
 
@@ -80,13 +87,13 @@ object BuildCmd: Cmd(DESC) {
                 runBuild(ctx, args)
             }
         } else {
-            ctx.print("skipped")
+            ctx.print("skipped", PrintStatus.WARN)
             BuildStatus.SKIP
         }
 
         val b = bi.getValue(ctx.key)
         if (!b.status.compareAndSet(BuildStatus.PENDING, status)) {
-            ctx.print("can't update build status to $status")
+            ctx.print("can't update build status to $status", PrintStatus.WARN)
         }
 
         return if (status == BuildStatus.SUCCESS) {
@@ -104,8 +111,7 @@ object BuildCmd: Cmd(DESC) {
             if (!bi.getValue(it).status.compareAndSet(BuildStatus.INIT, status)) {
                 return@bfs false
             }
-            val action = if (status == BuildStatus.SKIP) "skipped" else "failed"
-            ctx.print("$action due to ${ctx.key} is $action", key = it)
+            ctx.print("${status.action} due to ${ctx.key} is ${status.action}", status.printStatus, it)
             true
         })
     }
@@ -123,12 +129,8 @@ object BuildCmd: Cmd(DESC) {
             .success()
 
         val duration = Duration.ofNanos(System.nanoTime() - buildStart)
-        return if (success) {
-            ctx.print("done in ${duration.prettyPrint()}")
-            BuildStatus.SUCCESS
-        } else {
-            ctx.print("error in ${duration.prettyPrint()}")
-            BuildStatus.ERROR
+        return BuildStatus.fromBoolean(success).also {
+            ctx.print("${it.action} in ${duration.prettyString}", it.printStatus)
         }
     }
 
@@ -146,7 +148,7 @@ object BuildCmd: Cmd(DESC) {
         val cycles = mutableListOf<List<String>>()
         dfs(projects.keys, { projects.getValue(it).deps }, onCycle = cycles::add)
         return if (cycles.isEmpty()) false else {
-            ctx.print("cycles detected: $cycles")
+            ctx.print("cycles detected: $cycles", PrintStatus.ERROR)
             true
         }
     }
