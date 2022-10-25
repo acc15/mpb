@@ -6,6 +6,7 @@ import kotlinx.coroutines.launch
 import org.fusesource.jansi.AnsiConsole
 import org.fusesource.jansi.AnsiType
 import ru.vm.mpb.config.MpbConfig
+import ru.vm.mpb.config.OutputConfig
 
 interface Printer {
     fun print(data: PrintData)
@@ -20,11 +21,9 @@ fun CoroutineScope.createPrinter(cfg: MpbConfig): ChannelPrinter {
     val channel = Channel<PrintData>(1000)
     val out = AnsiConsole.out()
 
-    val ansiSupported = !UNSUPPORTED_TYPES.contains(out.type)
-    val colors = !cfg.output.monochrome && ansiSupported
-    val formatter: PrintFormatter = { it.format(colors) }
-    val printer = if (!cfg.output.plain && ansiSupported)
-        StatusPrinter(out, formatter) else DefaultPrinter(out, formatter)
+    val outputConfig = cfg.output.withAnsiSupport(UNSUPPORTED_TYPES.contains(out.type))
+    val printer = if (outputConfig.plain)
+        DefaultPrinter(out, outputConfig) else StatusPrinter(out, outputConfig)
 
     launch {
         for (data in channel) {

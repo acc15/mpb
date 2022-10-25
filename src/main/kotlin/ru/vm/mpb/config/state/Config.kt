@@ -58,10 +58,14 @@ abstract class Config(private val mutator: ConfigMutator) {
     val string: String? get() = plain?.toString()
     val stringList: List<String> get() = list.mapNotNull { ofImmutable(it).string }
     val stringSet: Set<String> get() = stringList.toSet()
+    val int: Int? get() = plain?.let {
+        (it as? Boolean)?.let { b -> if (b) 1 else 0 }
+        (it as? String)?.toIntOrNull()
+    }
+
     val flag: Boolean get() = plain?.let {
         it as? Boolean ?:
-        (it as? Number)?.let { i -> i.toInt() != 0 } ?:
-        (it as? String)?.let { s -> s.toBoolean() }
+        (it as? String)?.toBoolean()
     } ?: false
     val file: File? get() = string?.let { File(it) }
     val configList: List<Config> get() = list.map { ofImmutable(it) }

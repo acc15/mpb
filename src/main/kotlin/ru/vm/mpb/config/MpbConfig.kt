@@ -104,5 +104,16 @@ data class ProjectConfig(
 
 data class OutputConfig(
     val plain: Boolean,
-    val monochrome: Boolean
-)
+    val monochrome: Boolean,
+    val width: Int
+) {
+    fun withAnsiSupport(ansiUnsupported: Boolean) = OutputConfig(
+        plain || ansiUnsupported,
+        monochrome || ansiUnsupported,
+        width
+    )
+
+    fun getWidth(providedWidth: Int): Int {
+        return if (providedWidth == 0) width else providedWidth
+    }
+}

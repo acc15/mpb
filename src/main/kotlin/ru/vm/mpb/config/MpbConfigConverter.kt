@@ -30,7 +30,8 @@ object MpbConfigConverter {
 
     fun output(cfg: Config) = OutputConfig(
         cfg.get("status").flag,
-        cfg.get("colors").flag
+        cfg.get("colors").flag,
+        cfg.get("width").int ?: 80
     )
 
     fun ticket(cfg: Config, baseDir: File) = TicketConfig(

@@ -1,17 +1,16 @@
 package ru.vm.mpb.printer
 
 import org.fusesource.jansi.Ansi
-typealias PrintFormatter = (PrintData) -> String
 
 data class PrintData(
     val msg: Any?,
     val key: String
 ) {
-    fun format(colors: Boolean = false): String {
+    fun format(monochrome: Boolean): String {
         if (key.isEmpty()) {
             return msg.toString()
         }
-        if (!colors) {
+        if (monochrome) {
             return "[$key] $msg"
         }
         return Ansi.ansi()
