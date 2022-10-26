@@ -19,8 +19,8 @@ data class OutputConfig(
         fun fromConfig(cfg: Config): OutputConfig {
             val ansiUnsupported = UNSUPPORTED_TYPES.contains(AnsiConsole.out().type)
             return OutputConfig(
-                cfg.get("status").flag || ansiUnsupported,
-                cfg.get("colors").flag || ansiUnsupported,
+                cfg.get("plain").flag || ansiUnsupported,
+                cfg.get("monochrome").flag || ansiUnsupported,
                 cfg.get("width").int ?: 80
             )
         }
