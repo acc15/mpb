@@ -1,6 +1,6 @@
 package ru.vm.mpb.cmd.ctx
 
-import ru.vm.mpb.ProcessExecutor
+import ru.vm.mpb.util.ProcessExecutor
 import ru.vm.mpb.config.MpbConfig
 import ru.vm.mpb.printer.Printer
 import ru.vm.mpb.printer.PrintData

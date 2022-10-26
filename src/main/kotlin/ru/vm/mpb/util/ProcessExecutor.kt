@@ -1,4 +1,4 @@
-package ru.vm.mpb
+package ru.vm.mpb.util
 
 import java.io.File
 import java.io.InputStreamReader
