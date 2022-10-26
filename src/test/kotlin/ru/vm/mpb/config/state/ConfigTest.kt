@@ -155,7 +155,7 @@ class ConfigTest {
     fun mergeNullToList() {
         val m1 = ConfigRoot(emptyMap<String, Any>())
         val m2 = ConfigRoot(mapOf("args" to listOf("c", "417")))
-        m1.merge(m2.value!!)
+        m1.merge(m2.value)
         assertEquals(mapOf("args" to listOf("c", "417")), m1.value)
     }
 
@@ -174,7 +174,7 @@ class ConfigTest {
         m2.path("args").add("d")
         m2.path("debug").set(true)
 
-        m1.merge(m2.value!!)
+        m1.merge(m2.value)
 
         assertEquals(
             mapOf(
@@ -257,4 +257,17 @@ class ConfigTest {
         assertEquals(testConfig, state.value)
     }
 
+    @Test
+    fun mergeAll() {
+
+        val m1 = ConfigRoot(mutableMapOf("a" to 1))
+        val m2 = ConfigRoot(mutableMapOf("b" to 2))
+
+        val m = Config.mergeAll(listOf(m1, m2).reversed())
+
+        assertEquals(m.value, mapOf("a" to 1, "b" to 2))
+        assertEquals(m1.value, mapOf("a" to 1))
+        assertEquals(m2.value, mapOf("b" to 2))
+
+    }
 }

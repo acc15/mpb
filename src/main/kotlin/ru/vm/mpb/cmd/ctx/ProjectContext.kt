@@ -1,6 +1,5 @@
 package ru.vm.mpb.cmd.ctx
 
-import ru.vm.mpb.config.ProjectConfig
 import ru.vm.mpb.printer.PrintStatus
 
 data class ProjectContext(
@@ -9,9 +8,9 @@ data class ProjectContext(
 ) {
 
     val cfg = cmd.cfg
-    val info: ProjectConfig = cfg.projects.getValue(key)
-    val args = cfg.activeArgs[key].orEmpty()
-    val build = cfg.build.getValue(info.build)
+    val info = cfg.projects.getValue(key)
+    val args = cfg.args.active[key].orEmpty()
+    val build = info.build
 
     fun print(str: Any?, status: PrintStatus = PrintStatus.MESSAGE, key: String = this.key) =
         cmd.print(str, status, key)

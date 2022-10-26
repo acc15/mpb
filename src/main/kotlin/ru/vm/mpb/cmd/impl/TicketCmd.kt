@@ -62,7 +62,7 @@ object TicketCmd: Cmd(DESC) {
         }
 
         ctx.print("done: $targetDir", PrintStatus.SUCCESS)
-        ctx.cfg.cd.writeText(targetDir.toString())
+        ctx.cfg.path.cd.writeText(targetDir.toString())
 
         return true
 

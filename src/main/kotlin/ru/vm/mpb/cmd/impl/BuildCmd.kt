@@ -81,7 +81,7 @@ object BuildCmd: Cmd(DESC) {
     }
 
     suspend fun build(ctx: ProjectContext, bi: BuildInfoMap): Boolean {
-        val args = ctx.cfg.activeArgs[ctx.key]
+        val args = ctx.cfg.args.active[ctx.key]
         val status = if (args != null) {
             withContext(Dispatchers.IO) {
                 runBuild(ctx, args)
@@ -117,14 +117,13 @@ object BuildCmd: Cmd(DESC) {
     }
 
     private fun runBuild(ctx: ProjectContext, args: List<String>): BuildStatus {
-        val command = args.firstOrNull()?.let { ctx.build.profiles[it] } ?: ctx.build.profiles.getValue(DEFAULT_KEY)
-
+        val command = ctx.build.makeCommand(args.firstOrNull())
         ctx.print("building: ${command.joinToString(" ")}")
         val buildStart = System.nanoTime()
 
-        ctx.info.logFile.parentFile.mkdirs()
+        ctx.info.log.parentFile.mkdirs()
         val success = ctx.exec(command)
-            .redirectTo(ctx.info.logFile)
+            .redirectTo(ctx.info.log)
             .env(ctx.build.env)
             .success()
 

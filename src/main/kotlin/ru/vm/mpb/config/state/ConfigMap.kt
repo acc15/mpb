@@ -7,14 +7,14 @@ class ConfigMap(
 
     override val value: Map<String, Any> = map
 
-    override fun get(key: String) = of(map[key]) { mutateMap(map)[key] = it }
-    override fun get(index: Int) = get("").get(index)
-
-    override fun add(value: Any) {
-        get("").add(value)
+    override fun get(key: String) = of(map[key]) {
+        mutateMap(map).also { map -> if (it == null) map.remove(key) else map[key] = it }
     }
 
-    override fun merge(value: Any) {
+    override fun get(index: Int) = get("").get(index)
+    override fun add(value: Any?) = get("").add(value)
+
+    override fun merge(value: Any?) {
         mapValueByType(value,
             { map ->
                 ConfigRoot(this.map, this::set).also { mut ->
@@ -22,7 +22,8 @@ class ConfigMap(
                 }
             },
             { list -> get("").merge(list) },
-            { plain -> get("").merge(plain!!) }
+            { plain -> get("").merge(plain) },
+            { }
         )
     }
 

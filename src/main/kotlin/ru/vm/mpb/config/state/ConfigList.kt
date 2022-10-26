@@ -7,27 +7,22 @@ class ConfigList(
 
     override val value: List<Any?> = list
 
-    override fun get(key: String) = of(null) {
-        set(mutableMapOf("" to list, key to it))
-    }
-
-    override fun get(index: Int) = of(list.getOrNull(index)) {
-        putNonNull(mutateList(list), index to it)
-    }
-
-    override fun add(value: Any) {
+    override fun get(key: String) = of(null) { set(putNonNull(mutableMapOf("" to list), key to it)) }
+    override fun get(index: Int) = of(list.getOrNull(index)) { putNonNull(mutateList(list), index to it) }
+    override fun add(value: Any?) {
         mutateList(list).add(value)
     }
 
-    override fun merge(value: Any) {
+    override fun merge(value: Any?) {
         mapValueByType(value,
             { map -> ConfigMap(map.toMutableMap(), this::set).also { set(it) }.merge(list) },
             { list ->
                 ConfigRoot(this.list, this::set).also { mut ->
-                    list.withIndex().filter { it.value != null }.forEach { mut.get(it.index).merge(it.value!!) }
+                    list.withIndex().forEach { mut.get(it.index).merge(it.value) }
                 }
             },
-            { plain -> set(plain!!) }
+            { plain -> set(plain) },
+            { }
         )
     }
 

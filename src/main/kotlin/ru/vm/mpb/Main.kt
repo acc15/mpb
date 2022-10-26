@@ -41,14 +41,14 @@ fun main(args: Array<String>) {
         runBlocking(Dispatchers.Default) {
 
             val cfg = MpbConfig.parse(args)
-            if (cfg.command.isEmpty()) {
+            if (cfg.args.command.isEmpty()) {
                 printHelp(cfg)
                 return@runBlocking false
             }
 
-            val cmd = ALL_CMDS_MAP[cfg.command]
+            val cmd = ALL_CMDS_MAP[cfg.args.command]
             if (cmd == null) {
-                printHelp(cfg, "Unknown command: ${cfg.command}")
+                printHelp(cfg, "Unknown command: ${cfg.args.command}")
                 return@runBlocking false
             }
 

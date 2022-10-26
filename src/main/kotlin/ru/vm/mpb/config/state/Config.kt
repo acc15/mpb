@@ -29,7 +29,7 @@ import java.net.URL
  *
  */
 
-typealias ConfigMutator = (Any) -> Unit
+typealias ConfigMutator = (Any?) -> Unit
 
 abstract class Config(private val mutator: ConfigMutator) {
 
@@ -38,11 +38,17 @@ abstract class Config(private val mutator: ConfigMutator) {
     abstract val value: Any?
     abstract fun get(key: String): Config
     abstract fun get(index: Int): Config
-    abstract fun add(value: Any)
-    abstract fun merge(value: Any)
-
-    open fun set(value: Any) {
+    abstract fun add(value: Any?)
+    open fun set(value: Any?) {
         mutator(value)
+    }
+
+    open fun merge(value: Any?) {
+        mapValueByType(value,
+            { map -> set(map.toMutableMap()) },
+            { list -> set(list.toMutableList()) },
+            { plain -> set(plain) },
+            {})
     }
 
     // Path functions
@@ -78,7 +84,8 @@ abstract class Config(private val mutator: ConfigMutator) {
         fun of(value: Any?, mutator: ConfigMutator) = mapValueByType(value,
             { map -> ConfigMap(map, mutator) },
             { list -> ConfigList(list, mutator) },
-            { plain -> ConfigPlain(plain, mutator) }
+            { plain -> ConfigPlain(plain, mutator) },
+            { ConfigNull(mutator) }
         )
 
         fun parsePath(str: String): List<Any> {
@@ -171,10 +178,14 @@ abstract class Config(private val mutator: ConfigMutator) {
             value: Any?,
             mapHandler: (Map<String, Any>) -> T,
             listHandler: (List<Any?>) -> T,
-            plainHandler: (Any?) -> T
-        ) = (value as? Map<String, Any>)?.let { mapHandler(it) } ?:
-            (value as? List<Any?>)?.let { listHandler(it) } ?:
-            plainHandler(value)
+            plainHandler: (Any) -> T,
+            nullHandler: () -> T
+        ): T = when (value) {
+            is Map<*, *> -> mapHandler(value as Map<String, Any>)
+            is List<*> -> listHandler(value as List<Any?>)
+            null -> nullHandler()
+            else -> plainHandler(value)
+        }
 
         fun putNonNull(list: MutableList<Any?>, vararg values: Pair<Int, Any?>): MutableList<Any?> {
             for (v in values) {
@@ -195,6 +206,15 @@ abstract class Config(private val mutator: ConfigMutator) {
             }
             return map
         }
+
+        fun mergeAll(configs: List<Config>): Config {
+            val result = ConfigRoot()
+            for (c in configs) {
+                result.merge(c.value)
+            }
+            return result.state
+        }
+
     }
 
 }

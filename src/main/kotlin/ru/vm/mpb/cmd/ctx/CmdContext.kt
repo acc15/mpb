@@ -8,7 +8,7 @@ import ru.vm.mpb.printer.PrintStatus
 
 data class CmdContext(val cfg: MpbConfig, val printer: Printer) {
 
-    val args = cfg.commonArgs
+    val args = cfg.args.common
 
     fun print(str: Any?, status: PrintStatus = PrintStatus.MESSAGE, key: String = "") = printer.print(PrintData(str, status, key))
 
