@@ -6,5 +6,5 @@ import java.util.concurrent.atomic.AtomicReference
 data class BuildInfo(
     val pendingDeps: ConcurrentHashMap<String, Unit>,
     val dependants: Set<String>,
-    var status: AtomicReference<BuildStatus> = AtomicReference(BuildStatus.INIT)
+    val status: AtomicReference<BuildStatus> = AtomicReference(BuildStatus.INIT)
 )
