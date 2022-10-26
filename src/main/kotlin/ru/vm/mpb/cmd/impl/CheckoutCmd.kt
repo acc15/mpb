@@ -7,13 +7,14 @@ import ru.vm.mpb.cmd.ParallelCmd
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.printer.PrintStatus
 
-private val DESC = CmdDesc(
-    setOf("c", "co", "checkout"),
-    "checkout to specific commit/branch/tag",
-    "[branch]"
-)
 
-object CheckoutCmd: ParallelCmd(DESC) {
+object CheckoutCmd: ParallelCmd {
+
+    override val desc = CmdDesc(
+        listOf("c", "co", "checkout"),
+        "checkout to specific commit/branch/tag",
+        "[branch]"
+    )
 
     private fun resolveBranch(ctx: ProjectContext): String {
         val pb = ctx.info.branch

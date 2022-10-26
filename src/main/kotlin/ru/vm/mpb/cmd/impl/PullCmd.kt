@@ -7,13 +7,13 @@ import ru.vm.mpb.cmd.ParallelCmd
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.printer.PrintStatus
 
-private val DESC = CmdDesc(
-    setOf("p", "pull"),
-    "pull all repos",
-    ""
-)
+object PullCmd: ParallelCmd {
 
-object PullCmd: ParallelCmd(DESC) {
+    override val desc = CmdDesc(
+        listOf("p", "pull"),
+        "pull all repos",
+        ""
+    )
 
     override suspend fun parallelExecute(ctx: ProjectContext): Boolean = withContext(Dispatchers.IO) {
         ctx.print("pulling...")

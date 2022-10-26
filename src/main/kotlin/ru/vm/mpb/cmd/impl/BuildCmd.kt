@@ -5,42 +5,22 @@ import ru.vm.mpb.cmd.Cmd
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.ctx.ProjectContext
-import ru.vm.mpb.config.DEFAULT_KEY
 import ru.vm.mpb.printer.PrintStatus
-import ru.vm.mpb.util.*
+import ru.vm.mpb.util.bfs
+import ru.vm.mpb.util.dfs
+import ru.vm.mpb.util.prettyString
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
-
-enum class BuildStatus(val action: String, val printStatus: PrintStatus) {
-
-    INIT("initializing", PrintStatus.MESSAGE),
-    PENDING("pending", PrintStatus.MESSAGE),
-    SKIP("skipped", PrintStatus.WARN),
-    SUCCESS("done", PrintStatus.SUCCESS),
-    ERROR("failed", PrintStatus.ERROR);
-
-    companion object {
-        fun fromBoolean(v: Boolean) = if (v) SUCCESS else ERROR
-    }
-
-}
-
-data class BuildInfo(
-    val pendingDeps: ConcurrentHashMap<String, Unit>,
-    val dependants: Set<String>,
-    var status: AtomicReference<BuildStatus> = AtomicReference(BuildStatus.INIT)
-)
 
 typealias BuildInfoMap = Map<String, BuildInfo>
 
-private val DESC = CmdDesc(
-    setOf("b", "build"),
-    "build all projects",
-    "[build profile]"
-)
+object BuildCmd: Cmd {
 
-object BuildCmd: Cmd(DESC) {
+    override val desc = CmdDesc(
+        listOf("b", "build"),
+        "build all projects",
+        "[build profile]"
+    )
 
     override suspend fun execute(ctx: CmdContext): Boolean {
         if (ctx.cfg.build.isEmpty()) {

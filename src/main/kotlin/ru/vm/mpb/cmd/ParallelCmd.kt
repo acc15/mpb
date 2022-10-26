@@ -5,7 +5,7 @@ import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.config.MpbConfig
 
-abstract class ParallelCmd(desc: CmdDesc) : Cmd(desc) {
+interface ParallelCmd : Cmd {
     override suspend fun execute(ctx: CmdContext): Boolean = coroutineScope {
         ctx.cfg.args.active.keys.map {
             async {
@@ -14,5 +14,5 @@ abstract class ParallelCmd(desc: CmdDesc) : Cmd(desc) {
         }.awaitAll().all { it }
     }
 
-    abstract suspend fun parallelExecute(ctx: ProjectContext): Boolean
+    suspend fun parallelExecute(ctx: ProjectContext): Boolean
 }

@@ -8,24 +8,26 @@ import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.util.JiraTicket
 
-private val DESC = CmdDesc(
-    setOf("j", "jira"),
-    "opens jira issue in browser",
-    "<issueid or url...>"
-)
+object JiraCmd: Cmd {
 
-fun openUrlCmd(url: String) = System.getProperty("os.name")!!.let {
-    when {
-        it.startsWith("Windows") -> listOf("explorer", url)
-        it.startsWith("Mac") -> listOf("open", url)
-        else -> listOf("xdg-open", url)
-    }
-}
+    override val desc = CmdDesc(
+        listOf("j", "jira"),
+        "opens jira issue in browser",
+        "<issueid or url...>"
+    )
 
-object JiraCmd: Cmd(DESC) {
     override suspend fun execute(ctx: CmdContext): Boolean = coroutineScope {
         ctx.args.mapNotNull { JiraTicket.parse(ctx.cfg, it) }.map {
             async { ctx.exec(openUrlCmd(it.fullUrl)).success() }
         }.awaitAll().all { it }
     }
+
+    private fun openUrlCmd(url: String) = with(System.getProperty("os.name").orEmpty()) {
+        when {
+            startsWith("Windows") -> listOf("explorer", url)
+            startsWith("Mac") -> listOf("open", url)
+            else -> listOf("xdg-open", url)
+        }
+    }
+
 }

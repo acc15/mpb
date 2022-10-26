@@ -12,19 +12,19 @@ import java.nio.file.Files
 import java.util.stream.Collectors
 import kotlin.io.path.*
 
-private val DESC = CmdDesc(
-    setOf("t", "ticket"),
-    "make ticket dir",
-    "<ticket id> [-o | --overwrite (overwrite directory using new description)] [description...]"
-)
+object TicketCmd: Cmd {
 
-object TicketCmd: Cmd(DESC) {
+    override val desc = CmdDesc(
+        listOf("t", "ticket"),
+        "make ticket dir",
+        "<ticket id> [-o | --overwrite (overwrite directory using new description)] [description...]"
+    )
 
     override suspend fun execute(ctx: CmdContext): Boolean {
 
         val t = ctx.args.firstOrNull()?.let { JiraTicket.parse(ctx.cfg, it) }
         if (t == null) {
-            printUsage(ctx.cfg)
+            println(desc.usage(ctx.cfg))
             return false
         }
 
