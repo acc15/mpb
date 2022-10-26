@@ -1,8 +1,7 @@
-package ru.vm.mpb
+package ru.vm.mpb.util
 
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import ru.vm.mpb.util.ProcessExecutor
 import kotlin.test.Ignore
 
 class ProcessExecutorTest {
