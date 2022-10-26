@@ -89,10 +89,10 @@ class MpbConfigTest {
         )) { ConfigRoot(testConfig) }
 
         assertEquals(true, config.debug)
-        assertEquals("pull", config.command)
-        assertEquals(listOf("a", "b"), config.commonArgs)
-        assertEquals(listOf("args.a"), config.args["a"])
-        assertEquals(listOf("args.b"), config.args["b"])
+        assertEquals("pull", config.args.command)
+        assertEquals(listOf("a", "b"), config.args.common)
+        assertEquals(listOf("args.a"), config.args.project["a"])
+        assertEquals(listOf("args.b"), config.args.project["b"])
         assertTrue(equalBranchPattern(BranchPattern(Regex("i2"), "p2", -1), config.branch.patterns[1]))
 
     }
