@@ -12,18 +12,12 @@ interface Printer {
     fun print(data: PrintData)
 }
 
-private val UNSUPPORTED_TYPES = setOf(
-    AnsiType.Unsupported,
-    AnsiType.Redirected
-)
-
 fun CoroutineScope.createPrinter(cfg: MpbConfig): ChannelPrinter {
     val channel = Channel<PrintData>(1000)
     val out = AnsiConsole.out()
 
-    val outputConfig = cfg.output.withAnsiSupport(UNSUPPORTED_TYPES.contains(out.type))
-    val printer = if (outputConfig.plain)
-        DefaultPrinter(out, outputConfig) else StatusPrinter(out, outputConfig)
+    val printer = if (cfg.output.plain)
+        DefaultPrinter(out, cfg.output) else StatusPrinter(out, cfg.output)
 
     launch {
         for (data in channel) {
