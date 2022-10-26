@@ -10,8 +10,3 @@ fun <T> withJansi(callback: () -> T): T {
         AnsiConsole.systemUninstall()
     }
 }
-
-fun terminalWidth(): Int {
-    val w = AnsiConsole.getTerminalWidth()
-    return if (w <= 0) 80 else w
-}
