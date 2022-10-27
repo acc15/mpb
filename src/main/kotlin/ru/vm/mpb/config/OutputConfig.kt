@@ -10,17 +10,19 @@ private val UNSUPPORTED_TYPES = setOf(
 )
 
 data class OutputConfig(
+    val noAnsi: Boolean,
     val plain: Boolean,
     val monochrome: Boolean,
-    val width: Int
+    val width: Int,
 ) {
     fun getWidth(terminalWidth: Int) = if (terminalWidth <= 0) width else terminalWidth
     companion object {
         fun fromConfig(cfg: Config): OutputConfig {
-            val ansiUnsupported = UNSUPPORTED_TYPES.contains(AnsiConsole.out().type)
+            val noAnsi = UNSUPPORTED_TYPES.contains(AnsiConsole.out().type) || cfg.get("noAnsi").flag
             return OutputConfig(
-                cfg.get("plain").flag || ansiUnsupported,
-                cfg.get("monochrome").flag || ansiUnsupported,
+                noAnsi,
+                cfg.get("plain").flag || noAnsi,
+                cfg.get("monochrome").flag || noAnsi,
                 cfg.get("width").int ?: 80
             )
         }

@@ -2,6 +2,7 @@ package ru.vm.mpb.printer
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.fusesource.jansi.AnsiConsole
 import org.fusesource.jansi.AnsiType
@@ -24,5 +25,6 @@ fun CoroutineScope.createPrinter(cfg: MpbConfig): ChannelPrinter {
             printer.print(data)
         }
     }
+
     return ChannelPrinter(channel)
 }

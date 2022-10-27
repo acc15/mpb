@@ -1,7 +1,9 @@
 package ru.vm.mpb
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.fusesource.jansi.Ansi
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.impl.*
 import ru.vm.mpb.config.MpbConfig
@@ -26,9 +28,9 @@ fun printHelp(cfg: MpbConfig, msg: String = "") {
         println()
     }
 
-    println("Usage: ${cfg.name} <command> [arguments]")
+    println(Ansi.ansi().bold().a("Usage: ").boldOff().a(cfg.name).a(" <command> [arguments]"))
     println()
-    println("Supported commands: ")
+    println(Ansi.ansi().bold().a("Supported commands: ").reset())
     println()
 
     for (cmd in ALL_CMDS) {
@@ -37,26 +39,28 @@ fun printHelp(cfg: MpbConfig, msg: String = "") {
 }
 
 fun main(args: Array<String>) {
-    val success = withJansi {
+    val cfg = MpbConfig.parse(args)
+    val success = withJansi(cfg.output.noAnsi) {
         runBlocking(Dispatchers.Default) {
-
-            val cfg = MpbConfig.parse(args)
-            if (cfg.args.command.isEmpty()) {
-                printHelp(cfg)
-                return@runBlocking false
-            }
-
-            val cmd = ALL_CMDS_MAP[cfg.args.command]
-            if (cmd == null) {
-                printHelp(cfg, "Unknown command: ${cfg.args.command}")
-                return@runBlocking false
-            }
-
-            createPrinter(cfg).use {
-                cmd.execute(CmdContext(cfg, it))
-            }
+            runProgram(this, cfg)
         }
     }
     exitProcess(if (success) 0 else 1)
 }
 
+suspend fun runProgram(scope: CoroutineScope, cfg: MpbConfig): Boolean {
+    if (cfg.args.command.isEmpty()) {
+        printHelp(cfg)
+        return false
+    }
+
+    val cmd = ALL_CMDS_MAP[cfg.args.command]
+    if (cmd == null) {
+        printHelp(cfg, "Unknown command: ${cfg.args.command}")
+        return false
+    }
+
+    return scope.createPrinter(cfg).use {
+        cmd.execute(CmdContext(cfg, it))
+    }
+}
