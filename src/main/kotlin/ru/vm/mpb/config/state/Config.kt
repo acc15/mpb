@@ -45,8 +45,8 @@ abstract class Config(private val mutator: ConfigMutator) {
 
     open fun merge(value: Any?) {
         mapValueByType(value,
-            { map -> set(map.toMutableMap()) },
-            { list -> set(list.toMutableList()) },
+            { map -> ConfigMap(LinkedHashMap<String, Any>().also(mutator), this::set).merge(map) },
+            { list -> ConfigList(ArrayList<Any?>().also(mutator), this::set).merge(list) },
             { plain -> set(plain) },
             {})
     }

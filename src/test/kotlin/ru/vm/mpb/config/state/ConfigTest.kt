@@ -270,4 +270,16 @@ class ConfigTest {
         assertEquals(m2.value, mapOf("b" to 2))
 
     }
+
+    @Test
+    fun mergeMustKeepOriginalValue() {
+        val target = ConfigRoot()
+        val origin = ConfigRoot(mutableMapOf("b" to mutableListOf(1, 2, 3)))
+
+        target.merge(origin.value)
+        target.get("b").get(1).set(4)
+
+        assertEquals(origin.value, mapOf("b" to listOf(1, 2, 3)))
+        assertEquals(target.value, mapOf("b" to listOf(1, 4, 3)))
+    }
 }
