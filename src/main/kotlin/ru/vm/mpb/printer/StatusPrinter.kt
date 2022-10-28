@@ -11,14 +11,13 @@ class StatusPrinter(val out: AnsiPrintStream, val cfg: OutputConfig): Printer {
 
     override fun print(data: PrintData) {
         val printLine = keyLines.computeIfAbsent(data.key) { lines.size }
-        val msg = data.format(cfg.monochrome)
         if (printLine >= lines.size) {
-            lines.add(msg)
-            out.println(msg)
+            lines.add(data.msg)
+            out.println(data.msg)
         } else {
             val w = cfg.getWidth(out.terminalWidth)
             val lineOffset = lines.sumOf { (it.length + w - 1) / w }
-            lines[printLine] = msg
+            lines[printLine] = data.msg
             out.println( Ansi.ansi().cursorUpLine(lineOffset)
                 .eraseScreen(Ansi.Erase.FORWARD)
                 .a(lines.joinToString(System.lineSeparator()))

@@ -7,6 +7,7 @@ data class ProjectContext(
     val key: String,
 ) {
 
+    val ansi get() = cmd.ansi
     val cfg = cmd.cfg
     val info = cfg.projects.getValue(key)
     val args = cfg.args.active[key].orEmpty()

@@ -75,7 +75,7 @@ object CheckoutCmd: ParallelCmd {
         }
 
         if (success) {
-            ctx.print(Ansi.ansi().a("on ").bold().a(branch).reset(), PrintStatus.SUCCESS)
+            ctx.print(ctx.ansi.a("on ").bold().a(branch).reset(), PrintStatus.SUCCESS)
         }
         success
 

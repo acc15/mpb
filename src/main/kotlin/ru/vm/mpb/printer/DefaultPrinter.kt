@@ -5,6 +5,6 @@ import java.io.PrintStream
 
 class DefaultPrinter(val out: PrintStream, val cfg: OutputConfig): Printer {
     override fun print(data: PrintData) {
-        out.println(data.format(cfg.monochrome))
+        out.println(data.msg)
     }
 }

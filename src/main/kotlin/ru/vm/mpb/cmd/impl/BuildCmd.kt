@@ -34,15 +34,19 @@ object BuildCmd: Cmd {
 
         val roots = getRootKeys(ctx)
         val bi = createBuildInfoMap(ctx)
-        return launchBuilds(roots, null, ctx, bi)
+
+        return coroutineScope {
+            launchBuilds(this, roots, null, ctx, bi)
+        }
     }
 
     private suspend fun launchBuilds(
+        scope: CoroutineScope,
         keys: Iterable<String>,
         parentKey: String?,
         ctx: CmdContext,
         bi: BuildInfoMap
-    ): Boolean = coroutineScope {
+    ): Boolean {
         val tasks = mutableListOf<Deferred<Boolean>>()
         for (k in keys) {
             val b = bi.getValue(k)
@@ -55,17 +59,15 @@ object BuildCmd: Cmd {
             if (!b.status.compareAndSet(BuildStatus.INIT, BuildStatus.PENDING)) {
                 continue
             }
-            tasks += async { build(ctx.projectContext(k), bi) }
+            tasks += scope.async { build(scope, ctx.projectContext(k), bi) }
         }
-        tasks.awaitAll().all { it }
+        return tasks.awaitAll().all { it }
     }
 
-    suspend fun build(ctx: ProjectContext, bi: BuildInfoMap): Boolean {
+    suspend fun build(scope: CoroutineScope, ctx: ProjectContext, bi: BuildInfoMap): Boolean {
         val args = ctx.cfg.args.active[ctx.key]
         val status = if (args != null) {
-            withContext(Dispatchers.IO) {
-                runBuild(ctx, args)
-            }
+            runBuild(ctx, args)
         } else {
             ctx.print("skipped", PrintStatus.WARN)
             BuildStatus.SKIP
@@ -77,7 +79,7 @@ object BuildCmd: Cmd {
         }
 
         return if (status == BuildStatus.SUCCESS) {
-            launchBuilds(b.dependants, ctx.key, ctx.cmd, bi)
+            launchBuilds(scope, b.dependants, ctx.key, ctx.cmd, bi)
         } else {
             updateChildrenStatus(ctx, bi)
             status == BuildStatus.SKIP
@@ -96,9 +98,8 @@ object BuildCmd: Cmd {
         })
     }
 
-    private fun runBuild(ctx: ProjectContext, args: List<String>): BuildStatus {
+    private suspend fun runBuild(ctx: ProjectContext, args: List<String>): BuildStatus = withContext(Dispatchers.IO) {
         val command = ctx.build.makeCommand(args.firstOrNull())
-        ctx.print("building: ${command.joinToString(" ")}")
         val buildStart = System.nanoTime()
 
         ctx.info.log.parentFile.mkdirs()
@@ -108,7 +109,7 @@ object BuildCmd: Cmd {
             .success()
 
         val duration = Duration.ofNanos(System.nanoTime() - buildStart)
-        return BuildStatus.fromBoolean(success).also {
+        BuildStatus.fromBoolean(success).also {
             ctx.print("${it.action} in ${duration.prettyString}", it.printStatus)
         }
     }

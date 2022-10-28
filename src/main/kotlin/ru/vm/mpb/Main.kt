@@ -8,7 +8,7 @@ import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.impl.*
 import ru.vm.mpb.config.MpbConfig
 import ru.vm.mpb.printer.createPrinter
-import ru.vm.mpb.util.withJansi
+import ru.vm.mpb.jansi.withJansi
 import kotlin.system.exitProcess
 
 val ALL_CMDS = listOf(

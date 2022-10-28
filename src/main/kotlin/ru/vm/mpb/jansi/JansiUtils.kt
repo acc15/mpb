@@ -1,4 +1,4 @@
-package ru.vm.mpb.util
+package ru.vm.mpb.jansi
 
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
