@@ -1,5 +1,10 @@
 package ru.vm.mpb.util
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import java.io.InputStream
+import java.io.OutputStream
 import java.nio.file.CopyOption
 import java.nio.file.Files
 import java.nio.file.Path
@@ -65,4 +70,16 @@ fun deepMove(src: Path, dst: Path, replaceExisting: Boolean = true) {
         }
     }
 
+}
+
+fun CoroutineScope.redirectStream(input: InputStream, output: OutputStream, onData: () -> Unit) = launch {
+    val buf = ByteArray(8192)
+    while (isActive) {
+        val sz = input.read(buf)
+        if (sz < 0) {
+            break
+        }
+        onData()
+        output.write(buf, 0, sz)
+    }
 }

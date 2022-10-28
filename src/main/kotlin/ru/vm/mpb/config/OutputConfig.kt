@@ -1,8 +1,10 @@
 package ru.vm.mpb.config
 
+import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
 import org.fusesource.jansi.AnsiType
 import ru.vm.mpb.config.state.Config
+import ru.vm.mpb.jansi.ansi
 
 private val UNSUPPORTED_TYPES = setOf(
     AnsiType.Unsupported,
@@ -15,6 +17,9 @@ data class OutputConfig(
     val monochrome: Boolean,
     val width: Int,
 ) {
+
+    val colorAnsi get() = ansi(!monochrome)
+
     fun getWidth(terminalWidth: Int) = if (terminalWidth <= 0) width else terminalWidth
     companion object {
         fun fromConfig(cfg: Config): OutputConfig {

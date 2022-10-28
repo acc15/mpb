@@ -4,9 +4,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.fusesource.jansi.Ansi
+import org.fusesource.jansi.AnsiConsole
+import org.fusesource.jansi.AnsiPrintStream
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.impl.*
 import ru.vm.mpb.config.MpbConfig
+import ru.vm.mpb.jansi.applyIf
+import ru.vm.mpb.jansi.join
 import ru.vm.mpb.printer.createPrinter
 import ru.vm.mpb.jansi.withJansi
 import kotlin.system.exitProcess
@@ -22,25 +26,17 @@ val ALL_CMDS = listOf(
 
 val ALL_CMDS_MAP = ALL_CMDS.flatMap { c -> c.desc.names.map { it to c } }.toMap()
 
-fun printHelp(cfg: MpbConfig, msg: String = "") {
-    if (msg.isNotEmpty()) {
-        println(msg)
-        println()
-    }
-
-    println(Ansi.ansi().bold().a("Usage: ").boldOff().a(cfg.name).a(" <command> [arguments]"))
-    println()
-    println(Ansi.ansi().bold().a("Supported commands: ").reset())
-    println()
-
-    for (cmd in ALL_CMDS) {
-        println(cmd.desc.help(cfg))
-    }
+fun printHelp(out: AnsiPrintStream, cfg: MpbConfig, msg: String = "") {
+    out.println(cfg.output.colorAnsi
+        .applyIf(msg.isNotEmpty()) { it.a(msg).newline().newline() }
+        .bold().a("Usage: ").boldOff().a(cfg.name).a(" <command> [arguments]").newline().newline()
+        .bold().a("Supported commands: ").reset().newline().newline()
+        .join(ALL_CMDS, System.lineSeparator()) { a, it -> a.apply(it.desc.help(cfg.name)) })
 }
 
 fun main(args: Array<String>) {
     val cfg = MpbConfig.parse(args)
-    val success = withJansi(cfg.output.noAnsi) {
+    val success = withJansi {
         runBlocking(Dispatchers.Default) {
             runProgram(this, cfg)
         }
@@ -49,18 +45,19 @@ fun main(args: Array<String>) {
 }
 
 suspend fun runProgram(scope: CoroutineScope, cfg: MpbConfig): Boolean {
+    val out = AnsiConsole.out()
     if (cfg.args.command.isEmpty()) {
-        printHelp(cfg)
+        printHelp(out, cfg)
         return false
     }
 
     val cmd = ALL_CMDS_MAP[cfg.args.command]
     if (cmd == null) {
-        printHelp(cfg, "Unknown command: ${cfg.args.command}")
+        printHelp(out, cfg, "Unknown command: ${cfg.args.command}")
         return false
     }
 
-    return scope.createPrinter(cfg).use {
+    return scope.createPrinter(cfg, out).use {
         cmd.execute(CmdContext(cfg, it))
     }
 }

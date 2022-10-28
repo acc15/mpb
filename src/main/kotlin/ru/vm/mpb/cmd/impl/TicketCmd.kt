@@ -24,7 +24,7 @@ object TicketCmd: Cmd {
 
         val t = ctx.args.firstOrNull()?.let { JiraTicket.parse(ctx.cfg, it) }
         if (t == null) {
-            println(desc.usage(ctx.cfg))
+            ctx.print(ctx.ansi.apply(desc.usage(ctx.cfg.name)), PrintStatus.ERROR)
             return false
         }
 

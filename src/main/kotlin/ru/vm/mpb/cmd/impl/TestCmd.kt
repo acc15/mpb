@@ -12,12 +12,9 @@ object TestCmd: ParallelCmd {
     override val desc = CmdDesc(listOf("x"), "test", "")
 
     override suspend fun parallelExecute(ctx: ProjectContext): Boolean {
-        val w = 20
-        val p = IndeterminateProgressBar(Random.nextInt(IndeterminateProgressBar.maxPosition(w)))
+        delay(Random.nextInt(2000).toLong())
         for (i in 0..100) {
-            val a = ctx.ansi.a("building cmd ")
-            p.update(w, a)
-            ctx.print(a.toString())
+            ctx.print(listOf("Multi ${Random.nextInt()}", "line ${Random.nextDouble()}", "for project ${ctx.key}").joinToString(System.lineSeparator()))
             delay(100)
         }
         return true

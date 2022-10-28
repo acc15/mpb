@@ -1,10 +1,16 @@
 package ru.vm.mpb.progress
 
-import org.fusesource.jansi.Ansi
+import kotlinx.coroutines.*
+import org.fusesource.jansi.Ansi.Consumer
+import ru.vm.mpb.util.redirectStream
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.concurrent.atomic.AtomicBoolean
 
 class IndeterminateProgressBar(private var position: Int = 0) {
 
     private var offset: Int = 0
+    private val EMPTY_CONSUMER = Consumer {}
 
     companion object {
 
@@ -19,11 +25,11 @@ class IndeterminateProgressBar(private var position: Int = 0) {
 
     }
 
-    fun update(width: Int, ansi: Ansi) {
+    fun update(width: Int): Consumer {
         if (width < MIN_WIDTH) {
             position = 0
             offset = 0
-            return
+            return EMPTY_CONSUMER
         }
 
         val maxPosition = maxPosition(width)
@@ -38,20 +44,21 @@ class IndeterminateProgressBar(private var position: Int = 0) {
             offset = EMPTY.length
         }
 
-        ansi
-            .fgBright(Ansi.Color.WHITE)
-            .a(LBOUND)
-            .fgRgb(0x7f, 0x7f, 0x7f)
-            .a(EMPTY.repeat(position))
-            .fgBrightBlue()
-            .bold()
-            .a(CURSOR)
-            .boldOff()
-            .fgRgb(0x7f, 0x7f, 0x7f)
-            .a(EMPTY.repeat(maxPosition - position))
-            .fgBright(Ansi.Color.WHITE)
-            .a(RBOUND)
-            .reset()
+        return Consumer { it
+                .fgBrightDefault()
+                .a(LBOUND)
+                .fgRgb(0x7f, 0x7f, 0x7f)
+                .a(EMPTY.repeat(position))
+                .fgBrightBlue()
+                .bold()
+                .a(CURSOR)
+                .boldOff()
+                .fgRgb(0x7f, 0x7f, 0x7f)
+                .a(EMPTY.repeat(maxPosition - position))
+                .fgBrightDefault()
+                .a(RBOUND)
+                .reset()
+        }
     }
 
 
@@ -63,4 +70,26 @@ class IndeterminateProgressBar(private var position: Int = 0) {
     // [-<=>--]
     // [<=>---]
 
+}
+
+suspend fun streamProgress(
+    vararg streams: Pair<InputStream, OutputStream>,
+    callback: (IndeterminateProgressBar) -> Unit
+) = withContext(Dispatchers.Default) {
+    val changeFlag = AtomicBoolean(false)
+    val progressJob = launch {
+        val progress = IndeterminateProgressBar()
+        while (isActive) {
+            if (changeFlag.getAndSet(false)) {
+                callback(progress)
+            }
+            delay(50)
+        }
+    }
+    withContext(Dispatchers.IO) {
+        for (s in streams) {
+            redirectStream(s.first, s.second) { changeFlag.set(true) }
+        }
+    }
+    progressJob.cancelAndJoin()
 }

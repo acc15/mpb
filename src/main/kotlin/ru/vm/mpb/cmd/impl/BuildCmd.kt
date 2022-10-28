@@ -6,11 +6,17 @@ import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.printer.PrintStatus
+import ru.vm.mpb.progress.IndeterminateProgressBar
+import ru.vm.mpb.progress.streamProgress
 import ru.vm.mpb.util.bfs
 import ru.vm.mpb.util.dfs
 import ru.vm.mpb.util.prettyString
+import ru.vm.mpb.util.redirectStream
+import java.io.InputStream
+import java.io.OutputStream
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 typealias BuildInfoMap = Map<String, BuildInfo>
 
@@ -35,9 +41,15 @@ object BuildCmd: Cmd {
         val roots = getRootKeys(ctx)
         val bi = createBuildInfoMap(ctx)
 
-        return coroutineScope {
-            launchBuilds(this, roots, null, ctx, bi)
+        ctx.print("building...")
+
+        val result = coroutineScope { launchBuilds(this, roots, null, ctx, bi) }
+        if (result) {
+            ctx.print("success", PrintStatus.SUCCESS)
+        } else {
+            ctx.print("error", PrintStatus.ERROR)
         }
+        return result
     }
 
     private suspend fun launchBuilds(
@@ -103,10 +115,19 @@ object BuildCmd: Cmd {
         val buildStart = System.nanoTime()
 
         ctx.info.log.parentFile.mkdirs()
-        val success = ctx.exec(command)
-            .redirectTo(ctx.info.log)
+        val process = ctx.exec(command)
+            .redirectTo(ProcessBuilder.Redirect.PIPE)
             .env(ctx.build.env)
-            .success()
+            .start()
+
+        val msg = "building: ${command.joinToString(" ")}"
+        ctx.info.log.outputStream().use {
+            streamProgress(process.inputStream to it, process.errorStream to it) { progress ->
+                ctx.print(ctx.ansi.a(msg).a(' ').apply(progress.update(20)))
+            }
+        }
+
+        val success = process.waitFor() == 0
 
         val duration = Duration.ofNanos(System.nanoTime() - buildStart)
         BuildStatus.fromBoolean(success).also {
@@ -128,7 +149,8 @@ object BuildCmd: Cmd {
         val cycles = mutableListOf<List<String>>()
         dfs(projects.keys, { projects.getValue(it).deps }, onCycle = cycles::add)
         return if (cycles.isEmpty()) false else {
-            ctx.print("cycles detected: $cycles", PrintStatus.ERROR)
+            ctx.print("dependency cycles detected: ${cycles.joinToString { it.joinToString(" -> ") }}",
+                PrintStatus.ERROR)
             true
         }
     }
