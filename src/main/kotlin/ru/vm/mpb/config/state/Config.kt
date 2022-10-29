@@ -187,6 +187,9 @@ abstract class Config(private val mutator: ConfigMutator) {
             else -> plainHandler(value)
         }
 
+        fun isPlain(value: Any?) = mapValueByType(value, { false }, { false }, { true }, { true })
+        fun isPlainList(list: List<Any?>) = list.all { isPlain(it) }
+
         fun putNonNull(list: MutableList<Any?>, vararg values: Pair<Int, Any?>): MutableList<Any?> {
             for (v in values) {
                 if (v.second == null) {

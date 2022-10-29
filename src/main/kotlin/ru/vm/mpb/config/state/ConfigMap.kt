@@ -8,7 +8,7 @@ class ConfigMap(
     override val value: Map<String, Any> = map
 
     override fun get(key: String) = of(map[key]) {
-        mutateMap(map).also { map -> if (it == null) map.remove(key) else map[key] = it }
+        mutateMap().also { map -> if (it == null) map.remove(key) else map[key] = it }
     }
 
     override fun get(index: Int) = get("").get(index)
@@ -30,6 +30,6 @@ class ConfigMap(
     override val list: List<Any?> get() = get("").list
     override val plain: Any? get() = get("").plain
 
-    private fun <K, V> mutateMap(map: Map<K, V>): LinkedHashMap<K, V> =
-        map as? LinkedHashMap<K, V> ?: LinkedHashMap(map).also(this::set)
+    private fun mutateMap(): LinkedHashMap<String, Any> =
+        map as? LinkedHashMap<String, Any> ?: LinkedHashMap(map).also(this::set)
 }

@@ -282,4 +282,38 @@ class ConfigTest {
         assertEquals(origin.value, mapOf("b" to listOf(1, 2, 3)))
         assertEquals(target.value, mapOf("b" to listOf(1, 4, 3)))
     }
+
+    @Test
+    fun mergeMustDeeplyMergeListOfNonPlains() {
+        val target = Config.ofImmutable(mutableListOf(
+            mutableMapOf("a" to "b"),
+            mutableMapOf("b" to "c"),
+            mutableMapOf("c" to "d")
+        ))
+
+        target.merge(mutableListOf(
+            mutableMapOf("c" to "d", "d" to "e"),
+            mutableMapOf("b" to "f", "f" to "g")
+        ))
+
+        assertEquals(target.value, listOf(
+            mapOf("a" to "b", "c" to "d", "d" to "e"),
+            mapOf("b" to "f", "f" to "g"),
+            mapOf("c" to "d")
+        ))
+    }
+
+    @Test
+    fun mergeMustReplaceListOfPlainsWithoutMutation() {
+        val target = Config.ofImmutable(mutableListOf("very", "long", "list"))
+        target.merge(mutableListOf("short", "list"))
+        assertEquals(listOf("short", "list"), target.value)
+    }
+
+    @Test
+    fun mergeMustReplaceListOfPlains() {
+        val target = Config.ofImmutable(mutableMapOf("list" to mutableListOf("very", "long", "list")))
+        target.merge(mutableMapOf("list" to mutableListOf("short", "list")))
+        assertEquals(mapOf("list" to listOf("short", "list")), target.value)
+    }
 }
