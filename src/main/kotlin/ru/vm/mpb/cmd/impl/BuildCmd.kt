@@ -7,16 +7,12 @@ import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.printer.PrintStatus
 import ru.vm.mpb.progress.IndeterminateProgressBar
-import ru.vm.mpb.progress.streamProgress
 import ru.vm.mpb.util.bfs
 import ru.vm.mpb.util.dfs
 import ru.vm.mpb.util.prettyString
-import ru.vm.mpb.util.redirectStream
-import java.io.InputStream
-import java.io.OutputStream
+import ru.vm.mpb.util.transferAndTrackProgress
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 
 typealias BuildInfoMap = Map<String, BuildInfo>
 
@@ -122,7 +118,8 @@ object BuildCmd: Cmd {
 
         val msg = "building: ${command.joinToString(" ")}"
         ctx.info.log.outputStream().use {
-            streamProgress(process.inputStream to it, process.errorStream to it) { progress ->
+            val progress = IndeterminateProgressBar()
+            transferAndTrackProgress(process.inputStream to it, process.errorStream to it) {
                 ctx.print(ctx.ansi.a(msg).a(' ').apply(progress.update(20)))
             }
         }

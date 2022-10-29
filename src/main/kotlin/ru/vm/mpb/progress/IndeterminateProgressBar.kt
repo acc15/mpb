@@ -2,15 +2,16 @@ package ru.vm.mpb.progress
 
 import kotlinx.coroutines.*
 import org.fusesource.jansi.Ansi.Consumer
-import ru.vm.mpb.util.redirectStream
+import ru.vm.mpb.util.transferTo
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
+private val EMPTY_CONSUMER = Consumer {}
+
 class IndeterminateProgressBar(private var position: Int = 0) {
 
     private var offset: Int = 0
-    private val EMPTY_CONSUMER = Consumer {}
 
     companion object {
 
@@ -72,24 +73,3 @@ class IndeterminateProgressBar(private var position: Int = 0) {
 
 }
 
-suspend fun streamProgress(
-    vararg streams: Pair<InputStream, OutputStream>,
-    callback: (IndeterminateProgressBar) -> Unit
-) = withContext(Dispatchers.Default) {
-    val changeFlag = AtomicBoolean(false)
-    val progressJob = launch {
-        val progress = IndeterminateProgressBar()
-        while (isActive) {
-            if (changeFlag.getAndSet(false)) {
-                callback(progress)
-            }
-            delay(50)
-        }
-    }
-    withContext(Dispatchers.IO) {
-        for (s in streams) {
-            redirectStream(s.first, s.second) { changeFlag.set(true) }
-        }
-    }
-    progressJob.cancelAndJoin()
-}
