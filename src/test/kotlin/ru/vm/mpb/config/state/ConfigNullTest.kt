@@ -7,32 +7,30 @@ class ConfigNullTest {
 
     @Test
     fun setValueByKeyMustMutateToMap() {
-        var value: Any? = null
-        val n = ConfigNull { value = it }
-        n.get("a").set(1)
-        assertEquals(mapOf("a" to 1), value)
+        val target = ConfigRoot(null)
+        target.get("a").set(1)
+        assertEquals(mapOf("a" to 1), target.value)
     }
 
     @Test
     fun setValueByIndexMustMutateToList() {
-        var value: Any? = null
-        val n = ConfigNull { value = it }
-        n.get(3).set(1)
-        assertEquals(listOf(null, null, null, 1), value)
+        val target = ConfigRoot(null)
+        target.get(3).set(1)
+        assertEquals(listOf(null, null, null, 1), target.value)
     }
 
     @Test
     fun setNullByIndexMustKeepNullValue() {
-        val n = ConfigNull(Config.immutable)
-        n.get(10).set(null)
-        assertEquals(null, n.value)
+        val target = ConfigRoot(null)
+        target.get(10).set(null)
+        assertEquals(null, target.value)
     }
 
     @Test
     fun setNullByKeyMustKeepNullValue() {
-        val n = ConfigNull(Config.immutable)
-        n.get("a").set(null)
-        assertEquals(null, n.value)
+        val target = ConfigRoot()
+        target.get("a").set(null)
+        assertEquals(null, target.value)
     }
 
 }

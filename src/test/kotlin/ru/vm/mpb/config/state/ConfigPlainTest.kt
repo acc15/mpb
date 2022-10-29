@@ -7,26 +7,23 @@ class ConfigPlainTest {
 
     @Test
     fun setByIndexMutatesToList() {
-        var value: Any? = "a"
-        val target = ConfigPlain("a") { value = it }
+        val target = ConfigRoot("a")
         target.get(2).set("y")
-        assertEquals(listOf("a", null, "y"), value)
+        assertEquals(listOf("a", null, "y"), target.value)
     }
 
     @Test
     fun setByKeyMutatesToMap() {
-        var value: Any? = "a"
-        val target = ConfigPlain("a") { value = it }
+        val target = ConfigRoot("a")
         target.get("x").set("y")
-        assertEquals(mapOf("" to "a", "x" to "y"), value)
+        assertEquals(mapOf("" to "a", "x" to "y"), target.value)
     }
 
     @Test
     fun setNullByIndexDoesntChangeValue() {
-        var value: Any? = "a"
-        val target = ConfigPlain("a") { value = it }
+        val target = ConfigRoot("a")
         target.get(1).set(null)
-        assertEquals("a", value)
+        assertEquals("a", target.value)
     }
 
     @Test

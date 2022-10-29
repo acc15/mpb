@@ -7,7 +7,7 @@ class ConfigMapTest {
 
     @Test
     fun setNullByKeyMustRemoveEntry() {
-        val target = ConfigMap(mutableMapOf("a" to "b", "" to "abc")) {}
+        val target = ConfigRoot(mutableMapOf("a" to "b", "" to "abc"))
         target.get("").set(null)
         assertEquals(mapOf("a" to "b"), target.value)
     }

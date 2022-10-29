@@ -8,7 +8,6 @@ import java.io.Reader
 import java.lang.StringBuilder
 import java.lang.UnsupportedOperationException
 import java.net.URL
-import kotlin.contracts.contract
 
 /*
  *  State mutation rules:
@@ -192,9 +191,9 @@ abstract class Config(private val mutator: ConfigMutator) {
         fun isPlain(value: Any?) = mapValueByType(value, { false }, { false }, { true }, { true })
         fun isPlainList(list: List<Any?>) = list.all { isPlain(it) }
 
-        fun putNonNull(list: MutableList<Any?>, vararg values: Pair<Int, Any?>): MutableList<Any?> {
+        fun <T: MutableList<Any?>> applyValues(list: T, vararg values: Pair<Int, Any?>): T {
             for (v in values) {
-                if (v.second == null) {
+                if (v.first >= list.size && v.second == null) {
                     continue
                 }
                 while (list.size <= v.first) {
@@ -205,9 +204,13 @@ abstract class Config(private val mutator: ConfigMutator) {
             return list
         }
 
-        fun putNonNull(map: MutableMap<String, Any>, vararg values: Pair<String, Any?>): MutableMap<String, Any> {
+        fun <T: MutableMap<String, Any>> applyValues(map: T, vararg values: Pair<String, Any?>): T {
             for (v in values) {
-                map[v.first] = v.second ?: continue
+                if (v.second != null) {
+                    map[v.first] = v.second!!
+                } else {
+                    map.remove(v.first)
+                }
             }
             return map
         }

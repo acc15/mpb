@@ -32,7 +32,7 @@ class ConfigTest {
     fun putAllList() {
         assertEquals<List<Any?>>(
             listOf(null, "X", "Y", null, null, "Z"),
-            Config.putNonNull(mutableListOf(), 1 to "X", 2 to "Y", 5 to "Z")
+            Config.applyValues(mutableListOf(), 1 to "X", 2 to "Y", 5 to "Z")
         )
     }
 
