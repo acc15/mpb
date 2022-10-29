@@ -19,19 +19,19 @@ data class BuildConfig(
         private fun mergeBuild(cfg: Config, build: Config, defaultUse: String?): Config {
             val initKey = cfg.get("use").string ?: defaultUse ?: return cfg
 
-            val configs = LinkedList<Config>()
-            configs.addFirst(cfg)
+            val values = LinkedList<Any?>()
+            values.addFirst(cfg.value)
 
             var k: String? = initKey
             while (k != null) {
                 val b = build.get(k)
-                configs.addFirst(b)
+                values.addFirst(b.value)
                 k = b.get("use").string
                 if (k == initKey) {
                     break
                 }
             }
-            return Config.mergeAll(configs)
+            return Config.mergeAll(values)
         }
 
         fun fromConfig(cfg: Config, build: Config, defaultUse: String?) = mergeBuild(cfg, build, defaultUse).let {
