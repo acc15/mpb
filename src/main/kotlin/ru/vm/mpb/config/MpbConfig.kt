@@ -26,7 +26,7 @@ data class MpbConfig(
             val args = Config.parseArgs(list)
             val file = (args.get("config").file ?: File("mpb.yaml")).absoluteFile
             val yaml = yamlLoader(file)
-            val merged = Config.mergeAll(listOf(yaml, args))
+            val merged = Config.mergeAll(listOf(yaml.value, args.value))
             return fromConfig(merged, file)
         }
 

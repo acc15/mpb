@@ -7,8 +7,14 @@ class ConfigList(
 
     override val value: List<Any?> = list
 
-    override fun get(key: String) = of(null) { set(putNonNull(mutableMapOf("" to list), key to it)) }
-    override fun get(index: Int) = of(list.getOrNull(index)) { putNonNull(mutateList(), index to it) }
+    override fun get(key: String) = of(null) {
+        set(putNonNull(LinkedHashMap(), "" to list, key to it))
+    }
+
+    override fun get(index: Int) = of(list.getOrNull(index)) {
+        putNonNull(mutateList(), index to it)
+    }
+
     override fun add(value: Any?) { mutateList().add(value) }
 
     override fun merge(value: Any?) {

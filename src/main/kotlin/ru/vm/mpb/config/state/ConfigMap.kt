@@ -8,7 +8,12 @@ class ConfigMap(
     override val value: Map<String, Any> = map
 
     override fun get(key: String) = of(map[key]) {
-        mutateMap().also { map -> if (it == null) map.remove(key) else map[key] = it }
+        val map = mutateMap()
+        if (it != null) {
+            map[key] = it
+        } else {
+            map.remove(key)
+        }
     }
 
     override fun get(index: Int) = get("").get(index)
@@ -17,8 +22,9 @@ class ConfigMap(
     override fun merge(value: Any?) {
         mapValueByType(value,
             { map ->
-                ConfigRoot(this.map, this::set).also { mut ->
-                    map.entries.forEach { e -> mut.get(e.key).merge(e.value) }
+                val mut = ConfigRoot(this.map, this::set)
+                for ((k, v) in map) {
+                    mut.get(k).merge(v)
                 }
             },
             { list -> get("").merge(list) },

@@ -259,27 +259,25 @@ class ConfigTest {
 
     @Test
     fun mergeAll() {
+        val m1 = mutableMapOf("a" to 1)
+        val m2 = mutableMapOf("b" to 2)
 
-        val m1 = ConfigRoot(mutableMapOf("a" to 1))
-        val m2 = ConfigRoot(mutableMapOf("b" to 2))
-
-        val m = Config.mergeAll(listOf(m1, m2).reversed())
+        val m = Config.mergeAll(listOf(m1, m2))
 
         assertEquals(m.value, mapOf("a" to 1, "b" to 2))
-        assertEquals(m1.value, mapOf("a" to 1))
-        assertEquals(m2.value, mapOf("b" to 2))
-
+        assertEquals(m1, mapOf("a" to 1))
+        assertEquals(m2, mapOf("b" to 2))
     }
 
     @Test
     fun mergeMustKeepOriginalValue() {
         val target = ConfigRoot()
-        val origin = ConfigRoot(mutableMapOf("b" to mutableListOf(1, 2, 3)))
+        val origin = mutableMapOf("b" to mutableListOf(1, 2, 3))
 
-        target.merge(origin.value)
+        target.merge(origin)
         target.get("b").get(1).set(4)
 
-        assertEquals(origin.value, mapOf("b" to listOf(1, 2, 3)))
+        assertEquals(origin, mapOf("b" to listOf(1, 2, 3)))
         assertEquals(target.value, mapOf("b" to listOf(1, 4, 3)))
     }
 
@@ -316,4 +314,5 @@ class ConfigTest {
         target.merge(mutableMapOf("list" to mutableListOf("short", "list")))
         assertEquals(mapOf("list" to listOf("short", "list")), target.value)
     }
+
 }

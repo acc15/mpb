@@ -8,6 +8,7 @@ import java.io.Reader
 import java.lang.StringBuilder
 import java.lang.UnsupportedOperationException
 import java.net.URL
+import kotlin.contracts.contract
 
 /*
  *  State mutation rules:
@@ -79,7 +80,11 @@ abstract class Config(private val mutator: ConfigMutator) {
 
     companion object {
 
-        fun ofImmutable(value: Any?) = of(value) { throw UnsupportedOperationException() }
+        val immutable: ConfigMutator = {
+            throw UnsupportedOperationException("Mutation is not allowed for immutable Config objects")
+        }
+
+        fun ofImmutable(value: Any?) = of(value, immutable)
 
         fun of(value: Any?, mutator: ConfigMutator) = mapValueByType(value,
             { map -> ConfigMap(map, mutator) },
@@ -143,11 +148,8 @@ abstract class Config(private val mutator: ConfigMutator) {
             var path = defaultPath
 
             fun flush() {
-                if (values.isEmpty()) {
-                    if (path != defaultPath) {
-                        state.path(path).set(true)
-                    }
-                    return
+                if (values.isEmpty() && path != defaultPath) {
+                    state.path(path).set(true)
                 }
                 for (v in values) {
                     state.path(path).add(v)
@@ -210,10 +212,10 @@ abstract class Config(private val mutator: ConfigMutator) {
             return map
         }
 
-        fun mergeAll(configs: List<Config>): Config {
+        fun mergeAll(values: List<Any?>): Config {
             val result = ConfigRoot()
-            for (c in configs) {
-                result.merge(c.value)
+            for (v in values) {
+                result.merge(v)
             }
             return result.state
         }
