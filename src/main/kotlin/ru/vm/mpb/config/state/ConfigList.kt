@@ -12,26 +12,31 @@ class ConfigList(
     }
 
     override fun get(index: Int) = of(list.getOrNull(index)) {
-        applyValues(mutateList(), index to it)
+        applyValues(mutableList, index to it)
     }
 
-    override fun add(value: Any?) { mutateList().add(value) }
+    override fun add(other: Any?) {
+        mutableList.add(other)
+    }
 
-    override fun merge(value: Any?) {
-        mapValueByType(value,
-            { map ->
-                val newMap = LinkedHashMap(map)
-                set(newMap)
-                ConfigMap(newMap, this::set).merge(list)
-            },
+    override fun merge(other: Any?) {
+        mapByType(other,
+            { map -> ConfigMap(LinkedHashMap(map).also(this::set), this::set).merge(list) },
             { list ->
                 val mut = getConfigForMerge()
                 for ((i, v) in list.withIndex()) {
                     mut.get(i).merge(v)
                 }
             },
-            { plain -> set(plain) },
-            { }
+            { plain ->
+                if (plain != null) {
+                    if (isPlainList(list)) {
+                        set(plain)
+                    } else {
+                        get(0).merge(plain)
+                    }
+                }
+            }
         )
     }
 
@@ -39,25 +44,21 @@ class ConfigList(
     override val map: Map<String, Any> get() = mapOf("" to list)
 
     private fun getConfigForMerge(): Config {
-        val plainList = isPlainList(list)
-
+        val isPlainList = isPlainList(list)
         if (list is ArrayList<*>) {
-            if (plainList) {
+            if (isPlainList) {
                 list.clear()
             }
             return this
         }
 
-        if (plainList && list.isNotEmpty()) {
-            val newList = ArrayList<Any?>()
-            set(newList)
-            return ConfigList(newList, this::set)
+        if (isPlainList && list.isNotEmpty()) {
+            return ConfigList(ArrayList<Any?>().also(this::set), this::set)
         }
 
         return ConfigRoot(list, this::set)
     }
 
-    private fun mutateList(): ArrayList<Any?> =
-        list as? ArrayList<Any?> ?: ArrayList(list).also(this::set)
+    private val mutableList: ArrayList<Any?> get() = list as? ArrayList<Any?> ?: ArrayList(list).also(this::set)
 
 }

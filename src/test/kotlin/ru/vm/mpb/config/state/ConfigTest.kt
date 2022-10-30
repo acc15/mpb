@@ -29,64 +29,11 @@ class ConfigTest {
     )
 
     @Test
-    fun putAllList() {
+    fun applyValues() {
         assertEquals<List<Any?>>(
             listOf(null, "X", "Y", null, null, "Z"),
             Config.applyValues(mutableListOf(), 1 to "X", 2 to "Y", 5 to "Z")
         )
-    }
-
-    @Test
-    fun plainAdd() {
-        val m = ConfigRoot()
-        m.add("abc")
-        assertEquals("abc", m.value)
-
-        m.add("xyz")
-        assertEquals(listOf("abc", "xyz"), m.value)
-    }
-
-    @Test
-    fun plainGetMustReturnCorrectValue() {
-        val v = ConfigPlain(10) {}
-        assertEquals(null, v.get(0).value)
-        assertEquals(null, v.get(1).value)
-        assertEquals(null, v.get("").value)
-        assertEquals(null, v.get("x").value)
-    }
-
-    @Test
-    fun listGetMustReturnCorrectValue() {
-        val v = ConfigList(listOf(1, 2, 3)) {}
-        assertEquals(1, v.get(0).value)
-        assertEquals(null, v.get(3).value)
-        assertEquals(null, v.get("").value)
-    }
-
-    @Test
-    fun mapGetMustReturnCorrectValue() {
-        val v = ConfigMap(mapOf("x" to 1, "" to 5)) {}
-        assertEquals(1, v.get("x").value)
-        assertEquals(null, v.get("y").value)
-        assertEquals(5, v.get("").value)
-        assertEquals(null, v.get("").get(0).value)
-    }
-
-    @Test
-    fun getKeepsCollectionsImmutable() {
-        val map: MutableMap<String, Any> = mutableMapOf(
-            "a" to Collections.unmodifiableList(listOf("x")),
-            "b" to Collections.unmodifiableMap(mapOf("x" to "y"))
-        )
-        val m = ConfigRoot(map)
-        assertFalse(map["a"] is ArrayList<*>)
-        assertFalse(map["b"] is LinkedHashMap<*, *>)
-
-        m.get("a")
-        assertFalse(map["a"] is ArrayList<*>)
-
-        m.get("b")
-        assertFalse(map["b"] is LinkedHashMap<*, *>)
     }
 
     @Test
@@ -270,14 +217,14 @@ class ConfigTest {
     }
 
     @Test
-    fun mergeMustKeepOriginalValue() {
+    fun mergeMustAvoidOtherMutations() {
         val target = ConfigRoot()
-        val origin = mutableMapOf("b" to mutableListOf(1, 2, 3))
+        val other = mutableMapOf("b" to mutableListOf(1, 2, 3))
 
-        target.merge(origin)
+        target.merge(other)
         target.get("b").get(1).set(4)
 
-        assertEquals(origin, mapOf("b" to listOf(1, 2, 3)))
+        assertEquals(other, mapOf("b" to listOf(1, 2, 3)))
         assertEquals(target.value, mapOf("b" to listOf(1, 4, 3)))
     }
 
@@ -302,15 +249,8 @@ class ConfigTest {
     }
 
     @Test
-    fun mergeMustReplaceListOfPlainsWithoutMutation() {
-        val target = Config.ofImmutable(mutableListOf("very", "long", "list"))
-        target.merge(mutableListOf("short", "list"))
-        assertEquals(listOf("short", "list"), target.value)
-    }
-
-    @Test
     fun mergeMustReplaceListOfPlains() {
-        val target = Config.ofImmutable(mutableMapOf("list" to mutableListOf("very", "long", "list")))
+        val target = ConfigRoot(mutableMapOf("list" to mutableListOf("very", "long", "list")))
         target.merge(mutableMapOf("list" to mutableListOf("short", "list")))
         assertEquals(mapOf("list" to listOf("short", "list")), target.value)
     }

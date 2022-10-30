@@ -7,20 +7,12 @@ class ConfigMap(
 
     override val value: Map<String, Any> = map
 
-    override fun get(key: String) = of(map[key]) {
-        val map = mutateMap()
-        if (it != null) {
-            map[key] = it
-        } else {
-            map.remove(key)
-        }
-    }
-
+    override fun get(key: String) = of(map[key]) { applyValues(mutableMap, key to it) }
     override fun get(index: Int) = get("").get(index)
-    override fun add(value: Any?) = get("").add(value)
+    override fun add(other: Any?) = get("").add(other)
 
-    override fun merge(value: Any?) {
-        mapValueByType(value,
+    override fun merge(other: Any?) {
+        mapByType(other,
             { map ->
                 val mut = ConfigRoot(this.map, this::set)
                 for ((k, v) in map) {
@@ -28,14 +20,13 @@ class ConfigMap(
                 }
             },
             { list -> get("").merge(list) },
-            { plain -> get("").merge(plain) },
-            { }
+            { plain -> if (plain != null) get("").merge(plain) }
         )
     }
 
     override val list: List<Any?> get() = get("").list
     override val plain: Any? get() = get("").plain
 
-    private fun mutateMap(): LinkedHashMap<String, Any> =
+    private val mutableMap: LinkedHashMap<String, Any> get() =
         map as? LinkedHashMap<String, Any> ?: LinkedHashMap(map).also(this::set)
 }

@@ -38,17 +38,10 @@ abstract class Config(private val mutator: ConfigMutator) {
     abstract val value: Any?
     abstract fun get(key: String): Config
     abstract fun get(index: Int): Config
-    abstract fun add(value: Any?)
-    open fun set(value: Any?) {
-        mutator(value)
-    }
-
-    open fun merge(value: Any?) {
-        mapValueByType(value,
-            { map -> ConfigMap(LinkedHashMap<String, Any>().also(mutator), this::set).merge(map) },
-            { list -> ConfigList(ArrayList<Any?>().also(mutator), this::set).merge(list) },
-            { plain -> set(plain) },
-            {})
+    abstract fun add(other: Any?)
+    abstract fun merge(other: Any?)
+    open fun set(other: Any?) {
+        mutator(other)
     }
 
     // Path functions
@@ -85,11 +78,10 @@ abstract class Config(private val mutator: ConfigMutator) {
 
         fun ofImmutable(value: Any?) = of(value, immutable)
 
-        fun of(value: Any?, mutator: ConfigMutator) = mapValueByType(value,
+        fun of(value: Any?, mutator: ConfigMutator) = mapByType(value,
             { map -> ConfigMap(map, mutator) },
             { list -> ConfigList(list, mutator) },
-            { plain -> ConfigPlain(plain, mutator) },
-            { ConfigNull(mutator) }
+            { plain -> ConfigPlain(plain, mutator) }
         )
 
         fun parsePath(str: String): List<Any> {
@@ -175,20 +167,18 @@ abstract class Config(private val mutator: ConfigMutator) {
         fun parseYaml(url: URL) = url.openStream().use { parseYaml(it) }
 
         @Suppress("UNCHECKED_CAST")
-        fun <T> mapValueByType(
+        fun <T> mapByType(
             value: Any?,
             mapHandler: (Map<String, Any>) -> T,
             listHandler: (List<Any?>) -> T,
-            plainHandler: (Any) -> T,
-            nullHandler: () -> T
+            plainHandler: (Any?) -> T,
         ): T = when (value) {
             is Map<*, *> -> mapHandler(value as Map<String, Any>)
             is List<*> -> listHandler(value as List<Any?>)
-            null -> nullHandler()
             else -> plainHandler(value)
         }
 
-        fun isPlain(value: Any?) = mapValueByType(value, { false }, { false }, { true }, { true })
+        fun isPlain(value: Any?) = mapByType(value, { false }, { false }, { true })
         fun isPlainList(list: List<Any?>) = list.all { isPlain(it) }
 
         fun <T: MutableList<Any?>> applyValues(list: T, vararg values: Pair<Int, Any?>): T {

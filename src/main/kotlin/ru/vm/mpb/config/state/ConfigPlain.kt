@@ -1,26 +1,41 @@
 package ru.vm.mpb.config.state
 
 class ConfigPlain(
-    override val value: Any,
+    override val value: Any?,
     mutator: ConfigMutator
 ): Config(mutator) {
 
     override fun get(key: String) = of(null) {
-        if (it != null) {
-            set(applyValues(LinkedHashMap(), "" to value, key to it))
-        }
+        if (it != null) set(applyValues(LinkedHashMap(), "" to value, key to it))
     }
 
     override fun get(index: Int) = of(null) {
-        if (it != null) {
-            set(applyValues(ArrayList(), 0 to value, index to it))
-        }
+        if (it != null) set(applyValues(ArrayList(), 0 to value, index to it))
     }
 
-    override fun add(value: Any?) = set(mutableListOf(this.value, value))
+    override fun add(other: Any?) {
+        if (other == null) {
+            return
+        }
+        if (value == null) {
+            set(other)
+            return
+        }
+        val list = ArrayList<Any?>()
+        list.add(value)
+        list.add(other)
+        set(list)
+    }
 
-    override val list: List<Any?> get() = listOf(value)
-    override val map: Map<String, Any> get() = mapOf("" to value)
-    override val plain: Any get() = value
+    override fun merge(other: Any?) {
+        mapByType(other,
+            { map -> ConfigMap(LinkedHashMap<String, Any>().also(this::set), this::set).merge(map) },
+            { list -> ConfigList(ArrayList<Any?>().also(this::set), this::set).merge(list) },
+            { plain -> if (plain != null) set(plain) })
+    }
+
+    override val list: List<Any?> get() = if (value != null) listOf(value) else emptyList()
+    override val map: Map<String, Any> get() = if (value != null) mapOf("" to value) else emptyMap()
+    override val plain: Any? get() = value
 
 }

@@ -10,12 +10,12 @@ class ConfigRoot(
 
     override fun get(key: String) = state.get(key)
     override fun get(index: Int) = state.get(index)
-    override fun add(value: Any?) = state.add(value)
-    override fun merge(value: Any?) = state.merge(value)
-    override fun set(value: Any?) {
-        super.set(value)
-        this.value = value
-        this.state = of(this.value, this::set)
+    override fun add(other: Any?) = state.add(other)
+    override fun merge(other: Any?) = state.merge(other)
+    override fun set(other: Any?) {
+        super.set(other)
+        this.value = other
+        this.state = of(other, this::set)
     }
 
     override val list: List<Any?> get() = state.list
