@@ -24,6 +24,6 @@ internal class JansiUtilsKtTest {
     @Test
     fun noAnsi() {
         val v = ru.vm.mpb.jansi.noAnsi()
-        assertTrue(v is Ansi)
+        assertEquals("abc", v.bold().a("abc").boldOff().toString())
     }
 }

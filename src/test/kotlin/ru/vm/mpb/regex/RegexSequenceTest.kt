@@ -2,12 +2,12 @@ package ru.vm.mpb.regex
 
 import org.junit.jupiter.api.Test
 import java.io.File
-import kotlin.test.Ignore
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class RegexSequenceTest {
 
     private val TEST_STRING = """
+        [INFO] --- buildplan-maven-plugin:1.5:list (default-cli) @ test-project ---
         [INFO] Build Plan for test-project:  
         --------------------------------------------------------------------------------------- 
         PLUGIN                 | PHASE                  | ID                    | GOAL         
@@ -31,11 +31,7 @@ class RegexSequenceTest {
     @Test
     fun findMatches() {
         val lines = TEST_STRING.split("\n")
-        val state = mutableListOf<MatchGroupCollection>()
-        val matches = mutableListOf<String>()
-        for (line in lines) {
-            matches.addAll(planSequence.findMatches(state, line))
-        }
+        val matches = planSequence.findAllMatches(lines)
 
         val expected = listOf(
             "test-project@default-clean",
@@ -45,6 +41,13 @@ class RegexSequenceTest {
             "test-project@default-compile"
         )
         assertEquals(expected, matches)
+    }
+
+    @Test
+    fun findMatchesMustReturnEmptyListIfFirstRegexNeverMatched() {
+        val lines = TEST_STRING.split("\n").drop(1)
+        val matches = planSequence.findAllMatches(lines)
+        assertTrue(matches.isEmpty())
     }
 
     @Test

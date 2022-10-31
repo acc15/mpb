@@ -5,33 +5,37 @@ data class RegexSequence(
     val replacement: String
 ) {
 
-    fun findAllMatches(chunks: List<String>): List<String> {
-        val state = mutableListOf<MatchGroupCollection>()
-        return chunks.flatMap { findMatches(state, it) }
+    fun findAllMatches(
+        chunks: Iterable<String>,
+        groups: MutableList<MatchGroupCollection> = mutableListOf(),
+        matches: MutableList<String> = mutableListOf()
+    ): List<String> {
+        for (chunk in chunks) {
+            findMatches(chunk, groups, matches)
+        }
+        return matches
     }
 
-    fun findMatches(state: MutableList<MatchGroupCollection>, chunk: String): List<String> {
+    fun findMatches(
+        chunk: String,
+        groups: MutableList<MatchGroupCollection>,
+        matches: MutableList<String> = mutableListOf()
+    ): List<String> {
+        val lastIndex = patterns.lastIndex
+
         var pos = 0
-        val matches = mutableListOf<String>()
         while (pos < chunk.length) {
 
-            for ((i, p) in patterns.withIndex()) {
-                val isLast = i == patterns.lastIndex
-                val m = p.find(chunk, pos)
-                if (m != null) {
-                    state.subList(i, state.size).clear()
-                    state.add(m.groups)
-                    pos = m.range.last + 1
+            val (i, m) = (0 .. minOf(lastIndex, groups.size)).firstNotNullOfOrNull {
+                    i -> patterns[i].find(chunk, pos)?.let { m -> IndexedValue(i, m) }
+            } ?: return matches
 
-                    if (isLast) {
-                        // all patterns matched - compute replacement using state
-                        matches.add(replaceByGroups(replacement, state))
-                    }
-                    break
-                }
-                if (isLast) {
-                    return matches
-                }
+            groups.subList(i, groups.size).clear()
+            groups.add(m.groups)
+            pos = m.range.last + 1
+
+            if (i == lastIndex) {
+                matches.add(replaceByGroups(replacement, groups))
             }
         }
         return matches
