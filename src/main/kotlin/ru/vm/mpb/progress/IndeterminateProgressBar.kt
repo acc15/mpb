@@ -46,7 +46,6 @@ class IndeterminateProgressBar(private var position: Int = 0) {
         }
 
         return Consumer { it
-                .fgBrightDefault()
                 .a(LBOUND)
                 .fgRgb(0x7f, 0x7f, 0x7f)
                 .a(EMPTY.repeat(position))
@@ -56,9 +55,8 @@ class IndeterminateProgressBar(private var position: Int = 0) {
                 .boldOff()
                 .fgRgb(0x7f, 0x7f, 0x7f)
                 .a(EMPTY.repeat(maxPosition - position))
-                .fgBrightDefault()
-                .a(RBOUND)
                 .reset()
+                .a(RBOUND)
         }
     }
 
