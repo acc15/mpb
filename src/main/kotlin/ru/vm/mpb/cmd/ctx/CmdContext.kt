@@ -3,7 +3,7 @@ package ru.vm.mpb.cmd.ctx
 import org.fusesource.jansi.Ansi
 import ru.vm.mpb.util.ProcessExecutor
 import ru.vm.mpb.config.MpbConfig
-import ru.vm.mpb.jansi.ansi
+import ru.vm.mpb.ansi.ansi
 import ru.vm.mpb.printer.Printer
 import ru.vm.mpb.printer.PrintData
 import ru.vm.mpb.printer.PrintStatus

@@ -1,10 +1,9 @@
 package ru.vm.mpb.config
 
-import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
 import org.fusesource.jansi.AnsiType
 import ru.vm.mpb.config.state.Config
-import ru.vm.mpb.jansi.ansi
+import ru.vm.mpb.ansi.ansi
 
 private val UNSUPPORTED_TYPES = setOf(
     AnsiType.Unsupported,

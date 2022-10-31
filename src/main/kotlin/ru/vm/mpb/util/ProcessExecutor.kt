@@ -29,7 +29,7 @@ class ProcessExecutor(val builder: ProcessBuilder) {
         return this
     }
 
-    fun start() = builder.start()
+    fun start(): Process = builder.start()
     fun wait() = start().waitFor()
     fun success() = wait() == 0
     fun lines(): List<String> = builder.start().let {

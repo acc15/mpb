@@ -3,16 +3,15 @@ package ru.vm.mpb
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
 import org.fusesource.jansi.AnsiPrintStream
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.impl.*
 import ru.vm.mpb.config.MpbConfig
-import ru.vm.mpb.jansi.applyIf
-import ru.vm.mpb.jansi.join
+import ru.vm.mpb.ansi.applyIf
+import ru.vm.mpb.ansi.join
 import ru.vm.mpb.printer.createPrinter
-import ru.vm.mpb.jansi.withJansi
+import ru.vm.mpb.ansi.withAnsi
 import kotlin.system.exitProcess
 
 val ALL_CMDS = listOf(
@@ -36,7 +35,7 @@ fun printHelp(out: AnsiPrintStream, cfg: MpbConfig, msg: String = "") {
 
 fun main(args: Array<String>) {
     val cfg = MpbConfig.parse(args)
-    val success = withJansi {
+    val success = withAnsi {
         runBlocking(Dispatchers.Default) {
             runProgram(this, cfg)
         }

@@ -4,7 +4,6 @@ import kotlinx.coroutines.delay
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ParallelCmd
 import ru.vm.mpb.cmd.ctx.ProjectContext
-import ru.vm.mpb.progress.IndeterminateProgressBar
 import kotlin.random.Random
 
 object TestCmd: ParallelCmd {

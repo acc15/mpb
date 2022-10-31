@@ -1,4 +1,4 @@
-package ru.vm.mpb.jansi
+package ru.vm.mpb.ansi
 
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.Ansi.ansi
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 
-internal class JansiUtilsKtTest {
+internal class AnsiUtilsKtTest {
 
     @TestFactory
     fun stripAnsi() = mapOf<Ansi, String>(
@@ -23,7 +23,7 @@ internal class JansiUtilsKtTest {
 
     @Test
     fun noAnsi() {
-        val v = ru.vm.mpb.jansi.noAnsi()
+        val v = ru.vm.mpb.ansi.noAnsi()
         assertEquals("abc", v.bold().a("abc").boldOff().toString())
     }
 }

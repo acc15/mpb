@@ -1,9 +1,8 @@
 package ru.vm.mpb.printer
 
-import ru.vm.mpb.config.OutputConfig
 import java.io.PrintStream
 
-class DefaultPrinter(val out: PrintStream, val cfg: OutputConfig): Printer {
+class DefaultPrinter(val out: PrintStream): Printer {
     override fun print(data: PrintData) {
         out.println(data.msg)
     }

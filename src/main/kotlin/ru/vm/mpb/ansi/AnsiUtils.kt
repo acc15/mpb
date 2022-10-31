@@ -1,11 +1,11 @@
-package ru.vm.mpb.jansi
+package ru.vm.mpb.ansi
 
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.Ansi.Consumer
 import org.fusesource.jansi.AnsiConsole
 import java.util.function.Supplier
 
-fun <T> withJansi(callback: () -> T): T {
+fun <T> withAnsi(callback: () -> T): T {
     try {
         AnsiConsole.systemInstall()
         return callback()
@@ -29,19 +29,21 @@ fun noAnsi() = NoAnsiSupplier.get()
 fun ansi(enabled: Boolean) = if (enabled) ansi() else noAnsi()
 
 val ESC_REGEX = Regex(
-    "[\\u001B\\u009B][\\[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|" +
-    "[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|" +
-    "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))"
+    "[\\u001B\\u009B][\\[\\]()#;?]*(?:(?:(?:;[-a-zA-Z\\d/#&.:=?%@~_]+)*|" +
+    "[a-zA-Z\\d]+(?:;[-a-zA-Z\\d/#&.:=?%@~_]*)*)?\\u0007|" +
+    "(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~])"
 )
 
-fun <T> Ansi.join(coll: Iterable<T>, separator: String = ", ", consumer: (Ansi, T) -> Unit): Ansi {
+fun <T> Ansi.filterJoin(coll: Iterable<T>, separator: String = ", ", consumer: (Ansi, T) -> Boolean): Ansi {
     val iter = coll.iterator()
     if (!iter.hasNext()) {
         return this
     }
     while (true) {
         val item = iter.next()
-        consumer(this, item)
+        if (!consumer(this, item)) {
+            continue
+        }
         if (!iter.hasNext()) {
             break
         }
@@ -49,6 +51,9 @@ fun <T> Ansi.join(coll: Iterable<T>, separator: String = ", ", consumer: (Ansi, 
     }
     return this
 }
+
+fun <T> Ansi.join(coll: Iterable<T>, separator: String = ", ", consumer: (Ansi, T) -> Unit) =
+    filterJoin(coll, separator) { a, b -> consumer(a, b); true }
 
 fun Ansi.applyIf(condition: Boolean, callback: Consumer): Ansi {
     if (condition) {

@@ -6,7 +6,7 @@ import kotlin.test.*
 
 class RegexSequenceTest {
 
-    private val TEST_STRING = """
+    private val testString = """
         [INFO] --- buildplan-maven-plugin:1.5:list (default-cli) @ test-project ---
         [INFO] Build Plan for test-project:  
         --------------------------------------------------------------------------------------- 
@@ -30,7 +30,7 @@ class RegexSequenceTest {
 
     @Test
     fun findMatches() {
-        val lines = TEST_STRING.split("\n")
+        val lines = testString.split("\n")
         val matches = planSequence.findAllMatches(lines)
 
         val expected = listOf(
@@ -45,7 +45,7 @@ class RegexSequenceTest {
 
     @Test
     fun findMatchesMustReturnEmptyListIfFirstRegexNeverMatched() {
-        val lines = TEST_STRING.split("\n").drop(1)
+        val lines = testString.split("\n").drop(1)
         val matches = planSequence.findAllMatches(lines)
         assertTrue(matches.isEmpty())
     }

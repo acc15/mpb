@@ -1,11 +1,6 @@
 package ru.vm.mpb.progress
 
-import kotlinx.coroutines.*
 import org.fusesource.jansi.Ansi.Consumer
-import ru.vm.mpb.util.transferTo
-import java.io.InputStream
-import java.io.OutputStream
-import java.util.concurrent.atomic.AtomicBoolean
 
 private val EMPTY_CONSUMER = Consumer {}
 

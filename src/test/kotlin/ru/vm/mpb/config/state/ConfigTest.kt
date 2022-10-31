@@ -19,7 +19,7 @@ class ConfigTest {
         "--args.a", "a", "b"
     )
 
-    private val EXPECTED_MAP = mapOf(
+    private val expectedMap = mapOf(
         "a" to mapOf("b" to "HAHA"),
         "b" to listOf("VALUE0", "VALUE1"),
         "c" to "PLAIN",
@@ -69,7 +69,7 @@ class ConfigTest {
         m.get(1).add("A")
         m.get(3).add("B")
         m.get(5).add("C")
-        assertEquals(EXPECTED_MAP, m.value)
+        assertEquals(expectedMap, m.value)
     }
 
     @Test
@@ -86,7 +86,7 @@ class ConfigTest {
         m.path("[1]").add("A")
         m.path("[3]").add("B")
         m.path("[5]").add("C")
-        assertEquals(EXPECTED_MAP, m.value)
+        assertEquals(expectedMap, m.value)
     }
 
     @Test

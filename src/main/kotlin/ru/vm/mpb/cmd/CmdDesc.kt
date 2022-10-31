@@ -1,8 +1,8 @@
 package ru.vm.mpb.cmd
 
 import org.fusesource.jansi.Ansi.Consumer
-import ru.vm.mpb.jansi.applyIf
-import ru.vm.mpb.jansi.join
+import ru.vm.mpb.ansi.applyIf
+import ru.vm.mpb.ansi.join
 
 data class CmdDesc(
     val names: List<String>,
