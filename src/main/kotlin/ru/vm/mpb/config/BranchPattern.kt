@@ -1,6 +1,7 @@
 package ru.vm.mpb.config
 
 import ru.vm.mpb.config.state.Config
+import ru.vm.mpb.regex.escapeReplacement
 
 data class BranchPattern(
     val input: Regex,
@@ -9,10 +10,6 @@ data class BranchPattern(
 ) {
 
     companion object {
-        val REPLACE_ESCAPE_REGEX = Regex("(\\\\|\\\$(?!\\d|\\{.+}))")
-        fun escapeReplacement(replacement: String): String {
-            return REPLACE_ESCAPE_REGEX.replace(replacement, "\\\\$1")
-        }
 
         fun fromConfig(cfg: Config) = BranchPattern(
             Regex(cfg.get("input").string.orEmpty()),

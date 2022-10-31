@@ -1,30 +1,13 @@
 package ru.vm.mpb.config
 
-import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestFactory
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-internal class BranchPatternTest {
-
-    @TestFactory
-    internal fun escapeReplacement() = mapOf(
-        "abc$$" to "abc\\$\\$",
-        "abc$1" to "abc$1",
-        "abc\${name}" to "abc\${name}",
-        "abc\\xyz" to "abc\\\\xyz",
-        "\\abc\\xyz" to "\\\\abc\\\\xyz"
-    ).map {
-        DynamicTest.dynamicTest("escapeReplacement: ${it.key}") {
-            val actual = BranchPattern.escapeReplacement(it.key)
-            val expected = it.value
-            assertEquals(expected, actual)
-        }
-    }
+class BranchPatternTest {
 
     @Test
-    internal fun findBranch() {
+    fun findBranch() {
 
         val branches = listOf(
             "origin/abc",
