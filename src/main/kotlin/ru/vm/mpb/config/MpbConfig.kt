@@ -46,7 +46,7 @@ data class MpbConfig(
                 BranchConfig.fromConfig(cfg.get("branch")),
                 projects,
                 JiraConfig.fromConfig(cfg.get("jira")),
-                TicketConfig.fromConfig(cfg, path),
+                TicketConfig.fromConfig(cfg.get("ticket"), path),
                 build.configMap.mapValues { (_, c) -> BuildConfig.fromConfig(c, build, null) },
                 filters,
                 ArgConfig.fromConfig(cfg, projects.keys, filters)
