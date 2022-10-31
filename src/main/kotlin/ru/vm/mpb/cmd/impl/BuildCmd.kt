@@ -13,6 +13,7 @@ import ru.vm.mpb.util.prettyString
 import ru.vm.mpb.util.transferAndTrackProgress
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.measureTimedValue
 
 typealias BuildInfoMap = Map<String, BuildInfo>
 
@@ -38,13 +39,12 @@ object BuildCmd: Cmd {
         val bi = createBuildInfoMap(ctx)
 
         ctx.print("building...")
-
+        val start = System.currentTimeMillis()
         val result = coroutineScope { launchBuilds(this, roots, null, ctx, bi) }
-        if (result) {
-            ctx.print("success", PrintStatus.SUCCESS)
-        } else {
-            ctx.print("error", PrintStatus.ERROR)
-        }
+        val duration = Duration.ofMillis(System.currentTimeMillis() - start)
+
+        val status = PrintStatus.ofBoolean(result)
+        ctx.print("${status.name.lowercase()} in ${duration.prettyString}", status)
         return result
     }
 

@@ -7,4 +7,8 @@ enum class PrintStatus(val consumer: Consumer): Consumer by consumer {
     WARN({ it.fgBrightYellow() }),
     SUCCESS({ it.fgBrightGreen() }),
     ERROR({ it.fgBrightRed() });
+
+    companion object {
+        fun ofBoolean(f: Boolean) = if (f) SUCCESS else ERROR
+    }
 }
