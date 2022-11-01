@@ -1,6 +1,7 @@
 package ru.vm.mpb.util
 
-import java.lang.StringBuilder
+import org.fusesource.jansi.Ansi.Consumer
+import ru.vm.mpb.ansi.join
 import java.time.Duration
 
 enum class DurationTimeUnit(
@@ -15,25 +16,14 @@ enum class DurationTimeUnit(
     HOURS("h", MINUTES.div * 60, 24),
     DAYS("d", HOURS.div * 24);
 
-    fun appendTo(duration: Duration, builder: StringBuilder) {
+    fun getUnits(duration: Duration): Long {
         val v = fetch(duration)
         val d = if (div > 1) v / div else v
-        val m = if (mod > 1) d % mod else d
-        if (m <= 0) {
-            return
-        }
-        if (builder.isNotEmpty()) {
-            builder.append(' ')
-        }
-        builder.append("$m$suffix")
+        return if (mod > 1) d % mod else d
     }
 }
 
-val Duration.prettyString: String get() {
-    val b = StringBuilder()
-    val values = DurationTimeUnit.values()
-    for (index in values.indices.reversed()) {
-        values[index].appendTo(this, b)
-    }
-    return b.toString()
+val Duration.pretty get() = Consumer { a ->
+    a.join(DurationTimeUnit.values().reversed().map { it to it.getUnits(this) }.filter { it.second > 0 }, " ")
+        { x, v -> x.a(v.second).a(v.first.suffix) }
 }

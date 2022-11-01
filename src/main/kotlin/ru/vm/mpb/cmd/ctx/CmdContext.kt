@@ -12,12 +12,11 @@ data class CmdContext(val cfg: MpbConfig, val printer: Printer) {
 
     val args = cfg.args.common
 
-    val ansi: Ansi get() = ansi(!cfg.output.monochrome)
+    val ansi: Ansi get() = cfg.output.ansi.get()
+    fun ansi(parent: Ansi) = cfg.output.ansi.get(parent)
 
     fun print(str: Any?, status: PrintStatus = PrintStatus.MESSAGE, key: String = "*") {
-        printer.print(PrintData(key, ansi
-            .bold().apply(status).a('[').a(key).a(']').reset().a(' ')
-            .a(str).toString()))
+        printer.print(PrintData(key, ansi.apply(status.colored("[$key]")).a(' ').a(str).toString()))
     }
 
     fun projectContext(key: String) = ProjectContext(this, key)

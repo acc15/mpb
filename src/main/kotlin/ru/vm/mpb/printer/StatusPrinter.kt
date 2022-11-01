@@ -2,7 +2,7 @@ package ru.vm.mpb.printer
 
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiPrintStream
-import ru.vm.mpb.ansi.filterJoin
+import ru.vm.mpb.ansi.join
 import ru.vm.mpb.config.MpbConfig
 import ru.vm.mpb.ansi.stripAnsi
 
@@ -26,16 +26,13 @@ class StatusPrinter(val out: AnsiPrintStream, val cfg: MpbConfig): Printer {
         val lineOffset = lines.flatMap { it.value.second }.sumOf { (it + w - 1) / w }
         lines[data.key] = data.msg to noAnsiLength
 
-        out.println( Ansi().cursorUpLine(lineOffset)
-            .eraseScreen(Ansi.Erase.FORWARD)
-            .filterJoin(lines.values, System.lineSeparator()) { a, l ->
-                if (l.second.isEmpty()) {
-                    false
-                } else {
-                    a.a(l.first)
-                    true
-                }
-            })
+        val a = Ansi()
+        if (lineOffset > 0) {
+            a.cursorUpLine(lineOffset).eraseScreen(Ansi.Erase.FORWARD)
+        }
+        a.join(lines.values.filter { it.second.isNotEmpty() }, System.lineSeparator()) { x, l -> x.a(l.first) }
+
+        out.println( a.toString() )
 
     }
 }

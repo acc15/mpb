@@ -2,6 +2,8 @@ package ru.vm.mpb.cmd.impl
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import ru.vm.mpb.ansi.boldAppender
+import ru.vm.mpb.ansi.join
 import ru.vm.mpb.cmd.Cmd
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
@@ -9,7 +11,7 @@ import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.printer.PrintStatus
 import ru.vm.mpb.progress.IndeterminateProgressBar
 import ru.vm.mpb.util.dfs
-import ru.vm.mpb.util.prettyString
+import ru.vm.mpb.util.pretty
 import ru.vm.mpb.util.transferAndTrackProgress
 import java.time.Duration
 
@@ -36,12 +38,12 @@ object BuildCmd: Cmd {
             return false
         }
 
-        ctx.print("building...")
+        ctx.print(ctx.ansi.apply(BuildStatus.BUILDING).a("..."))
 
         val start = System.nanoTime()
         val status = buildAll(ctx)
         val duration = Duration.ofNanos(System.nanoTime() - start)
-        ctx.print("${status.action} in ${duration.prettyString}", status.printStatus)
+        ctx.print(ctx.ansi.apply(status).a(" in ").apply(duration.pretty), status.print)
         return status != BuildStatus.ERROR
     }
 
@@ -62,10 +64,10 @@ object BuildCmd: Cmd {
             .filterValues { it.deps.contains(ctx.key) }
             .map { channels.getValue(it.key) })
 
-        var status = BuildStatus.PENDING
+        var status = BuildStatus.BUILDING
         if (ctx.skipped) {
-            ctx.print("skipped", PrintStatus.WARN)
             status = BuildStatus.SKIP
+            ctx.print(ctx.ansi.apply(status), PrintStatus.WARN)
             send(BuildEvent(ctx.key, ctx.key, status))
         }
 
@@ -74,7 +76,7 @@ object BuildCmd: Cmd {
             status = BuildStatus.SKIP
         }
 
-        if (status == BuildStatus.PENDING) {
+        if (status == BuildStatus.BUILDING) {
             status = runBuild(ctx, ctx.args)
             if (status != BuildStatus.DONE) {
                 send(BuildEvent(ctx.key, ctx.key, status))
@@ -95,17 +97,17 @@ object BuildCmd: Cmd {
             .env(ctx.build.env)
             .start()
 
-        val msg = "building: ${command.joinToString(" ")}"
+        val msg = ctx.ansi.apply(BuildStatus.BUILDING).a(": ").join(command, " ")
         ctx.info.log.outputStream().use {
             val progress = IndeterminateProgressBar()
             transferAndTrackProgress(process.inputStream to it, process.errorStream to it) {
-                ctx.print(ctx.ansi.a(msg).a(' ').apply(progress.update(20)))
+                ctx.print(ctx.ansi(msg).a(' ').apply(progress.update(20)))
             }
         }
 
         val status = BuildStatus.valueOf(process.waitFor() == 0)
         val duration = Duration.ofNanos(System.nanoTime() - buildStart)
-        ctx.print("${status.action} in ${duration.prettyString}", status.printStatus)
+        ctx.print(ctx.ansi.apply(status).a(" in ").apply(duration.pretty), status.print)
 
         status
     }
@@ -121,7 +123,8 @@ object BuildCmd: Cmd {
         while (pending.isNotEmpty()) {
 
             if (!ctx.skipped && skipReasons.isEmpty()) {
-                ctx.print("waiting for $pending", PrintStatus.MESSAGE)
+                ctx.print(ctx.ansi.a("waiting for ").join(pending, ", ", boldAppender()),
+                    PrintStatus.MESSAGE)
             }
 
             val event = recv.receive()
@@ -135,8 +138,9 @@ object BuildCmd: Cmd {
             }
 
             skipReasons.computeIfAbsent(event.status) { LinkedHashSet() }.add(event.reason)
-            val reasonText = skipReasons.map { "${it.value} is ${it.key.action}" }.joinToString(" and ")
-            ctx.print("skipped due to $reasonText", PrintStatus.WARN)
+            ctx.print(ctx.ansi.a("skipped due to ").join(skipReasons.entries, " and ") { a, it ->
+                a.join(it.value, ", ", boldAppender()).a(" is ").apply(it.key)
+            }, PrintStatus.WARN)
 
             send(BuildEvent(ctx.key, event.reason, event.status))
 
@@ -152,7 +156,8 @@ object BuildCmd: Cmd {
             return false
         }
 
-        ctx.print("dependency cycles detected: ${cycles.joinToString { it.joinToString(" -> ") }}", PrintStatus.ERROR)
+        ctx.print(ctx.ansi.a("dependency cycles detected: ")
+            .join(cycles, ", ") { a, p -> a.join(p, " -> ", boldAppender()) }, PrintStatus.ERROR)
         return true
     }
 

@@ -1,6 +1,7 @@
 package ru.vm.mpb.progress
 
 import org.fusesource.jansi.Ansi.Consumer
+import ru.vm.mpb.ansi.AnsiRgb
 
 private val EMPTY_CONSUMER = Consumer {}
 
@@ -42,13 +43,13 @@ class IndeterminateProgressBar(private var position: Int = 0) {
 
         return Consumer { it
                 .a(LBOUND)
-                .fgRgb(0x7f, 0x7f, 0x7f)
+                .fgRgb(AnsiRgb.GRAY)
                 .a(EMPTY.repeat(position))
                 .fgBrightBlue()
                 .bold()
                 .a(CURSOR)
                 .boldOff()
-                .fgRgb(0x7f, 0x7f, 0x7f)
+                .fgRgb(AnsiRgb.GRAY)
                 .a(EMPTY.repeat(maxPosition - position))
                 .reset()
                 .a(RBOUND)

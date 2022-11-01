@@ -1,5 +1,6 @@
 package ru.vm.mpb.cmd.ctx
 
+import org.fusesource.jansi.Ansi
 import ru.vm.mpb.printer.PrintStatus
 
 data class ProjectContext(
@@ -8,6 +9,8 @@ data class ProjectContext(
 ) {
 
     val ansi get() = cmd.ansi
+    fun ansi(parent: Ansi) = cmd.ansi(parent)
+
     val cfg = cmd.cfg
     val info = cfg.projects.getValue(key)
     val args = cfg.args.active[key].orEmpty()

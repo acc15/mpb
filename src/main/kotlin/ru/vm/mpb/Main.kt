@@ -26,7 +26,7 @@ val ALL_CMDS = listOf(
 val ALL_CMDS_MAP = ALL_CMDS.flatMap { c -> c.desc.names.map { it to c } }.toMap()
 
 fun printHelp(out: AnsiPrintStream, cfg: MpbConfig, msg: String = "") {
-    out.println(cfg.output.colorAnsi
+    out.println(cfg.output.ansi.get()
         .applyIf(msg.isNotEmpty()) { it.a(msg).newline().newline() }
         .bold().a("Usage: ").boldOff().a(cfg.name).a(" <command> [arguments]").newline().newline()
         .bold().a("Supported commands: ").reset().newline().newline()

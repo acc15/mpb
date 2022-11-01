@@ -17,7 +17,7 @@ data class OutputConfig(
     val width: Int,
 ) {
 
-    val colorAnsi get() = ansi(!monochrome)
+    val ansi = ansi(!monochrome)
 
     fun getWidth(terminalWidth: Int) = if (terminalWidth <= 0) width else terminalWidth
     companion object {
