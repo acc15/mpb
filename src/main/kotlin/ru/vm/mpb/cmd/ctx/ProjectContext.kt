@@ -12,6 +12,7 @@ data class ProjectContext(
     val info = cfg.projects.getValue(key)
     val args = cfg.args.active[key].orEmpty()
     val build = info.build
+    val skipped = cfg.includes.excludes(key)
 
     fun print(str: Any?, status: PrintStatus = PrintStatus.MESSAGE, key: String = this.key) =
         cmd.print(str, status, key)

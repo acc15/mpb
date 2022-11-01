@@ -1,21 +1,19 @@
 package ru.vm.mpb.cmd.impl
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.reduce
 import ru.vm.mpb.cmd.Cmd
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.printer.PrintStatus
 import ru.vm.mpb.progress.IndeterminateProgressBar
-import ru.vm.mpb.util.bfs
 import ru.vm.mpb.util.dfs
 import ru.vm.mpb.util.prettyString
 import ru.vm.mpb.util.transferAndTrackProgress
 import java.time.Duration
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.measureTimedValue
-
-typealias BuildInfoMap = Map<String, BuildInfo>
 
 object BuildCmd: Cmd {
 
@@ -26,6 +24,11 @@ object BuildCmd: Cmd {
     )
 
     override suspend fun execute(ctx: CmdContext): Boolean {
+        if (ctx.cfg.projects.isEmpty()) {
+            ctx.print("no one project configured", PrintStatus.ERROR)
+            return false
+        }
+
         if (ctx.cfg.build.isEmpty()) {
             ctx.print("build configuration not specified", PrintStatus.ERROR)
             return false
@@ -35,75 +38,53 @@ object BuildCmd: Cmd {
             return false
         }
 
-        val roots = getRootKeys(ctx)
-        val bi = createBuildInfoMap(ctx)
-
         ctx.print("building...")
-        val start = System.currentTimeMillis()
-        val result = coroutineScope { launchBuilds(this, roots, null, ctx, bi) }
-        val duration = Duration.ofMillis(System.currentTimeMillis() - start)
 
-        val status = PrintStatus.ofBoolean(result)
-        ctx.print("${status.name.lowercase()} in ${duration.prettyString}", status)
-        return result
+        val start = System.nanoTime()
+        val status = buildAll(ctx)
+        val duration = Duration.ofNanos(System.nanoTime() - start)
+        ctx.print("${status.action} in ${duration.prettyString}", status.printStatus)
+        return status != BuildStatus.ERROR
     }
 
-    private suspend fun launchBuilds(
-        scope: CoroutineScope,
-        keys: Iterable<String>,
-        parentKey: String?,
-        ctx: CmdContext,
-        bi: BuildInfoMap
-    ): Boolean {
-        val tasks = mutableListOf<Deferred<Boolean>>()
-        for (k in keys) {
-            val b = bi.getValue(k)
-            if (parentKey != null) {
-                b.pendingDeps.remove(parentKey)
+    private suspend fun buildAll(ctx: CmdContext): BuildStatus = coroutineScope {
+        val channels = ctx.cfg.projects
+            .filterValues { it.deps.isNotEmpty() }
+            .mapValues { Channel<BuildEvent>(Channel.BUFFERED) }
+
+        ctx.cfg.projects.keys.map {
+            async {
+                build(ctx.projectContext(it), channels)
             }
-            if (b.pendingDeps.isNotEmpty()) {
-                continue
-            }
-            if (!b.status.compareAndSet(BuildStatus.INIT, BuildStatus.PENDING)) {
-                continue
-            }
-            tasks += scope.async { build(scope, ctx.projectContext(k), bi) }
-        }
-        return tasks.awaitAll().all { it }
+        }.awaitAll().reduce(BuildStatus::combine)
     }
 
-    suspend fun build(scope: CoroutineScope, ctx: ProjectContext, bi: BuildInfoMap): Boolean {
-        val args = ctx.cfg.args.active[ctx.key]
-        val status = if (args != null) {
-            runBuild(ctx, args)
-        } else {
+    private suspend fun build(ctx: ProjectContext, channels: Map<String, Channel<BuildEvent>>): BuildStatus {
+        val send = multiSend(ctx.cfg.projects
+            .filterValues { it.deps.contains(ctx.key) }
+            .map { channels.getValue(it.key) })
+
+        var status = BuildStatus.PENDING
+        if (ctx.skipped) {
             ctx.print("skipped", PrintStatus.WARN)
-            BuildStatus.SKIP
+            status = BuildStatus.SKIP
+            send(BuildEvent(ctx.key, ctx.key, status))
         }
 
-        val b = bi.getValue(ctx.key)
-        if (!b.status.compareAndSet(BuildStatus.PENDING, status)) {
-            ctx.print("can't update build status to $status", PrintStatus.WARN)
+        val recv = channels[ctx.key]
+        if (recv != null && !waitDependencies(ctx, recv, send)) {
+            status = BuildStatus.SKIP
         }
 
-        return if (status == BuildStatus.SUCCESS) {
-            launchBuilds(scope, b.dependants, ctx.key, ctx.cmd, bi)
-        } else {
-            updateChildrenStatus(ctx, bi)
-            status == BuildStatus.SKIP
-        }
-    }
-
-    private fun updateChildrenStatus(ctx: ProjectContext, bi: BuildInfoMap) {
-        val b = bi.getValue(ctx.key)
-        val status = b.status.get()
-        bfs(b.dependants, { bi.getValue(it).dependants }, onNode = {
-            if (!bi.getValue(it).status.compareAndSet(BuildStatus.INIT, status)) {
-                return@bfs false
+        if (status == BuildStatus.PENDING) {
+            status = runBuild(ctx, ctx.args)
+            if (status != BuildStatus.DONE) {
+                send(BuildEvent(ctx.key, ctx.key, status))
             }
-            ctx.print("${status.action} due to ${ctx.key} is ${status.action}", status.printStatus, it)
-            true
-        })
+        }
+
+        send(BuildEvent(ctx.key, ctx.key, BuildStatus.DONE))
+        return status
     }
 
     private suspend fun runBuild(ctx: ProjectContext, args: List<String>): BuildStatus = withContext(Dispatchers.IO) {
@@ -124,31 +105,62 @@ object BuildCmd: Cmd {
             }
         }
 
-        val success = process.waitFor() == 0
-
+        val status = BuildStatus.valueOf(process.waitFor() == 0)
         val duration = Duration.ofNanos(System.nanoTime() - buildStart)
-        BuildStatus.fromBoolean(success).also {
-            ctx.print("${it.action} in ${duration.prettyString}", it.printStatus)
+        ctx.print("${status.action} in ${duration.prettyString}", status.printStatus)
+
+        status
+    }
+
+    private suspend fun waitDependencies(
+        ctx: ProjectContext,
+        recv: ReceiveChannel<BuildEvent>,
+        send: suspend (BuildEvent) -> Unit
+    ): Boolean {
+
+        val pending = LinkedHashSet(ctx.info.deps)
+        val skipReasons = LinkedHashMap<BuildStatus, LinkedHashSet<String>>()
+        while (pending.isNotEmpty()) {
+
+            if (!ctx.skipped && skipReasons.isEmpty()) {
+                ctx.print("waiting for $pending", PrintStatus.MESSAGE)
+            }
+
+            val event = recv.receive()
+            if (event.status == BuildStatus.DONE) {
+                pending.remove(event.key)
+                continue
+            }
+
+            if (ctx.skipped) {
+                continue
+            }
+
+            skipReasons.computeIfAbsent(event.status) { LinkedHashSet() }.add(event.reason)
+            val reasonText = skipReasons.map { "${it.value} is ${it.key.action}" }.joinToString(" and ")
+            ctx.print("skipped due to $reasonText", PrintStatus.WARN)
+
+            send(BuildEvent(ctx.key, event.reason, event.status))
+
         }
+        return skipReasons.isEmpty()
     }
-
-    private fun createBuildInfoMap(ctx: CmdContext): BuildInfoMap = ctx.cfg.projects.mapValues { (k, i) ->
-        BuildInfo(
-            i.deps.associateWithTo(ConcurrentHashMap()) {},
-            ctx.cfg.projects.filter { e -> e.value.deps.contains(k) }.keys
-        )
-    }
-
-    private fun getRootKeys(ctx: CmdContext) = ctx.cfg.projects.filter { e -> e.value.deps.isEmpty() }.keys
 
     private fun findCycles(ctx: CmdContext): Boolean {
         val projects = ctx.cfg.projects
         val cycles = mutableListOf<List<String>>()
         dfs(projects.keys, { projects.getValue(it).deps }, onCycle = cycles::add)
-        return if (cycles.isEmpty()) false else {
-            ctx.print("dependency cycles detected: ${cycles.joinToString { it.joinToString(" -> ") }}",
-                PrintStatus.ERROR)
-            true
+        if (cycles.isEmpty()) {
+            return false
+        }
+
+        ctx.print("dependency cycles detected: ${cycles.joinToString { it.joinToString(" -> ") }}", PrintStatus.ERROR)
+        return true
+    }
+
+    private fun <T> multiSend(channels: Iterable<SendChannel<T>>): suspend (T) -> Unit = {
+        for (c in channels) {
+            c.send(it)
         }
     }
 
