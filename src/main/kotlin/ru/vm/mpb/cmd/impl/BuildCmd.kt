@@ -99,9 +99,9 @@ object BuildCmd: Cmd {
 
         val msg = ctx.ansi.apply(BuildStatus.BUILDING).a(": ").join(command, " ")
         ctx.info.log.outputStream().use {
-            val progress = IndeterminateProgressBar()
+            val progress = IndeterminateProgressBar(20)
             transferAndTrackProgress(process.inputStream to it, process.errorStream to it) {
-                ctx.print(ctx.ansi(msg).a(' ').apply(progress.update(20)))
+                ctx.print(ctx.ansi(msg).a(' ').apply(progress.update()))
             }
         }
 
