@@ -53,8 +53,8 @@ class RegexSequenceTest {
     @Test
     @Ignore
     fun findMatchesInFile() {
-        val planLines = File("mvn_multi_plan.txt").readLines()
-        val execLines = File("mvn_multi_parallel.txt").readLines()
+        val planLines = File("src/main/examples/mvn_multi_plan.txt").readLines()
+        val execLines = File("src/main/examples/mvn_multi_parallel.txt").readLines()
         val plan = planSequence.findAllMatches(planLines).toSet()
         val exec = execSequence.findAllMatches(execLines).toSet()
         assertEquals(plan, exec)
