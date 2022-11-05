@@ -1,4 +1,4 @@
-package ru.vm.mpb.progress
+package ru.vm.mpb.progressbar
 
 import org.fusesource.jansi.Ansi.Consumer
 

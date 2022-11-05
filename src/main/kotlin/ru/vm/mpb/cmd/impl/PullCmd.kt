@@ -6,6 +6,7 @@ import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ParallelCmd
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.printer.PrintStatus
+import ru.vm.mpb.util.success
 
 object PullCmd: ParallelCmd {
 

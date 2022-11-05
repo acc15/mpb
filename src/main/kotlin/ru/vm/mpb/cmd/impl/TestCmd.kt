@@ -4,17 +4,17 @@ import kotlinx.coroutines.delay
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ParallelCmd
 import ru.vm.mpb.cmd.ctx.ProjectContext
-import kotlin.random.Random
+import ru.vm.mpb.progressbar.IndeterminateProgressBar
 
 object TestCmd: ParallelCmd {
 
     override val desc = CmdDesc(listOf("x"), "test", "")
 
     override suspend fun parallelExecute(ctx: ProjectContext): Boolean {
-        delay(Random.nextInt(2000).toLong())
-        for (i in 0..100) {
-            ctx.print(listOf("Multi ${Random.nextInt()}", "line ${Random.nextDouble()}", "for project ${ctx.key}").joinToString(System.lineSeparator()))
-            delay(100)
+        val p = IndeterminateProgressBar(50)
+        for (i in 0..255) {
+            ctx.print(ctx.ansi.apply(p.update()))
+            delay(50)
         }
         return true
     }

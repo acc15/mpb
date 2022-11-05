@@ -50,10 +50,13 @@ abstract class Config(private val mutator: ConfigMutator) {
     fun path(p: List<Any>) = p.fold(this) { s, k -> if (k is Int) s.get(k) else s.get(k as String) }
 
     // Converting functions
-
     abstract val list: List<Any?>
     abstract val map: Map<String, Any>
     abstract val plain: Any?
+
+    val configList: List<Config> get() = list.map { ofImmutable(it) }
+    val configMap: Map<String, Config> get() = map.mapValues { ofImmutable(it.value) }
+
     val string: String? get() = plain?.toString()
     val stringList: List<String> get() = list.mapNotNull { ofImmutable(it).string }
     val stringSet: Set<String> get() = stringList.toSet()
@@ -62,13 +65,8 @@ abstract class Config(private val mutator: ConfigMutator) {
         (it as? String)?.toIntOrNull()
     }
 
-    val flag: Boolean get() = plain?.let {
-        it as? Boolean ?:
-        (it as? String)?.toBoolean()
-    } ?: false
+    val flag: Boolean get() = plain?.let { it as? Boolean ?: (it as? String)?.toBoolean() } ?: false
     val file: File? get() = string?.let { File(it) }
-    val configList: List<Config> get() = list.map { ofImmutable(it) }
-    val configMap: Map<String, Config> get() = map.mapValues { ofImmutable(it.value) }
 
     companion object {
 

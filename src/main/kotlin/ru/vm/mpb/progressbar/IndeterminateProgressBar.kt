@@ -1,14 +1,9 @@
-package ru.vm.mpb.progress
+package ru.vm.mpb.progressbar
 
 import org.fusesource.jansi.Ansi
-import ru.vm.mpb.ansi.AnsiRgb
+import java.lang.StrictMath.abs
 
-private const val LBOUND = "["
-private const val CURSOR = "<=>"
-private const val EMPTY = "-"
-private const val RBOUND = "]"
-private const val NON_EMPTY_WIDTH = LBOUND.length + CURSOR.length + RBOUND.length
-private const val MIN_WIDTH = NON_EMPTY_WIDTH + EMPTY.length
+private const val MIN_WIDTH = 1
 
 class IndeterminateProgressBar(
     var width: Int,
@@ -28,37 +23,40 @@ class IndeterminateProgressBar(
 
         maxPosition = width - MIN_WIDTH
         if (offset == 0) {
-            offset = EMPTY.length
+            offset = 1
             return this
         }
 
         position += offset
         if (position <= 0) {
             position = 0
-            offset = EMPTY.length
+            offset = 1
         } else if (position >= maxPosition) {
             position = maxPosition
-            offset = -EMPTY.length
+            offset = -1
         }
         return this
     }
+
+    private val colorRange = Interpolator(0xff00, 0xff)
 
     override fun apply(ansi: Ansi) {
         if (width < MIN_WIDTH) {
             return
         }
-        ansi
-            .a(LBOUND)
-            .fgRgb(AnsiRgb.GRAY)
-            .a(EMPTY.repeat(position))
-            .fgBrightBlue()
-            .bold()
-            .a(CURSOR)
-            .boldOff()
-            .fgRgb(AnsiRgb.GRAY)
-            .a(EMPTY.repeat(maxPosition - position))
-            .reset()
-            .a(RBOUND)
+
+        val p = Interpolator(0, width - 1)
+
+        var prevRgb = 0
+        for (i in 0 until width) {
+            val rgb = interpolateRgb(abs(i - position), p, colorRange)
+            if (i == 0 || rgb != prevRgb) {
+                ansi.bgRgb(rgb)
+                prevRgb = rgb
+            }
+            ansi.a(' ')
+        }
+        ansi.reset()
     }
 
     // [<=>---]

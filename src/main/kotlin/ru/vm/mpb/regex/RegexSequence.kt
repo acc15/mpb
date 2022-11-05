@@ -5,22 +5,18 @@ data class RegexSequence(
     val replacement: String
 ) {
 
-    fun findAllMatches(
-        chunks: Iterable<String>,
-        groups: MutableList<MatchGroupCollection> = mutableListOf(),
-        matches: MutableList<String> = mutableListOf()
-    ): List<String> {
-        for (chunk in chunks) {
-            findMatches(chunk, groups, matches)
+    fun findAllMatches(lines: Sequence<String>, onMatch: (String) -> Unit) {
+        val groups = mutableListOf<MatchGroupCollection>()
+        for (line in lines) {
+            findMatches(line, onMatch, groups)
         }
-        return matches
     }
 
     fun findMatches(
         chunk: String,
+        onMatch: (String) -> Unit,
         groups: MutableList<MatchGroupCollection>,
-        matches: MutableList<String> = mutableListOf()
-    ): List<String> {
+    ) {
         val lastIndex = patterns.lastIndex
 
         var pos = 0
@@ -28,17 +24,16 @@ data class RegexSequence(
 
             val (i, m) = (0 .. minOf(lastIndex, groups.size)).firstNotNullOfOrNull {
                     i -> patterns[i].find(chunk, pos)?.let { m -> IndexedValue(i, m) }
-            } ?: return matches
+            } ?: return
 
             groups.subList(i, groups.size).clear()
             groups.add(m.groups)
             pos = m.range.last + 1
 
             if (i == lastIndex) {
-                matches.add(replaceByGroups(replacement, groups))
+                onMatch(replaceByGroups(replacement, groups))
             }
         }
-        return matches
     }
 
 }

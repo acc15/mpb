@@ -1,7 +1,10 @@
 package ru.vm.mpb.util
 
 import kotlinx.coroutines.*
+import ru.vm.mpb.io.RedirectingInputStream
+import ru.vm.mpb.io.SynchronizedOutputStream
 import java.io.InputStream
+import java.io.InputStreamReader
 import java.io.OutputStream
 import java.nio.file.CopyOption
 import java.nio.file.Files
@@ -71,43 +74,14 @@ fun deepMove(src: Path, dst: Path, replaceExisting: Boolean = true) {
 
 }
 
-fun InputStream.transferTo(
-    output: OutputStream,
-    onRead: (ByteArray, Int) -> Boolean,
-    onWrite: (ByteArray, Int) -> Boolean = { _, _ -> true }
-) {
+typealias ReadCallback = (ByteArray, Int) -> Boolean
+
+fun readFully(inputStream: InputStream, onRead: ReadCallback) {
     val buf = ByteArray(8192)
     while (true) {
-        val sz = read(buf)
+        val sz = inputStream.read(buf)
         if (sz < 0 || !onRead(buf, sz)) {
             break
         }
-        output.write(buf, 0, sz)
-        if (!onWrite(buf, sz)) {
-            break
-        }
     }
-}
-
-suspend fun transferAndTrackProgress(
-    vararg streams: Pair<InputStream, OutputStream>,
-    onProgress: () -> Unit
-) = withContext(Dispatchers.Default) {
-    val changeFlag = AtomicBoolean(false)
-    val progressJob = launch {
-        while (isActive) {
-            if (changeFlag.getAndSet(false)) {
-                onProgress()
-            }
-            delay(50)
-        }
-    }
-    withContext(Dispatchers.IO) {
-        for (s in streams) {
-            launch {
-                s.first.transferTo(s.second, { _, _ -> changeFlag.set(true); isActive }, { _, _ -> isActive })
-            }
-        }
-    }
-    progressJob.cancelAndJoin()
 }

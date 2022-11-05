@@ -8,7 +8,8 @@ data class BuildConfig(
     val cmd: List<String>,
     val opt: List<String>,
     val profiles: Map<String, List<String>>,
-    val env: Map<String, String>
+    val env: Map<String, String>,
+    val progress: ProgressConfig
 ) {
 
     fun getProfile(profile: String?) = profile?.let { profiles[it] } ?: profiles.getValue(DEFAULT_KEY)
@@ -40,7 +41,8 @@ data class BuildConfig(
                 it.get("cmd").stringList,
                 it.get("opt").stringList,
                 it.get("profiles").configMap.mapValues { (_, c) -> c.stringList },
-                it.get("env").configMap.mapValues { (_, c) -> c.string.orEmpty() }
+                it.get("env").configMap.mapValues { (_, c) -> c.string.orEmpty() },
+                ProgressConfig.fromConfig(it.get("progress"))
             )
         }
     }

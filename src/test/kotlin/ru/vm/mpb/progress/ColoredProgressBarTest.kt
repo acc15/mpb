@@ -1,5 +1,6 @@
 package ru.vm.mpb.progress
 
+import ru.vm.mpb.progressbar.ColoredProgressBar
 import kotlin.test.*
 
 class ColoredProgressBarTest {
@@ -11,7 +12,7 @@ class ColoredProgressBarTest {
         ProgressBarTester(ColoredProgressBar(50), 100).test { i ->
             amount = i
             total = 100
-            message = "$i%"
+            text = "$i%"
         }
     }
 

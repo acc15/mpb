@@ -1,7 +1,7 @@
 package ru.vm.mpb.regex
 
 import org.junit.jupiter.api.Test
-import java.io.File
+import java.io.FileReader
 import kotlin.test.*
 
 class RegexSequenceTest {
@@ -28,10 +28,16 @@ class RegexSequenceTest {
         Regex("\\[INFO] --- [^:]+:[^:]+:\\S+ \\((?<id>\\S+)\\) @ (?<project>\\S+) ---")
     ), "\${project}@\${id}")
 
+    private fun findAllMatches(seq: RegexSequence, lines: Sequence<String>): List<String> {
+        val list = mutableListOf<String>()
+        seq.findAllMatches(lines, list::add)
+        return list
+    }
+
     @Test
     fun findMatches() {
-        val lines = testString.split("\n")
-        val matches = planSequence.findAllMatches(lines)
+        val lines = testString.split("\n").asSequence()
+        val matches = findAllMatches(planSequence, lines)
 
         val expected = listOf(
             "test-project@default-clean",
@@ -45,18 +51,20 @@ class RegexSequenceTest {
 
     @Test
     fun findMatchesMustReturnEmptyListIfFirstRegexNeverMatched() {
-        val lines = testString.split("\n").drop(1)
-        val matches = planSequence.findAllMatches(lines)
+        val lines = testString.split("\n").drop(1).asSequence()
+        val matches = findAllMatches(planSequence, lines)
         assertTrue(matches.isEmpty())
     }
 
     @Test
     @Ignore
     fun findMatchesInFile() {
-        val planLines = File("src/main/examples/mvn_multi_plan.txt").readLines()
-        val execLines = File("src/main/examples/mvn_multi_parallel.txt").readLines()
-        val plan = planSequence.findAllMatches(planLines).toSet()
-        val exec = execSequence.findAllMatches(execLines).toSet()
+        val plan = FileReader("src/main/examples/mvn_multi_plan.txt").use {
+            findAllMatches(planSequence, it.buffered().lineSequence()).toSet()
+        }
+        val exec = FileReader("src/main/examples/mvn_multi_parallel.txt").use {
+            findAllMatches(execSequence, it.buffered().lineSequence()).toSet()
+        }
         assertEquals(plan, exec)
     }
 

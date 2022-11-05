@@ -1,42 +1,32 @@
-package ru.vm.mpb.progress
+package ru.vm.mpb.progressbar
 
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.Ansi.Consumer
 
-private const val LBOUND = "|"
-private const val RBOUND = "|"
 private const val ELLIPSIS = "..."
-private const val BOUND_WIDTH = LBOUND.length + RBOUND.length
-private const val MIN_WIDTH = BOUND_WIDTH + 1
+private const val MIN_WIDTH = 1
 
 class ColoredProgressBar(
     var width: Int,
     var amount: Int = 0,
     var total: Int = 0,
-    var message: String = "",
-    var fill: Consumer = Consumer { it.bgGreen().fgBlack() },
-    var empty: Consumer = Consumer { it.bgDefault().fgDefault() },
-    var bound: Consumer = Consumer { it.reset() }
+    var text: String = ""
 ): ProgressBar {
 
-    private var innerWidth = 0
-    private var fillWidth = 0
     private var fillText = ""
     private var emptyText = ""
 
     override fun update(): ProgressBar {
         if (width < MIN_WIDTH) {
-            innerWidth = 0
-            fillWidth = 0
+            fillText = ""
+            emptyText = ""
             return this
         }
 
-        innerWidth = width - BOUND_WIDTH
-        fillWidth = if (total > 0) amount * innerWidth / total else 0
-
-        val innerText = spaceCentered(ellipsized(message, innerWidth), innerWidth)
+        val fillWidth = if (total > 0) amount * width / total else 0
+        val innerText = spaceCentered(ellipsized(text, width), width)
         fillText = innerText.substring(0, fillWidth)
-        emptyText = innerText.substring(fillWidth, innerWidth)
+        emptyText = innerText.substring(fillWidth, width)
         return this
     }
 
@@ -62,18 +52,14 @@ class ColoredProgressBar(
     }
 
     override fun apply(ansi: Ansi) {
-        if (innerWidth <= 0) {
+        if (width < MIN_WIDTH) {
             return
         }
         ansi
-            .apply(bound)
-            .a(LBOUND)
-            .apply(fill)
+            .bg(Ansi.Color.GREEN).fg(Ansi.Color.BLACK)
             .a(fillText)
-            .apply(empty)
+            .bg(Ansi.Color.BLUE).fg(Ansi.Color.BLACK)
             .a(emptyText)
-            .apply(bound)
-            .a(RBOUND)
             .reset()
     }
 }

@@ -8,11 +8,14 @@ import ru.vm.mpb.cmd.Cmd
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.ctx.ProjectContext
+import ru.vm.mpb.io.RedirectingInputStream
+import ru.vm.mpb.io.SynchronizedOutputStream
 import ru.vm.mpb.printer.PrintStatus
-import ru.vm.mpb.progress.IndeterminateProgressBar
+import ru.vm.mpb.progress.BuildProgress
 import ru.vm.mpb.util.dfs
+import ru.vm.mpb.util.environment
 import ru.vm.mpb.util.pretty
-import ru.vm.mpb.util.transferAndTrackProgress
+import ru.vm.mpb.util.redirectBoth
 import java.time.Duration
 
 object BuildCmd: Cmd {
@@ -88,20 +91,25 @@ object BuildCmd: Cmd {
     }
 
     private suspend fun runBuild(ctx: ProjectContext, args: List<String>): BuildStatus = withContext(Dispatchers.IO) {
+
+        val buildProgress = BuildProgress.init(ctx)
+
         val command = ctx.build.makeCommand(args.firstOrNull())
         val buildStart = System.nanoTime()
 
         ctx.info.log.parentFile.mkdirs()
         val process = ctx.exec(command)
-            .redirectTo(ProcessBuilder.Redirect.PIPE)
-            .env(ctx.build.env)
+            .redirectBoth(ProcessBuilder.Redirect.PIPE)
+            .environment(ctx.build.env)
             .start()
 
         val msg = ctx.ansi.apply(BuildStatus.BUILDING).a(": ").join(command, " ")
-        ctx.info.log.outputStream().use {
-            val progress = IndeterminateProgressBar(20)
-            transferAndTrackProgress(process.inputStream to it, process.errorStream to it) {
-                ctx.print(ctx.ansi(msg).a(' ').apply(progress.update()))
+        SynchronizedOutputStream(ctx.info.log.outputStream()).use { out ->
+            buildProgress.process(
+                RedirectingInputStream(process.inputStream, out),
+                RedirectingInputStream(process.errorStream, out)
+            ) {
+                ctx.print(ctx.ansi(msg).a(' ').apply(it))
             }
         }
 

@@ -7,6 +7,7 @@ import ru.vm.mpb.cmd.Cmd
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.util.JiraTicket
+import ru.vm.mpb.util.success
 
 object JiraCmd: Cmd {
 
