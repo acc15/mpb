@@ -4,9 +4,9 @@ import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import kotlin.test.*
 
-class InterpolatorTest {
+class RangeTest {
 
-    private fun i(start: Int, end: Int) = Interpolator(start, end)
+    private fun i(start: Int, end: Int) = Range(start, end)
 
     @Test
     fun progression() {
@@ -43,5 +43,16 @@ class InterpolatorTest {
         }
     }
 
+    @Test
+    fun interpolateRgb() {
+        val src = i(0, 15)
+        val dst = i(0xff0000, 0xff)
+        val expected = listOf(
+            0xff0000, 0xee0011, 0xdd0022, 0xcc0033, 0xbb0044, 0xaa0055, 0x990066, 0x880077,
+            0x770088, 0x660099, 0x5500aa, 0x4400bb, 0x3300cc, 0x2200dd, 0x1100ee, 0x0000ff
+        )
+        val actual = src.progression.map { src.interpolateRgb(it, dst) }
+        assertContentEquals(expected, actual)
+    }
 
 }

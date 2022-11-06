@@ -1,7 +1,7 @@
 package ru.vm.mpb.progressbar
 
 import org.fusesource.jansi.Ansi
-import org.fusesource.jansi.Ansi.Consumer
+import ru.vm.mpb.ansi.AnsiRgb
 
 private const val ELLIPSIS = "..."
 private const val MIN_WIDTH = 1
@@ -13,20 +13,17 @@ class ColoredProgressBar(
     var text: String = ""
 ): ProgressBar {
 
-    private var fillText = ""
-    private var emptyText = ""
+    private var innerText = ""
+
+//    private var fillText = ""
+//    private var emptyText = ""
 
     override fun update(): ProgressBar {
         if (width < MIN_WIDTH) {
-            fillText = ""
-            emptyText = ""
+            innerText = ""
             return this
         }
-
-        val fillWidth = if (total > 0) amount * width / total else 0
-        val innerText = spaceCentered(ellipsized(text, width), width)
-        fillText = innerText.substring(0, fillWidth)
-        emptyText = innerText.substring(fillWidth, width)
+        innerText = spaceCentered(ellipsized(text, width), width)
         return this
     }
 
@@ -51,15 +48,20 @@ class ColoredProgressBar(
         return " ".repeat(het + et % 2) + s + " ".repeat(het)
     }
 
-    override fun apply(ansi: Ansi) {
+    override fun apply(a: Ansi) {
         if (width < MIN_WIDTH) {
             return
         }
-        ansi
-            .bg(Ansi.Color.GREEN).fg(Ansi.Color.BLACK)
-            .a(fillText)
-            .bg(Ansi.Color.BLUE).fg(Ansi.Color.BLACK)
-            .a(emptyText)
-            .reset()
+
+        val fill = if (total > 0) amount * width / total else 0
+        a.fgBlack().bgRgb(AnsiRgb.GREEN).a(innerText.substring(0, fill))
+        if (fill < width) {
+            val remainder = if (total > 0) (amount * width) % total else 0
+            a.bgRgb(AnsiRgb.BLUE).a(innerText[fill])
+        }
+        if (fill + 1 < width) {
+            a.bgRgb(AnsiRgb.BLUE).a(innerText.substring(fill + 1))
+        }
+        a.reset()
     }
 }

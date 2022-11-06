@@ -1,6 +1,7 @@
 package ru.vm.mpb.progressbar
 
 import org.fusesource.jansi.Ansi
+import ru.vm.mpb.ansi.AnsiRgb
 import java.lang.StrictMath.abs
 
 private const val MIN_WIDTH = 1
@@ -11,6 +12,7 @@ class IndeterminateProgressBar(
     var offset: Int = 0
 ): ProgressBar {
 
+    private val colorRange = Range(AnsiRgb.GREEN, AnsiRgb.BLUE)
     private var maxPosition: Int = 0
 
     override fun update(): ProgressBar {
@@ -38,34 +40,25 @@ class IndeterminateProgressBar(
         return this
     }
 
-    private val colorRange = Interpolator(0xff00, 0xff)
-
     override fun apply(ansi: Ansi) {
         if (width < MIN_WIDTH) {
             return
         }
 
-        val p = Interpolator(0, width - 1)
+        ansi.fgBlack()
 
-        var prevRgb = 0
+        val p = Range(0, width * 3 / 4)
+        var lastRgb = 0
         for (i in 0 until width) {
-            val rgb = interpolateRgb(abs(i - position), p, colorRange)
-            if (i == 0 || rgb != prevRgb) {
+            val rgb = p.interpolateRgb(abs(i - position), colorRange)
+            if (i == 0 || rgb != lastRgb) {
                 ansi.bgRgb(rgb)
-                prevRgb = rgb
+                lastRgb = rgb
             }
             ansi.a(' ')
         }
         ansi.reset()
     }
-
-    // [<=>---]
-    // [-<=>--]
-    // [--<=>-]
-    // [---<=>]
-    // [--<=>-]
-    // [-<=>--]
-    // [<=>---]
 
 }
 

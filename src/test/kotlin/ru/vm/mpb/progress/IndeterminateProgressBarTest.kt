@@ -1,8 +1,6 @@
 package ru.vm.mpb.progress
 
 import ru.vm.mpb.progressbar.IndeterminateProgressBar
-import ru.vm.mpb.progressbar.Interpolator
-import ru.vm.mpb.progressbar.interpolateRgb
 import kotlin.test.*
 
 class IndeterminateProgressBarTest {
