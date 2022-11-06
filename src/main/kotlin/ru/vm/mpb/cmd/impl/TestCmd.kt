@@ -13,7 +13,7 @@ object TestCmd: Cmd {
     override suspend fun execute(ctx: CmdContext): Boolean {
         val p = ColoredProgressBar(50, 0, 1000)
         for (i in 0..1000) {
-            ctx.print(ctx.ansi.apply(p.apply { amount = i; text = "${i / 10}.${i % 10}%" }.update()))
+            ctx.print(ctx.ansi.apply(p.apply { current = i; text = "${i / 10}.${i % 10}%" }.update()))
             delay(50)
         }
 

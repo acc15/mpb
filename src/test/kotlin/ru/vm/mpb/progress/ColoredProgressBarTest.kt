@@ -10,7 +10,7 @@ class ColoredProgressBarTest {
     // @Ignore
     fun animation() {
         ProgressBarTester(ColoredProgressBar(50), 100).test { i ->
-            amount = i
+            current = i
             total = 100
             text = "$i%"
         }

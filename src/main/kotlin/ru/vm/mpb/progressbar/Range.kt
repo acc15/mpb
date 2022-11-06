@@ -4,7 +4,8 @@ import kotlin.math.abs
 
 data class Range(val start: Int, val end: Int) {
 
-    val total get() = abs(end - start)
+    val total get() = distance + 1
+    val distance get() = abs(end - start)
     val progression get() = IntProgression.fromClosedRange(start, end, if (start <= end) 1 else -1)
 
     fun overlap(value: Int): Int = if (start <= end) when {
@@ -35,7 +36,7 @@ data class Range(val start: Int, val end: Int) {
             1 -> return toEnd
         }
 
-        val t = total
+        val t = distance
         val v = zeroBased(value)
         return (toStart * (t - v) + toEnd * v) / t
     }

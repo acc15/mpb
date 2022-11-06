@@ -46,7 +46,7 @@ class BuildPlanProgress(val ctx: ProjectContext, val progress: ColoredProgressBa
 
             val intersection = build.intersect(plan)
             onProgress(progress.apply {
-                amount = intersection.size
+                current = intersection.size
                 total = plan.size
                 text = match
             }.update())

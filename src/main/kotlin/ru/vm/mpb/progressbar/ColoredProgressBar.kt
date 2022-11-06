@@ -8,22 +8,16 @@ private const val MIN_WIDTH = 1
 
 class ColoredProgressBar(
     var width: Int,
-    var amount: Int = 0,
+    var current: Int = 0,
     var total: Int = 0,
     var text: String = ""
 ): ProgressBar {
 
-    private var innerText = ""
-
-//    private var fillText = ""
-//    private var emptyText = ""
+    private val pixelColor = Range(AnsiRgb.BLUE, AnsiRgb.GREEN)
+    private val pixelRange = Range(0, 9)
 
     override fun update(): ProgressBar {
-        if (width < MIN_WIDTH) {
-            innerText = ""
-            return this
-        }
-        innerText = spaceCentered(ellipsized(text, width), width)
+        current = minOf(current, total)
         return this
     }
 
@@ -53,15 +47,24 @@ class ColoredProgressBar(
             return
         }
 
-        val fill = if (total > 0) amount * width / total else 0
-        a.fgBlack().bgRgb(AnsiRgb.GREEN).a(innerText.substring(0, fill))
+        val innerText = spaceCentered(ellipsized(text, width), width)
+        val pixelSteps = pixelRange.total
+        val alignedWidth = width * pixelSteps
+        val current = if (total > 0) current * alignedWidth / total else 0
+
+        a.fgBlack()
+
+        val fill = current / pixelSteps
+        if (fill > 0) {
+            a.bgRgb(AnsiRgb.GREEN).a(innerText.substring(0, fill))
+        }
         if (fill < width) {
-            val remainder = if (total > 0) (amount * width) % total else 0
-            a.bgRgb(AnsiRgb.BLUE).a(innerText[fill])
+            a.bgRgb(pixelRange.interpolateRgb(current % pixelSteps, pixelColor)).a(innerText[fill])
         }
         if (fill + 1 < width) {
             a.bgRgb(AnsiRgb.BLUE).a(innerText.substring(fill + 1))
         }
+
         a.reset()
     }
 }
