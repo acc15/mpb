@@ -1,0 +1,11 @@
+
+set "MPB_CD_FILE=%TEMP%\\mpb_cd.txt"
+if exist "%MPB_CD_FILE%" (
+    set /p MPB_CD_TO=<%print '<"%MPB_CD_FILE%"'%>
+    del "%MPB_CD_FILE%"
+)
+if defined MPB_CD_TO (
+	cd "%MPB_CD_TO%"
+)
+set MPB_CD_FILE=
+set MPB_CD_TO=

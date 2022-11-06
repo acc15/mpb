@@ -25,9 +25,10 @@ data class MpbConfig(
         fun parse(list: Array<String>, yamlLoader: (File) -> Config = Config.Companion::parseYaml): MpbConfig {
             val args = Config.parseArgs(list)
             val file = (args.get("config").file ?: File("mpb.yaml")).absoluteFile
-            val yaml = yamlLoader(file)
-            val merged = Config.mergeAll(listOf(yaml.value, args.value))
-            return fromConfig(merged, file)
+            return fromConfig(
+                if (file.exists()) Config.mergeAll(listOf(yamlLoader(file).value, args.value)) else args,
+                file
+            )
         }
 
         fun fromConfig(cfg: Config, file: File): MpbConfig {

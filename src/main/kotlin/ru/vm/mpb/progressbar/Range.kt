@@ -56,4 +56,8 @@ data class Range(val start: Int, val end: Int) {
     }
 
     override fun toString() = "$start..$end"
+
+    companion object {
+        fun fromTotal(total: Int) = Range(0, total - 1)
+    }
 }

@@ -1,0 +1,7 @@
+
+# Change directory to content of CD_FILE (if file exists)
+local CD_FILE='/tmp/mpb_cd.txt'
+if [[ -f "\$CD_FILE" ]]; then
+  cd \$(cat "\$CD_FILE")
+  rm "\$CD_FILE"
+fi

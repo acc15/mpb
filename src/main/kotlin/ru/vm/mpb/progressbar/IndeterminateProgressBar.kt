@@ -13,9 +13,11 @@ class IndeterminateProgressBar(
 ): ProgressBar {
 
     private val colorRange = Range(AnsiRgb.GREEN, AnsiRgb.BLUE)
+    private var gradientRange = Range.fromTotal(width / 4)
     private var maxPosition: Int = 0
 
     override fun update(): ProgressBar {
+        gradientRange = Range.fromTotal(width / 4)
         if (width < MIN_WIDTH) {
             position = 0
             offset = 0
@@ -47,10 +49,9 @@ class IndeterminateProgressBar(
 
         ansi.fgBlack()
 
-        val p = Range(0, width * 3 / 4)
         var lastRgb = 0
         for (i in 0 until width) {
-            val rgb = p.interpolateRgb(abs(i - position), colorRange)
+            val rgb = gradientRange.interpolateRgb(abs(i - position), colorRange)
             if (i == 0 || rgb != lastRgb) {
                 ansi.bgRgb(rgb)
                 lastRgb = rgb

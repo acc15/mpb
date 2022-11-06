@@ -27,8 +27,8 @@ object BuildCmd: Cmd {
     )
 
     override suspend fun execute(ctx: CmdContext): Boolean {
-        if (ctx.cfg.projects.isEmpty()) {
-            ctx.print("no one project configured", PrintStatus.ERROR)
+        if (ctx.cfg.args.active.isEmpty()) {
+            ctx.print("no one project is active", PrintStatus.ERROR)
             return false
         }
 

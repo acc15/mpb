@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.7.20"
+    application
 }
 
 group = "ru.vm"
@@ -26,9 +27,21 @@ tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "17"
 }
 
-val dist by tasks.registering(Copy::class) {
-    val dir = project.properties["dir"] ?: "${System.getProperty("user.home")}/.local/lib/mpb"
-    from(tasks.jar)
-    from(configurations.runtimeClasspath)
-    into(dir)
+tasks.startScripts {
+    val unix = unixStartScriptGenerator as TemplateBasedScriptGenerator
+    val windows = windowsStartScriptGenerator as TemplateBasedScriptGenerator
+    unix.template = resources.text.fromString(
+        unix.template.asString() +
+        resources.text.fromFile("src/main/scripts/mpb_unix_template.txt").asString()
+    )
+
+    windows.template = resources.text.fromString(
+        windows.template.asString() +
+        resources.text.fromFile("src/main/scripts/mpb_windows_template.txt").asString()
+    )
+}
+
+application {
+    mainClass.set("ru.vm.mpb.MainKt")
+    applicationDefaultJvmArgs = listOf("-Djansi.colors=truecolor")
 }

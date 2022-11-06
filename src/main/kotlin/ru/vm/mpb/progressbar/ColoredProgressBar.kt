@@ -14,7 +14,7 @@ class ColoredProgressBar(
 ): ProgressBar {
 
     private val pixelColor = Range(AnsiRgb.BLUE, AnsiRgb.GREEN)
-    private val pixelRange = Range(0, 9)
+    private val pixelRange = Range.fromTotal(10)
 
     override fun update(): ProgressBar {
         current = minOf(current, total)
