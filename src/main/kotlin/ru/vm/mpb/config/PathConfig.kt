@@ -13,7 +13,7 @@ data class PathConfig(
         fun fromConfig(cfg: Config, file: File) = PathConfig(
             file,
             cfg.get("base").file ?: file.parentFile,
-            cfg.get("log").file ?: File("log"),
+            cfg.get("log").file ?: File("log"), // TODO Must be relative to base directory
             cfg.get("cd").file ?: File(System.getProperty("java.io.tmpdir")).resolve("mpb_cd.txt")
         )
     }

@@ -11,12 +11,14 @@ data class MpbConfig(
     val path: PathConfig,
     val output: OutputConfig,
     val branch: BranchConfig,
-    val projects: Map<String, ProjectConfig>,
+    val projects: Map<String, ProjectConfig>, // TODO rename to modules
     val jira: JiraConfig,
     val ticket: TicketConfig,
     val build: Map<String, BuildConfig>,
     val includes: IncludeExclude<String>,
     val args: ArgConfig
+    // TODO add project: String, (default project to operate on, may be overriden by command-line)
+    // TODO add projects: Map<String, MpbConfig>
 ) {
 
     companion object {
