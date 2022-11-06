@@ -41,6 +41,13 @@ tasks.startScripts {
     )
 }
 
+tasks.installDist {
+    val dir = project.properties["dir"]
+    if (dir != null) {
+        destinationDir = File(dir.toString())
+    }
+}
+
 application {
     mainClass.set("ru.vm.mpb.MainKt")
     applicationDefaultJvmArgs = listOf("-Djansi.colors=truecolor")
