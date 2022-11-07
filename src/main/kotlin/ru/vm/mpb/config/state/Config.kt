@@ -59,7 +59,7 @@ abstract class Config(private val mutator: ConfigMutator) {
 
     val string: String? get() = plain?.toString()
     val stringList: List<String> get() = list.mapNotNull { ofImmutable(it).string }
-    val stringSet: Set<String> get() = stringList.toSet()
+    val stringSet: Set<String> get() = LinkedHashSet(stringList)
     val int: Int? get() = plain?.let {
         (it as? Boolean)?.let { b -> if (b) 1 else 0 }
         (it as? String)?.toIntOrNull()
