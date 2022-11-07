@@ -44,15 +44,13 @@ data class MpbConfig(
             return fromConfig(merged)
         }
 
-        fun loadYamlIfExists(file: File): Any? {
-            try {
-                return YamlLoader.load(file)
-            } catch (e: FileNotFoundException) {
-                AnsiConsole.err().println(Ansi.ansi()
-                    .fgBrightYellow().a("[warn] config file ${file.absoluteFile} doesn't exists").reset()
-                )
-                return null
-            }
+        fun loadYamlIfExists(file: File): Any? = try {
+            YamlLoader.load(file)
+        } catch (e: FileNotFoundException) {
+            AnsiConsole.err().println(Ansi.ansi()
+                .fgYellow().bold().a("[warn]").reset().a(" config file ${file.absoluteFile} doesn't exists")
+            )
+            null
         }
 
         fun fromConfig(cfg: Config): MpbConfig {
