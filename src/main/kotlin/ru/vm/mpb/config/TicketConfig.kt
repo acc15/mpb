@@ -8,8 +8,8 @@ data class TicketConfig(
     val overwrite: Boolean
 ) {
     companion object {
-        fun fromConfig(cfg: Config, path: PathConfig) = TicketConfig(
-            path.base.resolve(cfg.get("dir").file ?: File("tickets")),
+        fun fromConfig(cfg: Config, base: File) = TicketConfig(
+            base.resolve(cfg.get("dir").file ?: File("tickets")),
             cfg.get("overwrite").flag
         )
     }

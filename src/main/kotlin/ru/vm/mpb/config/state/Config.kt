@@ -67,6 +67,7 @@ abstract class Config(private val mutator: ConfigMutator) {
 
     val flag: Boolean get() = plain?.let { it as? Boolean ?: (it as? String)?.toBoolean() } ?: false
     val file: File? get() = string?.let { File(it) }
+    val files: List<File> get() = stringList.map { File(it) }
 
     companion object {
 
