@@ -14,7 +14,7 @@ import java.io.InputStream
 class BuildPlanProgress(val ctx: ProjectContext, val progress: ColoredProgressBar): BuildProgress {
 
     private val cfg = ctx.build.progress
-    private val plan = LinkedHashSet<String>()
+    private val plan = HashSet<String>()
 
     override suspend fun init(): Unit =  withContext(Dispatchers.IO) {
         ctx.print(ctx.ansi.apply(BuildStatus.BUILDING).a(": execution plan"))
@@ -39,14 +39,13 @@ class BuildPlanProgress(val ctx: ProjectContext, val progress: ColoredProgressBa
             readFully(err) { _, _ -> isActive }
         }
 
-        val build = LinkedHashSet<String>()
+        val remaining = HashSet<String>(plan)
         cfg.build.findAllMatches(inp.bufferedReader().lineSequence()) { match ->
 
-            build.add(match)
+            remaining.remove(match)
 
-            val intersection = build.intersect(plan)
             onProgress(progress.apply {
-                current = intersection.size
+                current = plan.size - remaining.size
                 total = plan.size
                 text = match
             }.update())

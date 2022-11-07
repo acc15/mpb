@@ -22,20 +22,20 @@ val testConfig get() = mapOf(
     "build" to mapOf(
         "default" to mapOf(
             "env" to mapOf("ENV1" to "VALUE1"),
-            "profiles" to mapOf(
+            "commands" to mapOf(
                 "default" to listOf("c", "d", "e"),
                 "nt" to listOf("c", "d", "e", "F")
             )
         ),
         "java17" to mapOf(
             "env" to mapOf("JAVA_HOME" to "/usr/lib/jvm/java-17-openjdk"),
-            "profiles" to mapOf(
+            "commands" to mapOf(
                 "default" to listOf("c", "d", "e"),
                 "nt" to listOf("c", "d", "e", "F")
             )
         ),
         "yarn" to mapOf(
-            "profiles" to mapOf("default" to listOf("a", "b"))
+            "commands" to mapOf("default" to listOf("a", "b"))
         )
     ),
     "projects" to mapOf(

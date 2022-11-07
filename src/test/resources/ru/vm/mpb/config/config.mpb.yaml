@@ -11,15 +11,15 @@ build:
   default:
     env:
       ENV1: VALUE1
-    profiles: &p1
+    commands: &p1
       default: [c, d, e]
       nt: [c, d, e, F]
   java17:
     env:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk
-    profiles: *p1
+    commands: *p1
   yarn:
-    profiles:
+    commands:
       default: [a, b]
 projects:
   a:

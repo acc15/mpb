@@ -5,7 +5,7 @@ import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.printer.PrintStatus
 
-interface ParallelCmd : Cmd {
+interface ProjectCmd : Cmd {
     override suspend fun execute(ctx: CmdContext): Boolean{
         val keys = ctx.cfg.args.active.keys
         if (keys.isEmpty()) {

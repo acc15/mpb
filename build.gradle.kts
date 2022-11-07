@@ -27,20 +27,6 @@ tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "17"
 }
 
-tasks.startScripts {
-    val unix = unixStartScriptGenerator as TemplateBasedScriptGenerator
-    val windows = windowsStartScriptGenerator as TemplateBasedScriptGenerator
-    unix.template = resources.text.fromString(
-        unix.template.asString() +
-        resources.text.fromFile("src/main/scripts/mpb_unix_template.txt").asString()
-    )
-
-    windows.template = resources.text.fromString(
-        windows.template.asString() +
-        resources.text.fromFile("src/main/scripts/mpb_windows_template.txt").asString()
-    )
-}
-
 tasks.installDist {
     val dir = project.properties["dir"]
     if (dir != null) {

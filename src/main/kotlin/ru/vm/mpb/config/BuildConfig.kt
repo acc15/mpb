@@ -5,15 +5,15 @@ import java.util.*
 
 data class BuildConfig(
     val use: String?,
-    val cmd: List<String>,
+    val tool: List<String>,
     val opt: List<String>,
-    val profiles: Map<String, List<String>>,
+    val commands: Map<String, List<String>>,
     val env: Map<String, String>,
     val progress: ProgressConfig
 ) {
 
-    fun getProfile(profile: String?) = profile?.let { profiles[it] } ?: profiles.getValue(DEFAULT_KEY)
-    fun makeCommand(profile: String?) = cmd + opt + getProfile(profile)
+    fun getCommand(command: String?) = command?.let { commands[it] } ?: commands.getValue(DEFAULT_KEY)
+    fun getCommandLine(command: String?) = tool + opt + getCommand(command)
 
     companion object {
 
@@ -38,9 +38,9 @@ data class BuildConfig(
         fun fromConfig(cfg: Config, build: Config, defaultUse: String?) = mergeBuild(cfg, build, defaultUse).let {
             BuildConfig(
                 it.get("use").string ?: defaultUse,
-                it.get("cmd").stringList,
+                it.get("tool").stringList,
                 it.get("opt").stringList,
-                it.get("profiles").configMap.mapValues { (_, c) -> c.stringList },
+                it.get("commands").configMap.mapValues { (_, c) -> c.stringList },
                 it.get("env").configMap.mapValues { (_, c) -> c.string.orEmpty() },
                 ProgressConfig.fromConfig(it.get("progress"))
             )

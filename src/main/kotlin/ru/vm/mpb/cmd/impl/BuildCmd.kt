@@ -23,7 +23,7 @@ object BuildCmd: Cmd {
     override val desc = CmdDesc(
         listOf("b", "build"),
         "build all projects",
-        "[build profile]"
+        "[build command]"
     )
 
     override suspend fun execute(ctx: CmdContext): Boolean {
@@ -94,7 +94,7 @@ object BuildCmd: Cmd {
 
         val buildProgress = BuildProgress.init(ctx)
 
-        val command = ctx.build.makeCommand(args.firstOrNull())
+        val command = ctx.build.getCommandLine(args.firstOrNull())
         val buildStart = System.nanoTime()
 
         ctx.info.log.parentFile.mkdirs()

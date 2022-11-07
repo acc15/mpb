@@ -3,12 +3,12 @@ package ru.vm.mpb.cmd.impl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.vm.mpb.cmd.CmdDesc
-import ru.vm.mpb.cmd.ParallelCmd
+import ru.vm.mpb.cmd.ProjectCmd
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.printer.PrintStatus
 import ru.vm.mpb.util.success
 
-object PullCmd: ParallelCmd {
+object PullCmd: ProjectCmd {
 
     override val desc = CmdDesc(
         listOf("p", "pull"),
