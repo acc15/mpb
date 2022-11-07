@@ -1,11 +1,9 @@
 package ru.vm.mpb.config.state
 
-import org.junit.jupiter.api.DynamicTest
 import kotlin.test.*
-import org.junit.jupiter.api.Test
+
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
-import ru.vm.mpb.config.MpbConfigTest
-import ru.vm.mpb.config.testConfig
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
@@ -196,12 +194,6 @@ class ConfigTest {
             val actual = Config.parseArgs(it.first).value
             assertEquals(expected, actual)
         }
-    }
-
-    @Test
-    fun parseYaml() {
-        val state = Config.parseYaml(MpbConfigTest::class.java.getResource("config.mpb.yaml")!!)
-        assertEquals(testConfig, state.value)
     }
 
     @Test

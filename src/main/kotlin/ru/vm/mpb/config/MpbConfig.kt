@@ -1,8 +1,12 @@
 package ru.vm.mpb.config
 
+import org.fusesource.jansi.Ansi
+import org.fusesource.jansi.AnsiConsole
 import ru.vm.mpb.config.state.Config
 import ru.vm.mpb.config.state.ConfigRoot
+import ru.vm.mpb.config.state.YamlLoader
 import java.io.File
+import java.io.FileNotFoundException
 
 const val DEFAULT_KEY = "default"
 
@@ -23,20 +27,33 @@ data class MpbConfig(
 
     companion object {
 
-        fun parse(list: Array<String>, yamlLoader: (File) -> Config = Config.Companion::parseYaml): MpbConfig {
+        val EMPTY = File("")
+
+        fun baseDir(cfg: Config) = cfg.get("base").file ?: EMPTY
+
+        fun parse(list: Array<String>): MpbConfig {
             val args = Config.parseArgs(list)
-            val file = baseDir(args).resolve(args.get("config").file ?: File("mpb.yaml"))
+            val base = baseDir(args)
+            val configs = args.get("config").files.ifEmpty { listOf(File("mpb.yaml")) }.map { base.resolve(it) }
 
             val merged = ConfigRoot()
-            if (file.exists()) {
-                merged.merge(yamlLoader(file).value)
+            for (config in configs) {
+                merged.merge(loadYamlIfExists(config))
             }
             merged.merge(args.value)
-
             return fromConfig(merged)
         }
 
-        fun baseDir(cfg: Config) = cfg.get("base").file ?: File("").absoluteFile
+        fun loadYamlIfExists(file: File): Any? {
+            try {
+                return YamlLoader.load(file)
+            } catch (e: FileNotFoundException) {
+                AnsiConsole.err().println(Ansi.ansi()
+                    .fgBrightYellow().a("[warn] config file ${file.absoluteFile} doesn't exists").reset()
+                )
+                return null
+            }
+        }
 
         fun fromConfig(cfg: Config): MpbConfig {
             val base = baseDir(cfg)

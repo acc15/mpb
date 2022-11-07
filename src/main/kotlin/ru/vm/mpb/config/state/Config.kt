@@ -159,12 +159,6 @@ abstract class Config(private val mutator: ConfigMutator) {
             return state
         }
 
-        fun parseYaml(loader: (Yaml) -> Map<String, Any>): Config = ConfigMap(loader(Yaml()).toMutableMap()) {}
-        fun parseYaml(stream: InputStream) = parseYaml { yaml -> yaml.load(stream) }
-        fun parseYaml(reader: Reader) = parseYaml { yaml -> yaml.load(reader) }
-        fun parseYaml(file: File) = FileReader(file).use { parseYaml(it) }
-        fun parseYaml(url: URL) = url.openStream().use { parseYaml(it) }
-
         @Suppress("UNCHECKED_CAST")
         fun <T> mapByType(
             value: Any?,

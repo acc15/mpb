@@ -1,9 +1,12 @@
 package ru.vm.mpb.config
 
-import org.junit.jupiter.api.Test
+import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.unmockkAll
 import ru.vm.mpb.config.state.*
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import java.io.File
+import java.io.Reader
+import kotlin.test.*
 
 val testConfig get() = mapOf(
     "name" to "test",
@@ -74,9 +77,19 @@ fun equalBranchPattern(b1: BranchPattern, b2: BranchPattern) =
 
 class MpbConfigTest {
 
+    @BeforeTest
+    fun setUp() {
+        mockkObject(YamlLoader)
+        every { YamlLoader.load(File("mpb.yaml")) } returns testConfig
+    }
+
+    @AfterTest
+    fun tearDown() {
+        unmockkAll()
+    }
+
     @Test
     fun parse() {
-
         val config = MpbConfig.parse(arrayOf(
             "pull",
             "--debug",
@@ -86,7 +99,7 @@ class MpbConfigTest {
             "--branch.patterns[1].input", "i2",
             "--branch.patterns[1].branch", "p2",
             "--branch.patterns[1].index", "last"
-        )) { ConfigRoot(testConfig) }
+        ))
 
         assertEquals(true, config.debug)
         assertEquals("pull", config.args.command)

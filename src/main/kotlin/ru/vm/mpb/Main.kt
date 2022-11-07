@@ -36,8 +36,8 @@ fun printHelp(out: AnsiPrintStream, cfg: MpbConfig, msg: String = "") {
 }
 
 fun main(args: Array<String>) {
-    val cfg = MpbConfig.parse(args)
     val success = withAnsi {
+        val cfg = MpbConfig.parse(args)
         runBlocking(Dispatchers.Default) {
             runProgram(this, cfg)
         }
