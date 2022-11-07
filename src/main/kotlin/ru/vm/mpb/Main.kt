@@ -20,8 +20,6 @@ val ALL_CMDS = listOf(
     CheckoutCmd,
     BuildCmd,
     PullCmd,
-    InstallCmd,
-    UninstallCmd,
     TestCmd
 )
 
