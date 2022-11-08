@@ -25,9 +25,21 @@ class YamlLoaderTest {
     }
 
     @Test
+    fun loadObjectYaml() {
+        val value = YamlLoader.load(StringReader("{a: b}"))
+        assertEquals(mapOf("a" to "b"), value)
+    }
+
+    @Test
     fun loadEmptyYaml() {
         val state = YamlLoader.load(StringReader(""))
         assertNull(state)
+    }
+
+    @Test
+    fun loadMultiYaml() {
+        val state = YamlLoader.load(StringReader("a: b\n###\nc: d"))
+        assertEquals(mapOf("a" to "b", "c" to "d"), state)
     }
 
 }

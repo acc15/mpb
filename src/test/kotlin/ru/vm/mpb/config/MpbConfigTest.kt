@@ -5,7 +5,6 @@ import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import ru.vm.mpb.config.state.*
 import java.io.File
-import java.io.Reader
 import kotlin.test.*
 
 val testConfig get() = mapOf(
@@ -80,7 +79,6 @@ class MpbConfigTest {
     @BeforeTest
     fun setUp() {
         mockkObject(YamlLoader)
-        every { YamlLoader.load(File("mpb.yaml")) } returns testConfig
     }
 
     @AfterTest
@@ -88,8 +86,13 @@ class MpbConfigTest {
         unmockkAll()
     }
 
+    val fsRoot: File = MpbPath.cwd.absoluteFile.toPath().root.toFile()
+
     @Test
     fun parse() {
+
+        every { YamlLoader.load(MpbPath.home.resolve("mpb.yaml")) } returns testConfig
+
         val config = MpbConfig.parse(arrayOf(
             "pull",
             "--debug",
@@ -101,6 +104,7 @@ class MpbConfigTest {
             "--branch.patterns[1].index", "last"
         ))
 
+        assertEquals("test", config.name)
         assertEquals(true, config.debug)
         assertEquals("pull", config.args.command)
         assertEquals(listOf("a", "b"), config.args.common)
@@ -110,4 +114,44 @@ class MpbConfigTest {
 
     }
 
-}
+    @Test
+    fun mustUseConfigParameter() {
+        val config = fsRoot.resolve("test").resolve("config.yaml")
+        every { YamlLoader.load(config) } returns mapOf("name" to "custom")
+
+        val cfg = MpbConfig.parse(arrayOf("--config", config.path))
+        assertEquals("custom", cfg.name)
+    }
+
+    @Test
+    fun canLoadNestedConfig() {
+        val config = fsRoot.resolve("test").resolve("config.yaml")
+        every { YamlLoader.load(config) } returns mapOf("name" to "custom")
+        every { YamlLoader.load(MpbPath.home.resolve("mpb.yaml")) } returns mapOf("config" to config.path)
+
+        val cfg = MpbConfig.parse(emptyArray())
+        assertEquals("custom", cfg.name)
+    }
+
+    @Test
+    fun nestedConfigsMustBeRelativeToCurrent() {
+        val root = fsRoot.resolve("test").resolve("root.yaml")
+        val custom = fsRoot.resolve("test").resolve("custom.yaml")
+        every { YamlLoader.load(root) } returns mapOf("config" to "custom.yaml")
+        every { YamlLoader.load(custom) } returns mapOf("name" to "a")
+
+        val cfg = MpbConfig.parse(emptyArray())
+        assertEquals("a", cfg.name)
+    }
+
+    @Test
+    fun rootConfigOverridesNestedConfig() {
+        val config = fsRoot.resolve("test").resolve("config.yaml")
+        every { YamlLoader.load(MpbPath.home.resolve("mpb.yaml")) } returns mapOf("config" to config.path, "name" to "b")
+        every { YamlLoader.load(config) } returns mapOf("name" to "a")
+
+        val cfg = MpbConfig.parse(emptyArray())
+        assertEquals("b", cfg.name)
+    }
+
+ }

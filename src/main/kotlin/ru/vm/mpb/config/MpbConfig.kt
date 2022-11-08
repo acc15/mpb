@@ -23,70 +23,35 @@ data class MpbConfig(
     val build: Map<String, BuildConfig>,
     val includes: IncludeExclude<String>,
     val args: ArgConfig,
-    val profiles: List<String>
 ) {
 
     companion object {
 
-        fun baseDir(cfg: Config, defaultBase: File) = cfg.get("base").file ?: defaultBase
-        fun resolveBase(base: File, files: List<File>) = files.map { base.resolve(it) }
-
         fun parse(list: Array<String>): MpbConfig {
             val args = Config.parseArgs(list)
             val cfg = ConfigRoot()
-
-            mergeYamls(
-                resolveBase(
-                    baseDir(args, MpbPath.home),
-                    args.get("config").files.ifEmpty { listOf(File("mpb.yaml")) }
-                ),
-                cfg
-            )
-
-            mergeProfiles(cfg, args.get("profile").stringSet)
+            val files = args.get("config").files.ifEmpty { listOf(File("mpb.yaml")) }.map { MpbPath.home.resolve(it) }
+            mergeYamls(files, cfg)
             cfg.merge(args.value)
-
             return fromConfig(cfg)
         }
 
-        fun mergeProfiles(cfg: Config, profiles: Iterable<String>) {
-            for (profile in profiles) {
-
-                val profileCfg = cfg.get("profiles").get(profile)
-                val profileBase = baseDir(profileCfg, baseDir(cfg, MpbPath.home))
-                val profileFiles = profileCfg.get("config").files.map { profileBase.resolve(it) }
-
-                cfg.merge(profileCfg)
-                mergeYamls(profileFiles, cfg)
-
-            }
-        }
-
         fun mergeYamls(files: List<File>, dest: Config) {
-            dfs(files, { file ->
-
+            for (file in files) {
                 val yaml = try {
                     YamlLoader.load(file)
                 } catch (e: FileNotFoundException) {
                     AnsiConsole.err().println(Ansi.ansi()
                         .fgYellow().bold().a("[warn]").reset().a(" config file ${file.absoluteFile} doesn't exists")
                     )
-                    return@dfs emptyList()
+                    continue
                 }
                 dest.merge(yaml)
-
-                val cfg = Config.ofImmutable(yaml)
-                resolveBase(baseDir(cfg, file.parentFile), cfg.get("config").files)
-
-            }, onCycle = { cycle ->
-                AnsiConsole.err().println(Ansi.ansi()
-                    .fgRed().bold().a("[error]").reset().a(" config cycle detected $cycle")
-                )
-            })
+            }
         }
 
         fun fromConfig(cfg: Config): MpbConfig {
-            val base = baseDir(cfg, MpbPath.home)
+            val base = cfg.get("base").file ?: MpbPath.home
             val path = PathConfig.fromConfig(cfg, base)
             val build = cfg.get("build")
             val projects = cfg.get("projects").configMap.mapValues { (k, c) ->
@@ -105,9 +70,7 @@ data class MpbConfig(
                 TicketConfig.fromConfig(cfg.get("ticket"), base),
                 build.configMap.mapValues { (_, c) -> BuildConfig.fromConfig(c, build, null) },
                 filters,
-                ArgConfig.fromConfig(cfg, projects.keys, filters),
-                cfg.get("profiles").map.keys.toList()
-            )
+                ArgConfig.fromConfig(cfg, projects.keys, filters))
         }
 
     }
