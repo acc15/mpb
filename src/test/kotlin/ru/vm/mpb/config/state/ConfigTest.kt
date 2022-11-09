@@ -141,27 +141,6 @@ class ConfigTest {
     }
 
     @TestFactory
-    fun parsePath() = mapOf(
-        "" to emptyList(),
-        "a.b[0][1].c.d" to listOf("a", "b", 0, 1, "c", "d"),
-        ".abc" to listOf("", "abc"),
-        "[].abc" to listOf("", "abc"),
-        "..." to listOf("", "", ""),
-        "[ 15 ]" to listOf(15),
-        "15" to listOf("15"),
-        "abc[xyz]" to listOf("abc", "xyz"),
-        "[abc][xyz]" to listOf("abc", "xyz"),
-        "[[abc]]" to listOf("[abc]"),
-        "[abc].[xyz]" to listOf("abc", "", "xyz"),
-    ).map {
-        DynamicTest.dynamicTest("parseConfigPath: ${it.key}") {
-            val actualSegments = Config.parsePath(it.key)
-            val expectedSegments = it.value
-            assertEquals(expectedSegments, actualSegments)
-        }
-    }
-
-    @TestFactory
     fun parseArgs() = listOf(
         testArgs to mapOf(
             "args" to mapOf("" to "pull", "a" to listOf("a", "b")),
@@ -198,14 +177,14 @@ class ConfigTest {
 
     @Test
     fun mergeAll() {
-        val m1 = mutableMapOf("a" to 1)
-        val m2 = mutableMapOf("b" to 2)
+        val m1 = Config.ofImmutable(mutableMapOf("a" to 1))
+        val m2 = Config.ofImmutable(mutableMapOf("b" to 2))
 
-        val m = Config.mergeAll(listOf(m1, m2))
+        val m = Config.mergeAll(m1, m2)
 
         assertEquals(m.value, mapOf("a" to 1, "b" to 2))
-        assertEquals(m1, mapOf("a" to 1))
-        assertEquals(m2, mapOf("b" to 2))
+        assertEquals(m1.value, mapOf("a" to 1))
+        assertEquals(m2.value, mapOf("b" to 2))
     }
 
     @Test

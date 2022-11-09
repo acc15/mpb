@@ -1,7 +1,6 @@
 package ru.vm.mpb.config.state
 
 import java.io.File
-import java.lang.StringBuilder
 import java.lang.UnsupportedOperationException
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -45,7 +44,7 @@ abstract class Config(private val mutator: ConfigMutator) {
 
     // Path functions
 
-    fun path(p: String) = path(parsePath(p))
+    fun path(p: String) = path(ConfigPath.parse(p))
     fun path(p: List<Any>) = p.fold(this) { s, k -> if (k is Int) s.get(k) else s.get(k as String) }
 
     // Converting functions
@@ -86,55 +85,9 @@ abstract class Config(private val mutator: ConfigMutator) {
             { plain -> ConfigPlain(plain, mutator) }
         )
 
-        fun parsePath(str: String): List<Any> {
-
-            val segments = mutableListOf<Any>()
-            val segment = StringBuilder()
-            var indexDepth = 0
-
-            fun flush(allowEmpty: Boolean) {
-                if (segment.isEmpty() && !allowEmpty) {
-                    return
-                }
-                segments.add(segment.toString().let {
-                    if (indexDepth == 1) (it.trim().toIntOrNull() ?: it) else it
-                })
-                segment.clear()
-            }
-
-            for ((i, ch) in str.withIndex()) {
-                when {
-                    indexDepth == 0 && ch == '.' -> {
-                        flush(i == 0 || str[i - 1] != ']')
-                        continue
-                    }
-                    indexDepth == 0 && ch == '[' -> {
-                        flush(i > 0 && str[i - 1] == '.')
-                        ++indexDepth
-                        continue
-                    }
-                    indexDepth > 0 && ch == '[' -> {
-                        ++indexDepth
-                    }
-                    indexDepth > 1 && ch == ']' -> {
-                        --indexDepth
-                    }
-                    indexDepth == 1 && ch == ']' -> {
-                        flush(true)
-                        indexDepth = 0
-                        continue
-                    }
-                }
-                segment.append(ch)
-            }
-            flush(false)
-
-            return segments
-        }
-
         fun parseArgs(vararg args: String): Config {
             val optPrefix = "--"
-            val defaultPath = parsePath("args")
+            val defaultPath = ConfigPath.parse("args")
             val state = ConfigMap(mutableMapOf()) {}
 
             val values = mutableListOf<String>()
@@ -153,7 +106,7 @@ abstract class Config(private val mutator: ConfigMutator) {
             for (a in args) {
                 if (a.startsWith(optPrefix)) {
                     flush()
-                    path = parsePath(a.substring(optPrefix.length)).ifEmpty { defaultPath }
+                    path = ConfigPath.parse(a.substring(optPrefix.length)).ifEmpty { defaultPath }
                     continue
                 }
                 values.add(a)
