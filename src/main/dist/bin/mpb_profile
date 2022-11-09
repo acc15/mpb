@@ -1,0 +1,17 @@
+# This script is intended to be sourced (from alias or bash function)
+
+mpb_bin=$( dirname -- "$0" )
+mpb_profile() {
+  MPB_PROFILE="$1" "$mpb_bin/mpb" "${@:2}"
+
+  local exit=$?
+  local cd='/tmp/mpb_cd.txt'
+  if [[ -f "$cd" ]]; then
+      cd $(cat "$cd")
+      rm "$cd"
+  fi
+
+  return $exit
+}
+
+mpb_profile "$@"
