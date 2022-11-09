@@ -33,6 +33,9 @@ tasks.installDist {
     if (dir != null) {
         destinationDir = File(dir.toString())
     }
+    preserve {
+        include("mpb.yaml")
+    }
 }
 
 application {
