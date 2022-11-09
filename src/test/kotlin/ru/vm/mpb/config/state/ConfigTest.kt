@@ -191,7 +191,7 @@ class ConfigTest {
     ).map {
         DynamicTest.dynamicTest("parseConfigArgs: ${it.first}") {
             val expected = it.second
-            val actual = Config.parseArgs(it.first).value
+            val actual = Config.parseArgs(*it.first).value
             assertEquals(expected, actual)
         }
     }

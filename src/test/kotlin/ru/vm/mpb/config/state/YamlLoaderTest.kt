@@ -4,6 +4,7 @@ import kotlin.test.*
 
 import org.junit.jupiter.api.Assertions.*
 import ru.vm.mpb.config.MpbConfigTest
+import ru.vm.mpb.config.loader.YamlLoader
 import ru.vm.mpb.config.testConfig
 import java.io.InputStreamReader
 import java.io.StringReader

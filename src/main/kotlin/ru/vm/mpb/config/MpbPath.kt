@@ -1,23 +1,26 @@
 package ru.vm.mpb.config
 
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.Path
 
 object MpbPath {
 
-    val cwd = File("").absoluteFile
+    val cwd = Path("").toAbsolutePath()
     val home = determineAppHome()
 
-    private fun determineAppHome(): File {
+    private fun determineAppHome(): Path {
         val envHome = System.getenv("MPB_HOME")
         if (envHome != null) {
-            return File(envHome)
+            return Path(envHome)
         }
 
         val sourcePath = MpbPath::class.java.protectionDomain.codeSource.location.path
         if (sourcePath.endsWith(".jar")) {
-            val sourceFile = File(sourcePath)
-            if (sourceFile.exists()) {
-                return sourceFile.parentFile.parentFile
+            val sourceFile = Path(sourcePath)
+            if (Files.exists(sourceFile)) {
+                return sourceFile.parent.parent
             }
         }
 

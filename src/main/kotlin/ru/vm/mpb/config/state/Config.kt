@@ -1,13 +1,10 @@
 package ru.vm.mpb.config.state
 
-import org.yaml.snakeyaml.Yaml
 import java.io.File
-import java.io.FileReader
-import java.io.InputStream
-import java.io.Reader
 import java.lang.StringBuilder
 import java.lang.UnsupportedOperationException
-import java.net.URL
+import java.nio.file.Path
+import kotlin.io.path.Path
 
 /*
  *  State mutation rules:
@@ -44,6 +41,8 @@ abstract class Config(private val mutator: ConfigMutator) {
         mutator(other)
     }
 
+    fun remove() = set(null)
+
     // Path functions
 
     fun path(p: String) = path(parsePath(p))
@@ -66,8 +65,12 @@ abstract class Config(private val mutator: ConfigMutator) {
     }
 
     val flag: Boolean get() = plain?.let { it as? Boolean ?: (it as? String)?.toBoolean() } ?: false
-    val file: File? get() = string?.let { File(it) }
-    val files: List<File> get() = stringList.map { File(it) }
+
+    val file: File? get() = string?.let(::File)
+    val files: List<File> get() = stringList.map(::File)
+
+    val path: Path? get() = string?.let(::Path)
+    val paths: List<Path> get() = stringList.map(::Path)
 
     companion object {
 
@@ -129,7 +132,7 @@ abstract class Config(private val mutator: ConfigMutator) {
             return segments
         }
 
-        fun parseArgs(args: Array<String>): Config {
+        fun parseArgs(vararg args: String): Config {
             val optPrefix = "--"
             val defaultPath = parsePath("args")
             val state = ConfigMap(mutableMapOf()) {}

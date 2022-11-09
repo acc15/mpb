@@ -20,7 +20,7 @@ data class ProjectContext(
     fun print(str: Any?, status: PrintStatus = PrintStatus.MESSAGE, key: String = this.key) =
         cmd.print(str, status, key)
 
-    fun exec(vararg cmdline: String) = cmd.exec(*cmdline).directory(info.dir)
-    fun exec(cmdline: List<String>) = cmd.exec(cmdline).directory(info.dir)
+    fun exec(vararg cmdline: String) = cmd.exec(*cmdline).directory(info.dir.toFile())
+    fun exec(cmdline: List<String>) = cmd.exec(cmdline).directory(info.dir.toFile())
 
 }

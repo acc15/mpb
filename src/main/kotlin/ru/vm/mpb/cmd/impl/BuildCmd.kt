@@ -16,7 +16,9 @@ import ru.vm.mpb.util.dfs
 import ru.vm.mpb.util.environment
 import ru.vm.mpb.util.pretty
 import ru.vm.mpb.util.redirectBoth
+import java.nio.file.Files
 import java.time.Duration
+import kotlin.io.path.outputStream
 
 object BuildCmd: Cmd {
 
@@ -97,7 +99,7 @@ object BuildCmd: Cmd {
         val command = ctx.build.getCommandLine(args.firstOrNull())
         val buildStart = System.nanoTime()
 
-        ctx.info.log.parentFile.mkdirs()
+        Files.createDirectories(ctx.info.log.parent)
         val process = ctx.exec(command)
             .redirectBoth(ProcessBuilder.Redirect.PIPE)
             .environment(ctx.build.env)

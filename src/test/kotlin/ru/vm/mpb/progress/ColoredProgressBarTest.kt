@@ -7,7 +7,7 @@ class ColoredProgressBarTest {
 
 
     @Test
-    // @Ignore
+    @Ignore
     fun animation() {
         ProgressBarTester(ColoredProgressBar(50), 100).test { i ->
             current = i

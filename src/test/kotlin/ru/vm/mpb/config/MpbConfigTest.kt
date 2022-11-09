@@ -3,8 +3,7 @@ package ru.vm.mpb.config
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import ru.vm.mpb.config.state.*
-import java.io.File
+import ru.vm.mpb.config.loader.YamlLoader
 import kotlin.test.*
 
 val testConfig get() = mapOf(
@@ -86,14 +85,12 @@ class MpbConfigTest {
         unmockkAll()
     }
 
-    val fsRoot: File = MpbPath.cwd.absoluteFile.toPath().root.toFile()
-
     @Test
     fun parse() {
 
         every { YamlLoader.load(MpbPath.home.resolve("mpb.yaml")) } returns testConfig
 
-        val config = MpbConfig.parse(arrayOf(
+        val config = MpbConfig.parse(
             "pull",
             "--debug",
             "--", "a", "b",
@@ -102,7 +99,7 @@ class MpbConfigTest {
             "--branch.patterns[1].input", "i2",
             "--branch.patterns[1].branch", "p2",
             "--branch.patterns[1].index", "last"
-        ))
+        )
 
         assertEquals("test", config.name)
         assertEquals(true, config.debug)
@@ -114,44 +111,30 @@ class MpbConfigTest {
 
     }
 
-    @Test
-    fun mustUseConfigParameter() {
-        val config = fsRoot.resolve("test").resolve("config.yaml")
-        every { YamlLoader.load(config) } returns mapOf("name" to "custom")
+    /*
+    ### mpb.yaml
+    config: b.yaml
+    name: a
 
-        val cfg = MpbConfig.parse(arrayOf("--config", config.path))
-        assertEquals("custom", cfg.name)
-    }
+### b.yaml
+    name: b
+    profiles:
+        a:
+            config: c.yaml
+            name: f # overrides 'c'
+            # name: e # overrides 'f' from profile 'a' of c.yaml
 
-    @Test
-    fun canLoadNestedConfig() {
-        val config = fsRoot.resolve("test").resolve("config.yaml")
-        every { YamlLoader.load(config) } returns mapOf("name" to "custom")
-        every { YamlLoader.load(MpbPath.home.resolve("mpb.yaml")) } returns mapOf("config" to config.path)
+### c.yaml
+    name: c
+    profiles:
+        a:
+            name: e
 
-        val cfg = MpbConfig.parse(emptyArray())
-        assertEquals("custom", cfg.name)
-    }
+###
+Merge order
+# no profile - b.yaml [base], mpb.yaml [base]
+# a profile - b.yaml [base], mpb.yaml [base], c.yaml [base], b.yaml [profile 'a'], c.yaml [profile 'a']
 
-    @Test
-    fun nestedConfigsMustBeRelativeToCurrent() {
-        val root = fsRoot.resolve("test").resolve("root.yaml")
-        val custom = fsRoot.resolve("test").resolve("custom.yaml")
-        every { YamlLoader.load(root) } returns mapOf("config" to "custom.yaml")
-        every { YamlLoader.load(custom) } returns mapOf("name" to "a")
-
-        val cfg = MpbConfig.parse(emptyArray())
-        assertEquals("a", cfg.name)
-    }
-
-    @Test
-    fun rootConfigOverridesNestedConfig() {
-        val config = fsRoot.resolve("test").resolve("config.yaml")
-        every { YamlLoader.load(MpbPath.home.resolve("mpb.yaml")) } returns mapOf("config" to config.path, "name" to "b")
-        every { YamlLoader.load(config) } returns mapOf("name" to "a")
-
-        val cfg = MpbConfig.parse(emptyArray())
-        assertEquals("b", cfg.name)
-    }
+     */
 
  }

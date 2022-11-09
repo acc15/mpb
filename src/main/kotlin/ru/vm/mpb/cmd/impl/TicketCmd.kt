@@ -32,7 +32,7 @@ object TicketCmd: Cmd {
 
         val desc = ctx.args.drop(1).joinToString(" ").replace(' ', '_').ifBlank { null }
 
-        val ticketDir = ctx.cfg.ticket.dir.toPath()
+        val ticketDir = ctx.cfg.ticket.dir
         val suggestedDir = ticketDir.resolve(desc?.let { "${t.id}_${it}" } ?: t.id)
 
         ctx.print("looking for same ticket dirs")
