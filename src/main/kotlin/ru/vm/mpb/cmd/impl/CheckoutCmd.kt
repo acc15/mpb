@@ -28,7 +28,7 @@ object CheckoutCmd: ProjectCmd {
             return subject
         }
 
-        val branches = ctx.exec("git", "branch", "-r").lines().map { it.substring(2) }
+        val branches = ctx.exec("git", "--no-pager", "branch", "-r").lines().map { it.substring(2) }
         return patterns.firstNotNullOfOrNull { it.findBranch(subject, branches) } ?: subject
     }
 
@@ -39,20 +39,24 @@ object CheckoutCmd: ProjectCmd {
             return false
         }
 
-        ctx.print("pulling")
-        if (!ctx.exec("git", "pull", "--rebase").success()) {
-            ctx.print("unable to pull", PrintStatus.ERROR)
-            return false
+        if (!ctx.info.branch.noPull) {
+            ctx.print("pulling")
+            if (!ctx.exec("git", "pull", "--rebase").success()) {
+                ctx.print("unable to pull", PrintStatus.ERROR)
+                return false
+            }
         }
         return true
     }
 
     override suspend fun parallelExecute(ctx: ProjectContext): Boolean = withContext(Dispatchers.IO) {
 
-        ctx.print("fetching all remotes...")
-        if (!ctx.exec("git", "fetch", "--all").success()) {
-            ctx.print("unable to fetch", PrintStatus.ERROR)
-            return@withContext false
+        if (!ctx.info.branch.noFetch) {
+            ctx.print("fetching all remotes...")
+            if (!ctx.exec("git", "fetch", "--all").success()) {
+                ctx.print("unable to fetch", PrintStatus.ERROR)
+                return@withContext false
+            }
         }
 
         val hasChanges = !ctx.exec("git", "diff", "--quiet").success()

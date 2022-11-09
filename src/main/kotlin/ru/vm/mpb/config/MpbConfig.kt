@@ -27,9 +27,8 @@ data class MpbConfig(
         fun fromConfig(cfg: Config): MpbConfig {
             val base = cfg.get("base").path ?: MpbEnv.home
             val path = PathConfig.fromConfig(cfg, base)
-            val build = cfg.get("build")
             val projects = cfg.get("projects").configMap.mapValues { (k, c) ->
-                ProjectConfig.fromConfig(k, c, path, build)
+                ProjectConfig.fromConfig(k, c, path, cfg)
             }
             val filters = IncludeExclude.fromConfig(cfg)
 
@@ -42,7 +41,9 @@ data class MpbConfig(
                 projects,
                 JiraConfig.fromConfig(cfg.get("jira")),
                 TicketConfig.fromConfig(cfg.get("ticket"), base),
-                build.configMap.mapValues { (_, c) -> BuildConfig.fromConfig(c, build, null) },
+                cfg.get("build").configMap.mapValues { (_, c) ->
+                    BuildConfig.fromConfig(BuildConfig.merge(c, cfg, null))
+                },
                 filters,
                 ArgConfig.fromConfig(cfg, projects.keys, filters),
                 cfg.get("profiles").map.keys

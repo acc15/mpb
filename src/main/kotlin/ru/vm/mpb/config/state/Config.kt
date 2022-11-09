@@ -201,13 +201,15 @@ abstract class Config(private val mutator: ConfigMutator) {
             return map
         }
 
-        fun mergeAll(values: List<Any?>): Config {
+        fun mergeAll(values: Iterable<Config>): Config {
             val result = ConfigRoot()
             for (v in values) {
-                result.merge(v)
+                result.merge(v.value)
             }
             return result.state
         }
+
+        fun mergeAll(vararg configs: Config) = mergeAll(configs.toList())
 
     }
 
