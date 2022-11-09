@@ -33,8 +33,13 @@ tasks.installDist {
     if (dir != null) {
         destinationDir = File(dir.toString())
     }
+
+    val configFile = "mpb.yaml"
+    if (destinationDir.resolve(configFile).exists()) {
+        exclude(configFile)
+    }
     preserve {
-        include("mpb.yaml")
+        include(configFile)
     }
 }
 

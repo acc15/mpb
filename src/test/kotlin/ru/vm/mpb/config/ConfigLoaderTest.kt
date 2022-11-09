@@ -194,7 +194,7 @@ class ConfigLoaderTest {
             ),
             "mpb.yaml" to mapOf(
                 "config" to "parent.yaml",
-                "base" to true,
+                "mpb" to true,
                 "profiles" to mapOf(
                     "a" to mapOf(
                         "config" to "profile.yaml",
@@ -216,7 +216,7 @@ class ConfigLoaderTest {
         val keys = c1.map.keys.toList()
         assertContentEquals(listOf(
             "parent-base",
-            "base",
+            "mpb",
             "parent-profile-base",
             "parent-profile-profile",
             "parent-profile",
