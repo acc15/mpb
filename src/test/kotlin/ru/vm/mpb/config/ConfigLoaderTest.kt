@@ -226,4 +226,18 @@ class ConfigLoaderTest {
         ), keys)
 
     }
+
+    @Test
+    fun mustUseBaseForLoadingConfigs() {
+
+        mockYamls(
+            "mpb.yaml" to mapOf("base" to "/custom-base", "config" to "mpb.yaml"),
+            "/custom-base/mpb.yaml" to mapOf("custom-base" to true)
+        )
+
+        val cfg = ConfigLoader.load()
+        assertEquals(true, cfg.get("custom-base").value)
+
+    }
+
 }

@@ -64,7 +64,7 @@ object ConfigLoader {
                     continue
                 }
 
-                val parent = loadPaths(configPaths(cfg, item.path.parent), item.profile)
+                val parent = loadPaths(configPaths(cfg, cfg.get("base").path ?: item.path.parent), item.profile)
                 if (parent.isNotEmpty()) {
                     process.addAll(0, parent)
                     continue
