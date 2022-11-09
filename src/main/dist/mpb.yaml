@@ -1,0 +1,69 @@
+# Configuration file for MPB
+
+# program name (used in help printing) - may be useful when u use bash aliases or windows doskey
+name: mpb
+
+# base directory for all other paths
+base: /home/acc15/MyProgs/it-one/epgu
+
+# branch configuration
+branch:
+
+  # global default branch (can be overriden in projects) - used in checkout command
+  default: branch-prod-fed
+
+  # patterns for simplified branch names
+  patterns:
+    - input: '^(\d+)$'
+      branch: '^origin/(rc/3\.$1\..*)$'
+      index: last
+build:
+  default:
+    tool: [mvn, -B, -T, 1C]
+    env:
+      JAVA_HOME: /usr/lib/jvm/java-11-openjdk
+    commands:
+      default: [clean, install]
+      nt: [clean, install, -Dmaven.test.skip=true]
+    progress:
+      cmd: [mvn, buildplan:list, '-Dbuildplan.tasks=clean,install']
+      plan:
+        patterns:
+          - '^\[INFO] --- buildplan-maven-plugin:.+?:list \(.+?\) @ (?<project>\S+) ---$'
+          - '^\S+\s*\|\s*\S+\s*\|\s*\S+\s*\|\s*(?!ID)(?<id>\S+)\s*$'
+        replacement: '${project}@${id}'
+      build:
+        patterns:
+          - '^\[INFO] --- [^:]+:[^:]+:\S+ \((?<id>\S+)\) @ (?<project>\S+) ---$'
+        replacement: '${project}@${id}'
+  mvn17:
+    use: default
+    env:
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk
+  yarn:
+    tool: [yarn]
+    commands:
+      default: [install]
+projects:
+  p1:
+    dir: custom-p4
+  p2:
+    dir: p2
+    deps: [p1]
+  p3:
+    dir: custom-p4
+    deps: [p1]
+  p4:
+    dir: custom-p4
+    build:
+      use: yarn
+jira:
+  url: https://jira/browse
+  project: JIRA
+ticket:
+  dir: tasks
+
+profiles:
+  a:
+    config: /home/user/mpb/mpb.yaml
+    base: /home/user/mpb
