@@ -17,6 +17,7 @@ data class MpbConfig(
     val build: Map<String, BuildConfig>,
     val includes: IncludeExclude<String>,
     val args: ArgConfig,
+    val profiles: Set<String>
 ) {
 
     companion object {
@@ -43,7 +44,9 @@ data class MpbConfig(
                 TicketConfig.fromConfig(cfg.get("ticket"), base),
                 build.configMap.mapValues { (_, c) -> BuildConfig.fromConfig(c, build, null) },
                 filters,
-                ArgConfig.fromConfig(cfg, projects.keys, filters))
+                ArgConfig.fromConfig(cfg, projects.keys, filters),
+                cfg.get("profiles").map.keys
+            )
         }
 
     }

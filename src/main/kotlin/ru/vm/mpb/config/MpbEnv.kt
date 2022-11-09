@@ -9,6 +9,7 @@ object MpbEnv {
     val profiles: Set<String> = System.getenv("MPB_PROFILE")?.split(" ")?.let { LinkedHashSet(it) }.orEmpty()
     val cwd = Path("").toAbsolutePath()
     val home = determineAppHome()
+    val cd = Path(System.getProperty("java.io.tmpdir"), "mpb_cd.txt")
 
     private fun determineAppHome(): Path {
         val envHome = System.getenv("MPB_HOME")

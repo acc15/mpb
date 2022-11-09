@@ -128,7 +128,7 @@ class ConfigLoaderTest {
         )
 
         val cfg = ConfigLoader.load("--config", "a.yaml", "--profile", "a")
-        assertEquals(emptyMap<String, Any>(), cfg.value)
+        assertNotNull(cfg.value)
     }
 
     @Test
@@ -149,7 +149,7 @@ class ConfigLoaderTest {
         )
 
         val cfg = ConfigLoader.load("--config", "a.yaml", "--profile", "a")
-        assertEquals(emptyMap<String, Any>(), cfg.value)
+        assertNotNull(cfg.value)
     }
 
 
@@ -168,7 +168,7 @@ class ConfigLoaderTest {
         )
 
         val cfg = ConfigLoader.load("--config", "a.yaml")
-        assertEquals(mapOf("test" to true), cfg.value)
+        assertEquals(true, cfg.get("test").value)
     }
 
     @Test
@@ -216,6 +216,7 @@ class ConfigLoaderTest {
         val keys = c1.map.keys.toList()
         assertContentEquals(listOf(
             "parent-base",
+            "profiles",
             "mpb",
             "parent-profile-base",
             "parent-profile-profile",

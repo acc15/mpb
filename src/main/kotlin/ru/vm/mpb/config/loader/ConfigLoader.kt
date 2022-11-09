@@ -12,7 +12,7 @@ import kotlin.collections.LinkedHashSet
 
 object ConfigLoader {
 
-    private val cleanupKeys = setOf("profiles", "profile", "config")
+    private val cleanupKeys = setOf("profile", "config")
 
     fun configPaths(cfg: Config, base: Path? = null, defaultFn: (() -> List<Path>)? = null): List<Path> {
         val list = cfg.get("config").paths
