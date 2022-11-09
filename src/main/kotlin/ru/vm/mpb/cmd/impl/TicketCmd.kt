@@ -38,28 +38,24 @@ object TicketCmd: Cmd {
 
         ctx.print("looking for same ticket dirs")
         val ticketDirs = withContext(Dispatchers.IO) {
-            Files.list(ticketDir)
-                .filter { Files.isDirectory(it) }
+            ticketDir.listDirectoryEntries()
+                .filter { it.isDirectory() }
                 .filter { it.name.startsWith(t.id) }
-                .collect(Collectors.toCollection(::HashSet))
+                .toMutableSet()
         }
-        ticketDirs.add(suggestedDir)
 
-        val targetDir = if (overwrite) suggestedDir else ticketDirs.maxBy { it.name.length }
+        val targetDir = if (overwrite || ticketDirs.isEmpty()) suggestedDir else ticketDirs.maxBy { it.name.length }
+
         ticketDirs.remove(targetDir)
+        if (!targetDir.isDirectory()) {
+            ctx.print("creating $targetDir")
+            targetDir.deleteIfExists()
+            targetDir.createDirectory()
+        }
 
-        if (ticketDirs.isEmpty()) {
-            if (!targetDir.isDirectory()) {
-                ctx.print("creating $targetDir")
-                targetDir.deleteIfExists()
-                targetDir.createDirectory()
-            }
-        } else {
-            ctx.print("merging $ticketDirs to $targetDir...")
-            for (d in ticketDirs) {
-                ctx.print("moving $d to $targetDir")
-                deepMove(d, targetDir)
-            }
+        for (d in ticketDirs) {
+            ctx.print("moving $d to $targetDir")
+            deepMove(d, targetDir)
         }
 
         ctx.print("done: $targetDir", PrintStatus.SUCCESS)
