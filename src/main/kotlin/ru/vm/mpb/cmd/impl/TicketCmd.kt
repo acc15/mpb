@@ -7,7 +7,7 @@ import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ctx.CmdContext
 import ru.vm.mpb.printer.PrintStatus
 import ru.vm.mpb.util.JiraTicket
-import ru.vm.mpb.util.deepMove
+import ru.vm.mpb.io.deepMove
 import java.nio.file.Files
 import java.util.stream.Collectors
 import kotlin.io.path.*

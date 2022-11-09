@@ -8,7 +8,7 @@ import org.fusesource.jansi.Ansi
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.cmd.impl.BuildStatus
 import ru.vm.mpb.progressbar.ColoredProgressBar
-import ru.vm.mpb.util.readFully
+import ru.vm.mpb.io.readFully
 import java.io.InputStream
 
 class BuildPlanProgress(val ctx: ProjectContext, val progress: ColoredProgressBar): BuildProgress {

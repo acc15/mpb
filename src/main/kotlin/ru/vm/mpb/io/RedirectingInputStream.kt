@@ -4,7 +4,10 @@ import java.io.FilterInputStream
 import java.io.InputStream
 import java.io.OutputStream
 
-class RedirectingInputStream(inputStream: InputStream, val sink: OutputStream): FilterInputStream(inputStream) {
+class RedirectingInputStream(
+    inputStream: InputStream,
+    val sink: OutputStream
+): FilterInputStream(inputStream) {
 
     override fun read(): Int {
         val byte = super.read()

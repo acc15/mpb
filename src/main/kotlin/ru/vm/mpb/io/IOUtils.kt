@@ -1,16 +1,10 @@
-package ru.vm.mpb.util
+package ru.vm.mpb.io
 
-import kotlinx.coroutines.*
-import ru.vm.mpb.io.RedirectingInputStream
-import ru.vm.mpb.io.SynchronizedOutputStream
 import java.io.InputStream
-import java.io.InputStreamReader
-import java.io.OutputStream
 import java.nio.file.CopyOption
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.collections.ArrayList
 import kotlin.io.path.*
 

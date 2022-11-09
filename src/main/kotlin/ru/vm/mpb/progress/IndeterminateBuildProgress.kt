@@ -2,9 +2,8 @@ package ru.vm.mpb.progress
 
 import kotlinx.coroutines.*
 import org.fusesource.jansi.Ansi
-import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.progressbar.ProgressBar
-import ru.vm.mpb.util.readFully
+import ru.vm.mpb.io.readFully
 import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
