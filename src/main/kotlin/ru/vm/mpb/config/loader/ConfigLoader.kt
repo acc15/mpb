@@ -2,12 +2,13 @@ package ru.vm.mpb.config.loader
 
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
-import ru.vm.mpb.config.MpbPath
+import ru.vm.mpb.config.MpbEnv
 import ru.vm.mpb.config.state.Config
 import ru.vm.mpb.config.state.ConfigRoot
 import ru.vm.mpb.util.OrderedHashMap
 import java.nio.file.Path
 import java.util.*
+import kotlin.collections.LinkedHashSet
 
 object ConfigLoader {
 
@@ -22,8 +23,8 @@ object ConfigLoader {
     fun load(vararg args: String): Config {
         val argCfg = Config.parseArgs(*args)
 
-        val configPaths = configPaths(argCfg) { listOf(MpbPath.home.resolve("mpb.yaml")) }
-        val activeProfiles = argCfg.get("profile").stringSet
+        val configPaths = configPaths(argCfg) { listOf(MpbEnv.home.resolve("mpb.yaml")) }
+        val activeProfiles = MpbEnv.profiles + argCfg.get("profile").stringSet
 
         val cfg = ConfigRoot()
         mergeConfigs(configPaths, activeProfiles, cfg)

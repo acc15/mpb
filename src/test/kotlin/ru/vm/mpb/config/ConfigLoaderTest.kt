@@ -21,7 +21,7 @@ class ConfigLoaderTest {
         unmockkAll()
     }
 
-    private fun mockYamls(vararg entries: Pair<String, Any?>, relativeTo: Path? = MpbPath.home) {
+    private fun mockYamls(vararg entries: Pair<String, Any?>, relativeTo: Path? = MpbEnv.home) {
         for (f in entries) {
             val p = if (relativeTo != null) relativeTo.resolve(f.first) else Path(f.first)
             every { YamlLoader.load(p) } returns f.second

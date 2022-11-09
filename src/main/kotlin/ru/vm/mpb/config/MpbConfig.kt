@@ -24,7 +24,7 @@ data class MpbConfig(
         fun parse(vararg args: String) = fromConfig(ConfigLoader.load(*args))
 
         fun fromConfig(cfg: Config): MpbConfig {
-            val base = cfg.get("base").path ?: MpbPath.home
+            val base = cfg.get("base").path ?: MpbEnv.home
             val path = PathConfig.fromConfig(cfg, base)
             val build = cfg.get("build")
             val projects = cfg.get("projects").configMap.mapValues { (k, c) ->

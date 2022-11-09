@@ -88,7 +88,7 @@ class MpbConfigTest {
     @Test
     fun parse() {
 
-        every { YamlLoader.load(MpbPath.home.resolve("mpb.yaml")) } returns testConfig
+        every { YamlLoader.load(MpbEnv.home.resolve("mpb.yaml")) } returns testConfig
 
         val config = MpbConfig.parse(
             "pull",
