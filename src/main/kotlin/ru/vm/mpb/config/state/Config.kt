@@ -25,32 +25,31 @@ import kotlin.io.path.Path
  *
  */
 
-typealias ConfigMutator = (Any?) -> Unit
+interface Config {
 
-abstract class Config(private val mutator: ConfigMutator) {
+    // Getters
+    val value: Any?
+    fun get(key: String): Config
+    fun get(index: Int): Config
 
-    // State management
-
-    abstract val value: Any?
-    abstract fun get(key: String): Config
-    abstract fun get(index: Int): Config
-    abstract fun add(other: Any?)
-    abstract fun merge(other: Any?)
-    open fun set(other: Any?) {
-        mutator(other)
-    }
-
+    // Mutators
+    fun add(other: Any?)
+    fun merge(other: Any?)
+    fun set(other: Any?)
     fun remove() = set(null)
 
     // Path functions
-
     fun path(p: String) = path(ConfigPath.parse(p))
     fun path(p: List<Any>) = p.fold(this) { s, k -> if (k is Int) s.get(k) else s.get(k as String) }
 
+    fun shorthand(shorthand: Config = this) = ConfigShorthand(this, ConfigComposite(listOf(shorthand, this)))
+
+    val shorthand: Config get() = this
+
     // Converting functions
-    abstract val list: List<Any?>
-    abstract val map: Map<String, Any>
-    abstract val plain: Any?
+    val list: List<Any?>
+    val map: Map<String, Any>
+    val plain: Any?
 
     val configList: List<Config> get() = list.map { ofImmutable(it) }
     val configMap: Map<String, Config> get() = map.mapValues { ofImmutable(it.value) }
@@ -58,12 +57,26 @@ abstract class Config(private val mutator: ConfigMutator) {
     val string: String? get() = plain?.toString()
     val stringList: List<String> get() = list.mapNotNull { ofImmutable(it).string }
     val stringSet: Set<String> get() = LinkedHashSet(stringList)
+
     val int: Int? get() = plain?.let {
-        (it as? Boolean)?.let { b -> if (b) 1 else 0 }
-        (it as? String)?.toIntOrNull()
+        when (it) {
+            is Boolean -> if (it) 1 else 0
+            is Number -> it.toInt()
+            is String -> it.toIntOrNull()
+            else -> null
+        }
     }
 
-    val flag: Boolean get() = plain?.let { it as? Boolean ?: (it as? String)?.toBoolean() } ?: false
+    val bool: Boolean? get() = plain?.let {
+        when (it) {
+            is Boolean -> it
+            is Number -> it.toInt() != 0
+            is String -> it.toBoolean()
+            else -> null
+        }
+    }
+
+    val flag get() = bool ?: false
 
     val file: File? get() = string?.let(::File)
     val files: List<File> get() = stringList.map(::File)

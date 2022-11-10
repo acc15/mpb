@@ -4,6 +4,7 @@ import org.fusesource.jansi.AnsiConsole
 import org.fusesource.jansi.AnsiType
 import ru.vm.mpb.config.state.Config
 import ru.vm.mpb.ansi.ansi
+import ru.vm.mpb.config.state.ConfigShorthand
 
 private val UNSUPPORTED_TYPES = setOf(
     AnsiType.Unsupported,
@@ -22,12 +23,12 @@ data class OutputConfig(
     fun getWidth(terminalWidth: Int) = if (terminalWidth <= 0) width else terminalWidth
     companion object {
         fun fromConfig(cfg: Config): OutputConfig {
-            val noAnsi = UNSUPPORTED_TYPES.contains(AnsiConsole.out().type) || cfg.get("noAnsi").flag
+            val noAnsi = UNSUPPORTED_TYPES.contains(AnsiConsole.out().type) || cfg.shorthand.get("noAnsi").flag
             return OutputConfig(
                 noAnsi,
-                cfg.get("plain").flag || noAnsi,
-                cfg.get("monochrome").flag || noAnsi,
-                cfg.get("width").int ?: 80
+                cfg.shorthand.get("plain").flag || noAnsi,
+                cfg.shorthand.get("monochrome").flag || noAnsi,
+                cfg.shorthand.get("width").int ?: 80
             )
         }
     }

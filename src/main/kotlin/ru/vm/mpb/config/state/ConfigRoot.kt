@@ -2,10 +2,10 @@ package ru.vm.mpb.config.state
 
 class ConfigRoot(
     override var value: Any? = null,
-    mutator: ConfigMutator = {}
-): Config(mutator) {
+    val mutator: ConfigMutator = {}
+): Config {
 
-    var state: Config = of(value, this::set)
+    var state = Config.of(value, this::set)
         private set
 
     override fun get(key: String) = state.get(key)
@@ -13,9 +13,9 @@ class ConfigRoot(
     override fun add(other: Any?) = state.add(other)
     override fun merge(other: Any?) = state.merge(other)
     override fun set(other: Any?) {
-        super.set(other)
+        mutator(other)
         this.value = other
-        this.state = of(other, this::set)
+        this.state = Config.of(other, this::set)
     }
 
     override val list: List<Any?> get() = state.list

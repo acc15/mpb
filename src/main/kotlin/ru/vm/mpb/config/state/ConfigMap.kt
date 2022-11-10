@@ -3,16 +3,16 @@ package ru.vm.mpb.config.state
 class ConfigMap(
     override val map: Map<String, Any>,
     mutator: ConfigMutator
-): Config(mutator) {
+): AbstractConfig(mutator) {
 
     override val value: Map<String, Any> = map
 
-    override fun get(key: String) = of(map[key]) { applyValues(mutableMap, key to it) }
+    override fun get(key: String) = Config.of(map[key]) { Config.applyValues(mutableMap, key to it) }
     override fun get(index: Int) = get("").get(index)
     override fun add(other: Any?) = get("").add(other)
 
     override fun merge(other: Any?) {
-        mapByType(other,
+        Config.mapByType(other,
             { map ->
                 val mut = ConfigRoot(this.map, this::set)
                 for ((k, v) in map) {

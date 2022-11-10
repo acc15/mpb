@@ -3,14 +3,14 @@ package ru.vm.mpb.config.state
 class ConfigPlain(
     override val value: Any?,
     mutator: ConfigMutator
-): Config(mutator) {
+): AbstractConfig(mutator) {
 
-    override fun get(key: String) = of(null) {
-        if (it != null) set(applyValues(LinkedHashMap(), "" to value, key to it))
+    override fun get(key: String) = Config.of(null) {
+        if (it != null) set(Config.applyValues(LinkedHashMap(), "" to value, key to it))
     }
 
-    override fun get(index: Int) = of(null) {
-        if (it != null) set(applyValues(ArrayList(), 0 to value, index to it))
+    override fun get(index: Int) = Config.of(null) {
+        if (it != null) set(Config.applyValues(ArrayList(), 0 to value, index to it))
     }
 
     override fun add(other: Any?) {
@@ -28,7 +28,7 @@ class ConfigPlain(
     }
 
     override fun merge(other: Any?) {
-        mapByType(other,
+        Config.mapByType(other,
             { map -> ConfigMap(LinkedHashMap<String, Any>().also(this::set), this::set).merge(map) },
             { list -> ConfigList(ArrayList<Any?>().also(this::set), this::set).merge(list) },
             { plain -> if (plain != null) set(plain) })

@@ -3,16 +3,16 @@ package ru.vm.mpb.config.state
 class ConfigList(
     override val list: List<Any?>,
     mutator: ConfigMutator
-): Config(mutator) {
+): AbstractConfig(mutator) {
 
     override val value: List<Any?> = list
 
-    override fun get(key: String) = of(null) {
-        set(applyValues(LinkedHashMap(), "" to list, key to it))
+    override fun get(key: String) = Config.of(null) {
+        set(Config.applyValues(LinkedHashMap(), "" to list, key to it))
     }
 
-    override fun get(index: Int) = of(list.getOrNull(index)) {
-        applyValues(mutableList, index to it)
+    override fun get(index: Int) = Config.of(list.getOrNull(index)) {
+        Config.applyValues(mutableList, index to it)
     }
 
     override fun add(other: Any?) {
@@ -20,7 +20,7 @@ class ConfigList(
     }
 
     override fun merge(other: Any?) {
-        mapByType(other,
+        Config.mapByType(other,
             { map -> ConfigMap(LinkedHashMap(map).also(this::set), this::set).merge(list) },
             { list ->
                 val mut = getConfigForMerge()
@@ -30,7 +30,7 @@ class ConfigList(
             },
             { plain ->
                 if (plain != null) {
-                    if (isPlainList(list)) {
+                    if (Config.isPlainList(list)) {
                         set(plain)
                     } else {
                         get(0).merge(plain)
@@ -44,7 +44,7 @@ class ConfigList(
     override val map: Map<String, Any> get() = mapOf("" to list)
 
     private fun getConfigForMerge(): Config {
-        val isPlainList = isPlainList(list)
+        val isPlainList = Config.isPlainList(list)
         if (list is ArrayList<*>) {
             if (isPlainList) {
                 list.clear()

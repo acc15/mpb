@@ -226,4 +226,29 @@ class ConfigTest {
         assertEquals(mapOf("list" to listOf("short", "list")), target.value)
     }
 
+    @Test
+    fun shorthand() {
+
+        val map = mapOf(
+            "base" to "base",
+            "deep" to mapOf(
+                "object" to listOf(
+                    mapOf(
+                        "base" to "deep.object[0].base",
+                        "v1" to "deep.object[0].v1"
+                    )
+                )
+            )
+        )
+
+        val root = Config.ofImmutable(map).shorthand()
+
+        val cfg = root.get("deep").get("object").get(0)
+        assertEquals("deep.object[0].base", cfg.get("base").string)
+        assertEquals("deep.object[0].v1", cfg.get("v1").string)
+
+        assertEquals("base", cfg.shorthand.get("base").string)
+        assertEquals("deep.object[0].v1", cfg.shorthand.get("v1").string)
+
+    }
 }

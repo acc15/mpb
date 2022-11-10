@@ -12,8 +12,8 @@ data class BranchConfig(
         fun fromConfig(cfg: Config) = BranchConfig(
             cfg.get("default").string,
             cfg.get("patterns").configList.map(BranchPattern::fromConfig),
-            cfg.get("noFetch").flag,
-            cfg.get("noPull").flag
+            cfg.shorthand.get("noFetch").flag,
+            cfg.shorthand.get("noPull").flag
         )
     }
 }

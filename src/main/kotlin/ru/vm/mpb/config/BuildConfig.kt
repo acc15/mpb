@@ -17,16 +17,15 @@ data class BuildConfig(
 
     companion object {
 
-        fun merge(cfg: Config, root: Config, defaultUse: String?): Config {
-            val initKey = cfg.get("use").string ?: defaultUse ?: return cfg
-            val build = root.get("build")
+        fun merge(projectBuild: Config, rootBuild: Config, defaultUse: String?): Config {
+            val initKey = projectBuild.get("use").string ?: defaultUse ?: return projectBuild
 
             val values = LinkedList<Config>()
-            values.addFirst(cfg)
+            values.addFirst(projectBuild)
 
             var k: String? = initKey
             while (k != null) {
-                val b = build.get(k)
+                val b = rootBuild.get(k)
                 values.addFirst(b)
                 k = b.get("use").string
                 if (k == initKey) {

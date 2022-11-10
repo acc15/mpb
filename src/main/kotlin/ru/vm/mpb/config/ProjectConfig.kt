@@ -1,7 +1,6 @@
 package ru.vm.mpb.config
 
 import ru.vm.mpb.config.state.Config
-import java.io.File
 import java.nio.file.Path
 
 data class ProjectConfig(
@@ -12,12 +11,12 @@ data class ProjectConfig(
     val log: Path
 ) {
     companion object {
-        fun fromConfig(key: String, cfg: Config, path: PathConfig, root: Config) = ProjectConfig(
-            path.base.resolve(cfg.get("dir").string ?: key),
-            cfg.get("deps").stringSet,
-            BuildConfig.fromConfig(BuildConfig.merge(cfg, root, DEFAULT_KEY)),
-            BranchConfig.fromConfig(Config.mergeAll(root.get("branch"), cfg.get("branch"))),
-            path.log.resolve(cfg.get("log").string ?: "$key.log")
+        fun fromConfig(key: String, project: Config, root: Config, path: PathConfig) = ProjectConfig(
+            path.base.resolve(project.get("dir").string ?: key),
+            project.get("deps").stringSet,
+            BuildConfig.fromConfig(BuildConfig.merge(project.get("build"), root.get("build"), DEFAULT_KEY)),
+            BranchConfig.fromConfig(Config.mergeAll(root.get("branch"), project.get("branch")).shorthand(root)),
+            path.log.resolve(project.get("log").string ?: "$key.log")
         )
     }
 }
