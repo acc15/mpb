@@ -2,8 +2,8 @@ package ru.vm.mpb.config.state
 
 class ConfigRoot(
     override var value: Any? = null,
-    val mutator: ConfigMutator = {}
-): Config {
+    mutator: ConfigMutator = emptyMutator
+): AbstractConfig(mutator) {
 
     var state = Config.of(value, this::set)
         private set
@@ -13,7 +13,7 @@ class ConfigRoot(
     override fun add(other: Any?) = state.add(other)
     override fun merge(other: Any?) = state.merge(other)
     override fun set(other: Any?) {
-        mutator(other)
+        super.set(other)
         this.value = other
         this.state = Config.of(other, this::set)
     }

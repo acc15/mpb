@@ -1,7 +1,6 @@
 package ru.vm.mpb.config.state
 
 import java.io.File
-import java.lang.UnsupportedOperationException
 import java.nio.file.Path
 import kotlin.io.path.Path
 
@@ -51,11 +50,11 @@ interface Config {
     val map: Map<String, Any>
     val plain: Any?
 
-    val configList: List<Config> get() = list.map { ofImmutable(it) }
-    val configMap: Map<String, Config> get() = map.mapValues { ofImmutable(it.value) }
+    val configList: List<Config> get() = list.indices.map { get(it) }
+    val configMap: Map<String, Config> get() = map.keys.associateWith { get(it) }
 
     val string: String? get() = plain?.toString()
-    val stringList: List<String> get() = list.mapNotNull { ofImmutable(it).string }
+    val stringList: List<String> get() = list.mapNotNull { immutable(it).string }
     val stringSet: Set<String> get() = LinkedHashSet(stringList)
 
     val int: Int? get() = plain?.let {
@@ -86,47 +85,13 @@ interface Config {
 
     companion object {
 
-        val immutable: ConfigMutator = {
-            throw UnsupportedOperationException("Mutation is not allowed for immutable Config objects")
-        }
-
-        fun ofImmutable(value: Any?) = of(value, immutable)
+        fun immutable(value: Any?) = of(value, immutable)
 
         fun of(value: Any?, mutator: ConfigMutator) = mapByType(value,
             { map -> ConfigMap(map, mutator) },
             { list -> ConfigList(list, mutator) },
             { plain -> ConfigPlain(plain, mutator) }
         )
-
-        fun parseArgs(vararg args: String): Config {
-            val optPrefix = "--"
-            val defaultPath = ConfigPath.parse("args")
-            val state = ConfigMap(mutableMapOf()) {}
-
-            val values = mutableListOf<String>()
-            var path = defaultPath
-
-            fun flush() {
-                if (values.isEmpty() && path != defaultPath) {
-                    state.path(path).set(true)
-                }
-                for (v in values) {
-                    state.path(path).add(v)
-                }
-                values.clear()
-            }
-
-            for (a in args) {
-                if (a.startsWith(optPrefix)) {
-                    flush()
-                    path = ConfigPath.parse(a.substring(optPrefix.length)).ifEmpty { defaultPath }
-                    continue
-                }
-                values.add(a)
-            }
-            flush()
-            return state
-        }
 
         @Suppress("UNCHECKED_CAST")
         fun <T> mapByType(

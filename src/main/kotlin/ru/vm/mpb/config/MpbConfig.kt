@@ -8,7 +8,6 @@ const val DEFAULT_KEY = "default"
 data class MpbConfig(
     val name: String,
     val debug: Boolean,
-    val path: PathConfig,
     val output: OutputConfig,
     val branch: BranchConfig,
     val projects: Map<String, ProjectConfig>,
@@ -32,7 +31,6 @@ data class MpbConfig(
             return MpbConfig(
                 cfg.get("name").string ?: "mpb",
                 cfg.get("debug").flag,
-                path,
                 OutputConfig.fromConfig(cfg.get("output")),
                 BranchConfig.fromConfig(cfg.get("branch")),
                 projects,

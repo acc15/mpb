@@ -2,8 +2,10 @@ package ru.vm.mpb.config.state
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ConfigPlainTest {
 
@@ -74,11 +76,41 @@ class ConfigPlainTest {
     }
 
     @Test
+    fun list() {
+        assertEquals(listOf(10), ConfigPlain(10, immutable).list)
+        assertEquals(emptyList(), ConfigPlain(null, immutable).list)
+    }
+
+    @Test
+    fun map() {
+        assertEquals(mapOf("" to 10), ConfigPlain(10, immutable).map)
+        assertEquals(emptyMap(), ConfigPlain(null, immutable).map)
+    }
+
+    @Test
+    fun plain() {
+        assertEquals(10, ConfigPlain(10, immutable).plain)
+        assertEquals(null, ConfigPlain(null, immutable).plain)
+    }
+
+    @Test
+    fun configList() {
+        assertEquals(10, ConfigPlain(10, immutable).configList[0].value)
+        assertTrue(ConfigPlain(null, immutable).configList.isEmpty())
+    }
+
+    @Test
+    fun configMap() {
+        assertEquals(10, ConfigPlain(10, immutable).configMap.getValue("").value)
+        assertTrue(ConfigPlain(null, immutable).configMap.isEmpty())
+    }
+
+    @Test
     fun getMustReturnCorrectValue() {
         val v = ConfigPlain(10) {}
-        assertNull(v.get(0).value)
+        assertEquals(10, v.get(0).value)
         assertNull(v.get(1).value)
-        assertNull(v.get("").value)
+        assertEquals(10, v.get("").value)
         assertNull(v.get("x").value)
     }
 

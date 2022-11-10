@@ -33,10 +33,10 @@ class ConfigListTest {
 
     @Test
     fun getMustReturnCorrectValue() {
-        val v = ConfigList(listOf(1, 2, 3)) {}
+        val v = ConfigList(listOf(1, 2, 3), immutable)
         assertEquals(1, v.get(0).value)
         assertNull(v.get(3).value)
-        assertNull(v.get("").value)
+        assertEquals(listOf(1, 2, 3), v.get("").value)
     }
 
     @TestFactory
@@ -67,6 +67,36 @@ class ConfigListTest {
             target.merge(it.first)
             assertEquals(it.second, target.value)
         }
+    }
+
+    @Test
+    fun list() {
+        assertEquals(emptyList(), ConfigList(emptyList(), immutable).list)
+        assertEquals(listOf(10), ConfigList(listOf(10), immutable).list)
+    }
+
+    @Test
+    fun map() {
+        assertEquals(mapOf("" to listOf(10)), ConfigList(listOf(10), immutable).map)
+        assertEquals(emptyMap(), ConfigList(emptyList(), immutable).map)
+    }
+
+    @Test
+    fun plain() {
+        assertEquals(10, ConfigList(listOf(10), immutable).plain)
+        assertEquals(null, ConfigList(emptyList(), immutable).plain)
+    }
+
+    @Test
+    fun configList() {
+        assertEquals(10, ConfigList(listOf(10), immutable).configList[0].value)
+        assertTrue(ConfigList(emptyList(), immutable).configList.isEmpty())
+    }
+
+    @Test
+    fun configMap() {
+        assertEquals(listOf(10), ConfigList(listOf(10), immutable).configMap.getValue("").value)
+        assertTrue(ConfigList(emptyList(), immutable).configMap.isEmpty())
     }
 
 }

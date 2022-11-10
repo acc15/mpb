@@ -8,14 +8,14 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 
-class ConfigTest {
+val testArgs = arrayOf(
+    "pull",
+    "--config", "abc",
+    "--projects.d.deps", "a", "b",
+    "--args.a", "a", "b"
+)
 
-    private val testArgs = arrayOf(
-        "pull",
-        "--config", "abc",
-        "--projects.d.deps", "a", "b",
-        "--args.a", "a", "b"
-    )
+class ConfigTest {
 
     private val expectedMap = mapOf(
         "a" to mapOf("b" to "HAHA"),
@@ -137,48 +137,12 @@ class ConfigTest {
             ),
             m1.value
         )
-
-    }
-
-    @TestFactory
-    fun parseArgs() = listOf(
-        testArgs to mapOf(
-            "args" to mapOf("" to "pull", "a" to listOf("a", "b")),
-            "config" to "abc",
-            "projects" to mapOf(
-                "d" to mapOf(
-                    "deps" to listOf("a", "b")
-                )
-            )
-        ),
-        arrayOf("non", "opt") to mapOf("args" to listOf("non", "opt")),
-        arrayOf("--debug") to mapOf("debug" to true),
-        arrayOf("--args", "a", "b") to mapOf("args" to listOf("a", "b")),
-        arrayOf("--args", "a", "b", "--args.fb", "x", "y") to mapOf(
-            "args" to mapOf(
-                "" to listOf("a", "b"),
-                "fb" to listOf("x", "y")
-            )
-        ),
-        arrayOf("--indexed[0].value", "a", "--indexed[2].value", "b") to mapOf(
-            "indexed" to listOf(
-                mapOf("value" to "a"),
-                null,
-                mapOf("value" to "b")
-            )
-        ),
-    ).map {
-        DynamicTest.dynamicTest("parseConfigArgs: ${it.first}") {
-            val expected = it.second
-            val actual = Config.parseArgs(*it.first).value
-            assertEquals(expected, actual)
-        }
     }
 
     @Test
     fun mergeAll() {
-        val m1 = Config.ofImmutable(mutableMapOf("a" to 1))
-        val m2 = Config.ofImmutable(mutableMapOf("b" to 2))
+        val m1 = Config.immutable(mutableMapOf("a" to 1))
+        val m2 = Config.immutable(mutableMapOf("b" to 2))
 
         val m = Config.mergeAll(m1, m2)
 
@@ -201,7 +165,7 @@ class ConfigTest {
 
     @Test
     fun mergeMustDeeplyMergeListOfNonPlains() {
-        val target = Config.ofImmutable(mutableListOf(
+        val target = Config.immutable(mutableListOf(
             mutableMapOf("a" to "b"),
             mutableMapOf("b" to "c"),
             mutableMapOf("c" to "d")
@@ -229,26 +193,34 @@ class ConfigTest {
     @Test
     fun shorthand() {
 
-        val map = mapOf(
-            "base" to "base",
+        val root = Config.immutable(mapOf(
+            "v1" to "v1",
             "deep" to mapOf(
-                "object" to listOf(
+                "list" to listOf(
                     mapOf(
-                        "base" to "deep.object[0].base",
-                        "v1" to "deep.object[0].v1"
+                        "v1" to "deep.list[0].v1",
+                        "v2" to "deep.list[0].v2"
                     )
+                ),
+                "object" to mapOf(
+                    "v1" to "deep.object.v1",
+                    "v2" to "deep.object.v2"
                 )
             )
-        )
+        )).shorthand()
 
-        val root = Config.ofImmutable(map).shorthand()
+        val map = root.get("deep").configMap
+        val obj = map.getValue("object")
+        assertEquals("deep.object.v1", obj.get("v1").string)
+        assertEquals("deep.object.v2", obj.get("v2").string)
+        assertEquals("v1", obj.shorthand.get("v1").string)
+        assertEquals("deep.object.v2", obj.shorthand.get("v2").string)
 
-        val cfg = root.get("deep").get("object").get(0)
-        assertEquals("deep.object[0].base", cfg.get("base").string)
-        assertEquals("deep.object[0].v1", cfg.get("v1").string)
-
-        assertEquals("base", cfg.shorthand.get("base").string)
-        assertEquals("deep.object[0].v1", cfg.shorthand.get("v1").string)
+        val list = map.getValue("list").configList[0]
+        assertEquals("deep.list[0].v1", list.get("v1").string)
+        assertEquals("deep.list[0].v2", list.get("v2").string)
+        assertEquals("v1", list.shorthand.get("v1").string)
+        assertEquals("deep.list[0].v2", list.shorthand.get("v2").string)
 
     }
 }

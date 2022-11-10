@@ -10,15 +10,8 @@ class ConfigComposite(val configs: Iterable<Config>): Config {
     override fun merge(other: Any?) = configs.forEach { it.merge(other) }
     override fun set(other: Any?) = configs.forEach { it.set(other) }
 
-    override val value: Any?
-        get() = configs.firstNotNullOfOrNull { it.value }
-
-    override val plain: Any?
-        get() = configs.firstNotNullOfOrNull { it.plain }
-
-    override val list: List<Any?>
-        get() = Config.mergeAll(configs).list
-
-    override val map: Map<String, Any>
-        get() = Config.mergeAll(configs).map
+    override val value: Any? get() = configs.firstNotNullOfOrNull { it.value }
+    override val plain: Any? get() = configs.firstNotNullOfOrNull { it.plain }
+    override val list: List<Any?> get() = Config.mergeAll(configs).list
+    override val map: Map<String, Any> get() = Config.mergeAll(configs).map
 }

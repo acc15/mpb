@@ -4,11 +4,11 @@ import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
 import ru.vm.mpb.config.MpbEnv
 import ru.vm.mpb.config.state.Config
+import ru.vm.mpb.config.state.ConfigArg
 import ru.vm.mpb.config.state.ConfigRoot
 import ru.vm.mpb.util.OrderedHashMap
 import java.nio.file.Path
 import java.util.*
-import kotlin.collections.LinkedHashSet
 
 object ConfigLoader {
 
@@ -21,7 +21,7 @@ object ConfigLoader {
     }
 
     fun load(vararg args: String): Config {
-        val argCfg = Config.parseArgs(*args)
+        val argCfg = ConfigArg.parse(*args)
 
         val configPaths = configPaths(argCfg) { listOf(MpbEnv.home.resolve("mpb.yaml")) }
         val activeProfiles = MpbEnv.profiles + argCfg.get("profile").stringSet
@@ -56,7 +56,7 @@ object ConfigLoader {
 
             val item = process.peek()
 
-            val cfg = Config.ofImmutable(item.value)
+            val cfg = Config.immutable(item.value)
             if (!item.processed) {
                 item.processed = true
                 if (checkHasCycle(item.path, stack)) {

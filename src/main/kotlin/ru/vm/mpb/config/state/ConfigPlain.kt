@@ -5,11 +5,11 @@ class ConfigPlain(
     mutator: ConfigMutator
 ): AbstractConfig(mutator) {
 
-    override fun get(key: String) = Config.of(null) {
+    override fun get(key: String) = Config.of(if (key == "") value else null) {
         if (it != null) set(Config.applyValues(LinkedHashMap(), "" to value, key to it))
     }
 
-    override fun get(index: Int) = Config.of(null) {
+    override fun get(index: Int) = Config.of(if (index == 0) value else null) {
         if (it != null) set(Config.applyValues(ArrayList(), 0 to value, index to it))
     }
 

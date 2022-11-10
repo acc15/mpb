@@ -7,7 +7,7 @@ class ConfigList(
 
     override val value: List<Any?> = list
 
-    override fun get(key: String) = Config.of(null) {
+    override fun get(key: String) = Config.of(if (key == "") list else null) {
         set(Config.applyValues(LinkedHashMap(), "" to list, key to it))
     }
 
@@ -41,7 +41,7 @@ class ConfigList(
     }
 
     override val plain: Any? get() = get(0).plain
-    override val map: Map<String, Any> get() = mapOf("" to list)
+    override val map: Map<String, Any> get() = if (list.isEmpty()) emptyMap() else mapOf("" to list)
 
     private fun getConfigForMerge(): Config {
         val isPlainList = Config.isPlainList(list)
