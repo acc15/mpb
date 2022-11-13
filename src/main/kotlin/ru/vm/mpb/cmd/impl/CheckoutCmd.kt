@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import ru.vm.mpb.cmd.CmdDesc
 import ru.vm.mpb.cmd.ProjectCmd
 import ru.vm.mpb.cmd.ctx.ProjectContext
+import ru.vm.mpb.config.BranchPattern
 import ru.vm.mpb.printer.PrintStatus
 import ru.vm.mpb.util.lines
 import ru.vm.mpb.util.success
@@ -19,17 +20,16 @@ object CheckoutCmd: ProjectCmd {
 
     private fun resolveBranch(ctx: ProjectContext): String {
         val pb = ctx.info.branch
-        val gb = ctx.cfg.branch
 
-        val subject = ctx.args.firstOrNull() ?: return pb.default ?: gb.default ?: "master"
+        val subject = ctx.args.firstOrNull() ?: return pb.default ?: "master"
 
-        val patterns = pb.patterns + gb.patterns
+        val patterns = pb.patterns
         if (patterns.isEmpty()) {
             return subject
         }
 
         val branches = ctx.exec("git", "--no-pager", "branch", "-r").lines().map { it.substring(2) }
-        return patterns.firstNotNullOfOrNull { it.findBranch(subject, branches) } ?: subject
+        return BranchPattern.findMatch(patterns, branches, subject) ?: subject
     }
 
     private fun checkoutAndPull(ctx: ProjectContext, branch: String): Boolean {
