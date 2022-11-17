@@ -39,9 +39,9 @@ object CheckoutCmd: ProjectCmd {
             return false
         }
 
-        if (!ctx.info.branch.noPull) {
-            ctx.print("pulling")
-            if (!ctx.exec("git", "pull", "--rebase").success()) {
+        if (!ctx.info.branch.noRebase) {
+            ctx.print("rebasing")
+            if (!ctx.exec("git", "rebase", "FETCH_HEAD").success()) {
                 ctx.print("unable to pull", PrintStatus.ERROR)
                 return false
             }
