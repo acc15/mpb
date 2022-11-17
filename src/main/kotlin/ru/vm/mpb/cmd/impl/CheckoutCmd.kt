@@ -28,7 +28,7 @@ object CheckoutCmd: ProjectCmd {
             return subject
         }
 
-        val branches = ctx.exec("git", "--no-pager", "branch", "-r").lines().map { it.substring(2) }
+        val branches = ctx.exec("git", "--no-pager", "branch", "-r").lines().map { it.substring(2) }.toList()
         return BranchPattern.findMatch(patterns, branches, subject) ?: subject
     }
 

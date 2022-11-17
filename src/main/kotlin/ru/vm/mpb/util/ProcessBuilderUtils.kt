@@ -11,8 +11,8 @@ fun ProcessBuilder.environment(map: Map<String, String>): ProcessBuilder {
     return this
 }
 
-fun ProcessBuilder.lines(): List<String> {
+fun ProcessBuilder.lines(): Sequence<String> {
     val p = redirectBoth(Redirect.PIPE).start()
     val s = p.waitFor()
-    return if (s == 0) p.inputReader().readLines() else emptyList()
+    return if (s == 0) p.inputReader().lineSequence() else emptySequence()
 }
