@@ -32,7 +32,7 @@ object CheckoutCmd: ProjectCmd {
         return BranchPattern.findMatch(patterns, branches, subject) ?: subject
     }
 
-    private fun checkoutAndPull(ctx: ProjectContext, branch: String): Boolean {
+    private fun checkoutAndUpdate(ctx: ProjectContext, branch: String): Boolean {
         ctx.print("checkout to $branch")
         if (!ctx.exec("git", "checkout", branch).success()) {
             ctx.print("unable to checkout to $branch", PrintStatus.ERROR)
@@ -69,7 +69,7 @@ object CheckoutCmd: ProjectCmd {
         }
 
         val branch = resolveBranch(ctx)
-        val success = checkoutAndPull(ctx, branch)
+        val success = checkoutAndUpdate(ctx, branch)
         if (hasChanges) {
             ctx.print("restoring stash")
             if (!ctx.exec("git", "stash", "pop").success()) {
