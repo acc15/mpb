@@ -12,7 +12,7 @@ fun ProcessBuilder.environment(map: Map<String, String>): ProcessBuilder {
 }
 
 fun ProcessBuilder.lines(): List<String> {
-    val p = start()
+    val p = redirectBoth(Redirect.PIPE).start()
     val s = p.waitFor()
     return if (s == 0) p.inputReader().readLines() else emptyList()
 }
