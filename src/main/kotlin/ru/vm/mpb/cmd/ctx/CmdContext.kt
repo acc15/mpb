@@ -20,14 +20,11 @@ data class CmdContext(val cfg: MpbConfig, val printer: Printer) {
 
     fun projectContext(key: String) = ProjectContext(this, key)
 
-    fun exec(vararg cmdline: String) = applyDebug(ProcessBuilder(*cmdline))
-    fun exec(cmdline: List<String>) = applyDebug(ProcessBuilder(cmdline))
+    fun exec(vararg cmdline: String) = ProcessBuilder(*cmdline).also(this::applyContext)
+    fun exec(cmdline: List<String>) = ProcessBuilder(cmdline).also(this::applyContext)
 
-    private fun applyDebug(b: ProcessBuilder): ProcessBuilder {
-        if (cfg.debug) {
-            b.redirectBoth(ProcessBuilder.Redirect.INHERIT)
-        }
-        return b
+    private fun applyContext(b: ProcessBuilder) {
+        b.redirectBoth(if (cfg.debug) ProcessBuilder.Redirect.INHERIT else ProcessBuilder.Redirect.DISCARD)
     }
 
 }
