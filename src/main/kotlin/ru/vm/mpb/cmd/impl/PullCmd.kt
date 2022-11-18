@@ -16,7 +16,7 @@ object PullCmd: ProjectCmd {
         ""
     )
 
-    override suspend fun parallelExecute(ctx: ProjectContext): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun projectExecute(ctx: ProjectContext): Boolean = withContext(Dispatchers.IO) {
         ctx.print("pulling...")
 
         val success = ctx.exec("git", "pull", "--rebase").success()

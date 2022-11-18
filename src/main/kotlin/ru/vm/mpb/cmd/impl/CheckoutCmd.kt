@@ -41,7 +41,7 @@ object CheckoutCmd: ProjectCmd {
 
         if (!ctx.info.branch.noRebase) {
             ctx.print("rebasing")
-            if (!ctx.exec("git", "rebase", "FETCH_HEAD").success()) {
+            if (!ctx.exec("git", "pull", "--rebase").success()) {
                 ctx.print("unable to pull", PrintStatus.ERROR)
                 return false
             }
@@ -49,7 +49,7 @@ object CheckoutCmd: ProjectCmd {
         return true
     }
 
-    override suspend fun parallelExecute(ctx: ProjectContext): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun projectExecute(ctx: ProjectContext): Boolean = withContext(Dispatchers.IO) {
 
         if (!ctx.info.branch.noFetch) {
             ctx.print("fetching all remotes...")
