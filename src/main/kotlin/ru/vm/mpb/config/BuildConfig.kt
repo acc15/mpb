@@ -17,7 +17,7 @@ data class BuildConfig(
 
     companion object {
 
-        fun merge(projectBuild: Config, rootBuild: Config, defaultUse: String?): Config {
+        fun merge(rootBuild: Config, projectBuild: Config, defaultUse: String?): Config {
             val initKey = projectBuild.get("use").string ?: defaultUse ?: return projectBuild
 
             val values = LinkedList<Config>()

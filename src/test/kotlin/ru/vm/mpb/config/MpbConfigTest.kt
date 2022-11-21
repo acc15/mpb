@@ -107,7 +107,7 @@ class MpbConfigTest {
         assertEquals(listOf("a", "b"), config.args.common)
         assertEquals(listOf("args.a"), config.args.project["a"])
         assertEquals(listOf("args.b"), config.args.project["b"])
-        assertTrue(equalBranchPattern(BranchPattern(Regex("i2"), "p2", -1), config.branch.patterns[1]))
+        assertTrue(equalBranchPattern(BranchPattern(Regex("i2"), "p2", -1), config.git.patterns[1]))
 
     }
 

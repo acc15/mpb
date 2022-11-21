@@ -60,7 +60,11 @@ object CheckoutCmd: ProjectCmd {
             }
         }
 
+        ctx.print("aborting pending rebase...");
         ctx.exec("git", "rebase", "--abort").run()
+
+        ctx.print("reverting ignored paths...");
+        ctx.exec(listOf("git", "checkout", "--") + ctx.info.branch.ignore.map { it.toString() }).run()
 
         val hasChanges = !ctx.exec("git", "diff", "--quiet").success()
         if (hasChanges) {

@@ -10,7 +10,7 @@ data class MpbConfig(
     val debug: Boolean,
     val seq: Boolean,
     val output: OutputConfig,
-    val branch: BranchConfig,
+    val git: GitConfig,
     val projects: Map<String, ProjectConfig>,
     val jira: JiraConfig,
     val ticket: TicketConfig,
@@ -34,12 +34,12 @@ data class MpbConfig(
                 cfg.get("debug").flag,
                 cfg.get("seq").flag,
                 OutputConfig.fromConfig(cfg.get("output")),
-                BranchConfig.fromConfig(cfg.get("branch")),
+                GitConfig.fromConfig(cfg.get("git")),
                 projects,
                 JiraConfig.fromConfig(cfg.get("jira")),
                 TicketConfig.fromConfig(cfg.get("ticket"), path.base),
                 cfg.get("build").configMap.mapValues { (_, c) ->
-                    BuildConfig.fromConfig(BuildConfig.merge(c, cfg, null))
+                    BuildConfig.fromConfig(BuildConfig.merge(cfg, c, null))
                 },
                 ArgConfig.fromConfig(cfg, projects.keys, IncludeExclude.fromConfig(cfg)),
                 cfg.get("profiles").map.keys
