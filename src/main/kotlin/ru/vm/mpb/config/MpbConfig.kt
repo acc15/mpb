@@ -8,7 +8,7 @@ const val DEFAULT_KEY = "default"
 data class MpbConfig(
     val name: String,
     val debug: Boolean,
-    val noParallel: Boolean,
+    val seq: Boolean,
     val output: OutputConfig,
     val branch: BranchConfig,
     val projects: Map<String, ProjectConfig>,
@@ -32,7 +32,7 @@ data class MpbConfig(
             return MpbConfig(
                 cfg.get("name").string ?: "mpb",
                 cfg.get("debug").flag,
-                cfg.get("noParallel").flag,
+                cfg.get("seq").flag,
                 OutputConfig.fromConfig(cfg.get("output")),
                 BranchConfig.fromConfig(cfg.get("branch")),
                 projects,

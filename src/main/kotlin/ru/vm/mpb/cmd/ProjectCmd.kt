@@ -12,7 +12,7 @@ interface ProjectCmd : Cmd {
             ctx.print("no one project is active", PrintStatus.ERROR)
             return false
         }
-        return if (ctx.cfg.noParallel) runSequentially(keys, ctx) else runParallel(keys, ctx)
+        return if (ctx.cfg.seq) runSequentially(keys, ctx) else runParallel(keys, ctx)
     }
 
     suspend fun runSequentially(keys: Set<String>, ctx: CmdContext) =

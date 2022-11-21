@@ -7,6 +7,7 @@ import ru.vm.mpb.cmd.ProjectCmd
 import ru.vm.mpb.cmd.ctx.ProjectContext
 import ru.vm.mpb.config.BranchPattern
 import ru.vm.mpb.printer.PrintStatus
+import ru.vm.mpb.util.run
 import ru.vm.mpb.util.lines
 import ru.vm.mpb.util.success
 
@@ -40,7 +41,7 @@ object CheckoutCmd: ProjectCmd {
         }
 
         if (!ctx.info.branch.noRebase) {
-            ctx.print("rebasing")
+            ctx.print("pulling")
             if (!ctx.exec("git", "pull", "--rebase").success()) {
                 ctx.print("unable to pull", PrintStatus.ERROR)
                 return false
@@ -58,6 +59,8 @@ object CheckoutCmd: ProjectCmd {
                 return@withContext false
             }
         }
+
+        ctx.exec("git", "rebase", "--abort").run()
 
         val hasChanges = !ctx.exec("git", "diff", "--quiet").success()
         if (hasChanges) {

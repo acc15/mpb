@@ -5,6 +5,7 @@ import java.lang.ProcessBuilder.Redirect
 
 fun ProcessBuilder.redirectBoth(file: File): ProcessBuilder = redirectError(file).redirectOutput(file)
 fun ProcessBuilder.redirectBoth(redirect: Redirect): ProcessBuilder = redirectError(redirect).redirectOutput(redirect)
+fun ProcessBuilder.run() { success() }
 fun ProcessBuilder.success() = start().waitFor() == 0
 fun ProcessBuilder.environment(map: Map<String, String>): ProcessBuilder {
     environment().putAll(map)
