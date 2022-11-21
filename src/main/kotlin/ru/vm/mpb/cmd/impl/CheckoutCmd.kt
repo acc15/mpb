@@ -53,18 +53,18 @@ object CheckoutCmd: ProjectCmd {
     override suspend fun projectExecute(ctx: ProjectContext): Boolean = withContext(Dispatchers.IO) {
 
         if (!ctx.info.branch.noFetch) {
-            ctx.print("fetching all remotes...")
+            ctx.print("fetching all remotes")
             if (!ctx.exec("git", "fetch", "--all").success()) {
                 ctx.print("unable to fetch", PrintStatus.ERROR)
                 return@withContext false
             }
         }
 
-        ctx.print("aborting pending rebase...");
+        ctx.print("aborting pending rebase");
         ctx.exec("git", "rebase", "--abort").run()
 
         if (ctx.info.branch.ignore.isNotEmpty()) {
-            ctx.print("reverting ignored paths...")
+            ctx.print("reverting ignored paths")
             ctx.exec(listOf("git", "checkout", "--") + ctx.info.branch.ignore.map { it.toString() }).run()
         }
 
