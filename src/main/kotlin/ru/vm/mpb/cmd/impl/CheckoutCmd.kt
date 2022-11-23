@@ -20,7 +20,7 @@ object CheckoutCmd: ProjectCmd {
     )
 
     private fun resolveBranch(ctx: ProjectContext): String {
-        val pb = ctx.info.branch
+        val pb = ctx.info.git
 
         val subject = ctx.args.firstOrNull() ?: return pb.default ?: "master"
 
@@ -40,7 +40,7 @@ object CheckoutCmd: ProjectCmd {
             return false
         }
 
-        if (!ctx.info.branch.noRebase) {
+        if (!ctx.info.git.noRebase) {
             ctx.print("pulling")
             if (!ctx.exec("git", "pull", "--rebase").success()) {
                 ctx.print("unable to pull", PrintStatus.ERROR)
@@ -52,7 +52,7 @@ object CheckoutCmd: ProjectCmd {
 
     override suspend fun projectExecute(ctx: ProjectContext): Boolean = withContext(Dispatchers.IO) {
 
-        if (!ctx.info.branch.noFetch) {
+        if (!ctx.info.git.noFetch) {
             ctx.print("fetching all remotes")
             if (!ctx.exec("git", "fetch", "--all").success()) {
                 ctx.print("unable to fetch", PrintStatus.ERROR)
@@ -63,9 +63,9 @@ object CheckoutCmd: ProjectCmd {
         ctx.print("aborting pending rebase");
         ctx.exec("git", "rebase", "--abort").run()
 
-        if (ctx.info.branch.ignore.isNotEmpty()) {
+        if (ctx.info.git.ignore.isNotEmpty()) {
             ctx.print("reverting ignored paths")
-            ctx.exec(listOf("git", "checkout", "--") + ctx.info.branch.ignore.map { it.toString() }).run()
+            ctx.exec(listOf("git", "checkout", "--") + ctx.info.git.ignore.map { it.toString() }).run()
         }
 
         val hasChanges = !ctx.exec("git", "diff", "--quiet").success()

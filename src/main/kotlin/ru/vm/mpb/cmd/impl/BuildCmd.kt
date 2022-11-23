@@ -155,7 +155,8 @@ object BuildCmd: Cmd {
             send(BuildEvent(ctx.key, event.reason, event.status))
 
         }
-        return skipReasons.isEmpty() || (ctx.info.noSkip && skipReasons.keys.singleOrNull() == BuildStatus.SKIP)
+        return skipReasons.isEmpty()
+                || (!ctx.info.propagateSkip && skipReasons.keys.singleOrNull() == BuildStatus.SKIP)
     }
 
     private fun findCycles(ctx: CmdContext): Boolean {
