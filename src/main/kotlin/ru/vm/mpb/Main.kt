@@ -46,7 +46,7 @@ suspend fun runProgram(scope: CoroutineScope, cfg: MpbConfig): Boolean {
     val out = AnsiConsole.out()
     if (cfg.args.command.isEmpty()) {
         printHelp(out, cfg)
-        return false
+        return true
     }
 
     val cmd = ALL_CMDS_MAP[cfg.args.command]
