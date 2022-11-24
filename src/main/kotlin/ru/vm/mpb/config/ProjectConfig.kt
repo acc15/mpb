@@ -2,6 +2,7 @@ package ru.vm.mpb.config
 
 import ru.vm.mpb.config.state.Config
 import java.nio.file.Path
+import kotlin.io.path.Path
 
 data class ProjectConfig(
 
@@ -39,7 +40,7 @@ data class ProjectConfig(
 ) {
     companion object {
         fun fromConfig(key: String, project: Config, root: Config, path: PathConfig) = ProjectConfig(
-            path.base.resolve(project.get("dir").string ?: key),
+            path.project.resolve(project.get("dir").path ?: Path(key)),
             project.get("deps").stringSet,
             project.shorthand.get("propagateSkip").flag,
             BuildConfig.fromConfig(BuildConfig.merge(root.get("build"), project.get("build"), DEFAULT_KEY)),
