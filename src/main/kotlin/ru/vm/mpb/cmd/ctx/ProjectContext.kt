@@ -1,5 +1,6 @@
 package ru.vm.mpb.cmd.ctx
 
+import kotlinx.coroutines.sync.withPermit
 import org.fusesource.jansi.Ansi
 import ru.vm.mpb.printer.PrintStatus
 import ru.vm.mpb.util.redirectBoth
@@ -25,8 +26,14 @@ data class ProjectContext(
     fun exec(cmdline: List<String>) = cmd.exec(cmdline).also(this::applyContext)
 
     private fun applyContext(b: ProcessBuilder) {
-        b.directory(info.dir.toFile())
-            .redirectBoth(if (cfg.debug) ProcessBuilder.Redirect.to(info.log.toFile()) else ProcessBuilder.Redirect.DISCARD)
+        b.directory(info.dir.toFile()).redirectBoth(defaultRedirect)
     }
+
+    private val defaultRedirect = if (cfg.debug)
+        ProcessBuilder.Redirect.to(info.log.toFile()) else
+        ProcessBuilder.Redirect.DISCARD
+
+    suspend fun <T> withMaxSessions(block: ProjectContext.() -> T): T = if (cmd.sessionSemaphore != null)
+        cmd.sessionSemaphore.withPermit { this.block() } else block()
 
 }

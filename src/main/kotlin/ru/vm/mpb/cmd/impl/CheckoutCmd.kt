@@ -33,7 +33,7 @@ object CheckoutCmd: ProjectCmd {
         return BranchPattern.findMatch(patterns, branches, subject) ?: subject
     }
 
-    private fun checkoutAndUpdate(ctx: ProjectContext, branch: String): Boolean {
+    private suspend fun checkoutAndUpdate(ctx: ProjectContext, branch: String): Boolean {
         ctx.print("checkout to $branch")
         if (!ctx.exec("git", "checkout", branch).success()) {
             ctx.print("unable to checkout to $branch", PrintStatus.ERROR)
@@ -42,7 +42,7 @@ object CheckoutCmd: ProjectCmd {
 
         if (!ctx.info.git.noRebase) {
             ctx.print("pulling")
-            if (!ctx.exec("git", "pull", "--rebase").success()) {
+            if (!ctx.withMaxSessions { exec("git", "pull", "--rebase").success() }) {
                 ctx.print("unable to pull", PrintStatus.ERROR)
                 return false
             }
@@ -54,7 +54,7 @@ object CheckoutCmd: ProjectCmd {
 
         if (!ctx.info.git.noFetch) {
             ctx.print("fetching all remotes")
-            if (!ctx.exec("git", "fetch", "--all").success()) {
+            if (!ctx.withMaxSessions { exec("git", "fetch", "--all").success() }) {
                 ctx.print("unable to fetch", PrintStatus.ERROR)
                 return@withContext false
             }
@@ -65,7 +65,7 @@ object CheckoutCmd: ProjectCmd {
 
         if (ctx.info.git.ignore.isNotEmpty()) {
             ctx.print("reverting ignored paths")
-            ctx.exec(listOf("git", "checkout", "--") + ctx.info.git.ignore.map { it.toString() }).run()
+            ctx.exec(listOf("git", "restore") + ctx.info.git.ignore.map { it.toString() }).run()
         }
 
         val hasChanges = !ctx.exec("git", "diff", "--quiet").success()

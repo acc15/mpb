@@ -1,5 +1,6 @@
 package ru.vm.mpb.cmd.ctx
 
+import kotlinx.coroutines.sync.Semaphore
 import org.fusesource.jansi.Ansi
 import ru.vm.mpb.config.MpbConfig
 import ru.vm.mpb.printer.Printer
@@ -10,8 +11,8 @@ import ru.vm.mpb.util.redirectBoth
 data class CmdContext(val cfg: MpbConfig, val printer: Printer) {
 
     val args = cfg.args.common
-
     val ansi: Ansi get() = cfg.output.ansi.get()
+    val sessionSemaphore = if (cfg.maxSessions > 0) Semaphore(cfg.maxSessions) else null
     fun ansi(parent: Ansi) = cfg.output.ansi.get(parent)
 
     fun print(str: Any?, status: PrintStatus = PrintStatus.MESSAGE, key: String = "*") {
