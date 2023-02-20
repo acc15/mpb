@@ -19,7 +19,7 @@ object PullCmd: ProjectCmd {
     override suspend fun projectExecute(ctx: ProjectContext): Boolean = withContext(Dispatchers.IO) {
         ctx.print("pulling...")
 
-        val success = ctx.exec("git", "pull", "--rebase").success()
+        val success = ctx.withMaxSessions { exec("git", "pull", "--rebase").success() }
         if (success) {
             ctx.print("done", PrintStatus.SUCCESS)
         } else {
