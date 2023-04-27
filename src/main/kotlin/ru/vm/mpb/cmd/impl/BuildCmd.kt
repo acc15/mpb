@@ -72,7 +72,6 @@ object BuildCmd: Cmd {
         var status = BuildStatus.BUILDING
         if (ctx.skipped) {
             status = BuildStatus.SKIP
-            ctx.print(ctx.ansi.apply(status), PrintStatus.WARN)
             send(BuildEvent(ctx.key, ctx.key, status))
         }
 
