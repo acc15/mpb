@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.8.21"
+    kotlin("jvm") version "1.9.20"
     application
 }
 
@@ -13,11 +13,11 @@ repositories {
 }
 
 dependencies {
-    implementation("org.yaml:snakeyaml:2.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    implementation("org.fusesource.jansi:jansi:2.4.0")
+    implementation("org.yaml:snakeyaml:2.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    implementation("org.fusesource.jansi:jansi:2.4.1")
     testImplementation(kotlin("test"))
-    testImplementation("io.mockk:mockk:1.13.5")
+    testImplementation("io.mockk:mockk:1.13.8")
 }
 
 tasks.test {

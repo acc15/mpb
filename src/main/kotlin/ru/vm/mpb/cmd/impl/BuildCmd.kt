@@ -46,37 +46,43 @@ object BuildCmd: Cmd {
         ctx.print(ctx.ansi.apply(BuildStatus.BUILDING).a("..."))
 
         val start = System.nanoTime()
-        val status = buildAll(ctx)
+        val status = buildActive(ctx)
         val duration = Duration.ofNanos(System.nanoTime() - start)
         ctx.print(ctx.ansi.apply(status).a(" in ").apply(duration.pretty), status.print)
         return status != BuildStatus.ERROR
     }
 
-    private suspend fun buildAll(ctx: CmdContext): BuildStatus = coroutineScope {
-        val channels = ctx.cfg.projects
-            .filterValues { it.deps.isNotEmpty() }
+    private suspend fun buildActive(ctx: CmdContext): BuildStatus = coroutineScope {
+        val activeProjectsWithDeps = ctx.cfg.run {
+            args.active.mapValues { (k) ->
+                projects[k]!!.deps.filter { args.active.containsKey(it) }.toCollection(LinkedHashSet())
+            }
+        }
+
+        val channels = activeProjectsWithDeps
+            .filterValues { it.isNotEmpty() }
             .mapValues { Channel<BuildEvent>(Channel.BUFFERED) }
 
-        ctx.cfg.projects.keys.map {
+        activeProjectsWithDeps.keys.map {
             async {
-                build(ctx.projectContext(it), channels)
+                build(ctx.projectContext(it), activeProjectsWithDeps, channels)
             }
         }.awaitAll().reduce(BuildStatus::combine)
     }
 
-    private suspend fun build(ctx: ProjectContext, channels: Map<String, Channel<BuildEvent>>): BuildStatus {
-        val send = multiSend(ctx.cfg.projects
-            .filterValues { it.deps.contains(ctx.key) }
+    private suspend fun build(
+        ctx: ProjectContext,
+        projects: Map<String, Set<String>>,
+        channels: Map<String, Channel<BuildEvent>>
+    ): BuildStatus {
+
+        val send = multiSend(projects
+            .filterValues { it.contains(ctx.key) }
             .map { channels.getValue(it.key) })
 
         var status = BuildStatus.BUILDING
-        if (ctx.skipped) {
-            status = BuildStatus.SKIP
-            send(BuildEvent(ctx.key, ctx.key, status))
-        }
-
         val recv = channels[ctx.key]
-        if (recv != null && !waitDependencies(ctx, recv, send)) {
+        if (recv != null && !waitDependencies(ctx, projects.getValue(ctx.key), recv, send)) {
             status = BuildStatus.SKIP
         }
 
@@ -123,11 +129,12 @@ object BuildCmd: Cmd {
 
     private suspend fun waitDependencies(
         ctx: ProjectContext,
+        deps: Set<String>,
         recv: ReceiveChannel<BuildEvent>,
         send: suspend (BuildEvent) -> Unit
     ): Boolean {
 
-        val pending = LinkedHashSet(ctx.info.deps)
+        val pending = LinkedHashSet(deps)
         val skipReasons = LinkedHashMap<BuildStatus, LinkedHashSet<String>>()
         while (pending.isNotEmpty()) {
 

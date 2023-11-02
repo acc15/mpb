@@ -12,6 +12,8 @@ import ru.vm.mpb.ansi.applyIf
 import ru.vm.mpb.ansi.join
 import ru.vm.mpb.printer.createPrinter
 import ru.vm.mpb.ansi.withAnsi
+import ru.vm.mpb.util.redirectBoth
+import java.io.File
 import kotlin.system.exitProcess
 
 val ALL_CMDS = listOf(

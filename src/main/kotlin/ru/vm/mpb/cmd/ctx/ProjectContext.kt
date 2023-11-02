@@ -26,7 +26,7 @@ data class ProjectContext(
     fun exec(cmdline: List<String>) = cmd.exec(cmdline).also(this::applyContext)
 
     private fun applyContext(b: ProcessBuilder) {
-        b.directory(info.dir.toFile()).redirectBoth(defaultRedirect)
+        b.directory(info.dir.toFile().absoluteFile).redirectBoth(defaultRedirect)
     }
 
     private val defaultRedirect = if (cfg.debug)
