@@ -87,7 +87,7 @@ object BuildCmd: Cmd {
         }
 
         if (status == BuildStatus.BUILDING) {
-            status = runBuild(ctx, ctx.args)
+            status = runBuild(ctx)
             if (status != BuildStatus.DONE) {
                 send(BuildEvent(ctx.key, ctx.key, status))
             }
@@ -97,11 +97,11 @@ object BuildCmd: Cmd {
         return status
     }
 
-    private suspend fun runBuild(ctx: ProjectContext, args: List<String>): BuildStatus = withContext(Dispatchers.IO) {
+    private suspend fun runBuild(ctx: ProjectContext): BuildStatus = withContext(Dispatchers.IO) {
 
         val buildProgress = BuildProgress.init(ctx)
 
-        val command = ctx.build.getCommandLine(args.firstOrNull())
+        val command = ctx.build.getCommandLine(ctx.args.firstOrNull())
         val buildStart = System.nanoTime()
 
         Files.createDirectories(ctx.info.log.parent)
