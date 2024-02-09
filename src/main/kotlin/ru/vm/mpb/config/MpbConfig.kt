@@ -1,5 +1,6 @@
 package ru.vm.mpb.config
 
+import org.fusesource.jansi.AnsiConsole
 import ru.vm.mpb.config.loader.ConfigLoader
 import ru.vm.mpb.config.state.Config
 
@@ -21,7 +22,7 @@ data class MpbConfig(
 
     companion object {
 
-        fun parse(vararg args: String) = fromConfig(ConfigLoader.load(*args).let { it.shorthand(it) })
+        fun parse(vararg args: String) = fromConfig(ConfigLoader(AnsiConsole.err()).load(*args).let { it.shorthand(it) })
 
         fun fromConfig(cfg: Config): MpbConfig {
             val path = PathConfig.fromConfig(cfg.get("path"))

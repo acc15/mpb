@@ -3,8 +3,12 @@ package ru.vm.mpb.config
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
+import org.fusesource.jansi.AnsiConsole
 import ru.vm.mpb.config.loader.ConfigLoader
 import ru.vm.mpb.config.loader.YamlLoader
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
+import java.io.PrintStream
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.test.*
@@ -32,7 +36,7 @@ class ConfigLoaderTest {
     fun mustUseConfigParameter() {
         mockYamls("/test/config.yaml" to mapOf("name" to "custom"))
 
-        val cfg = ConfigLoader.load("--config", "/test/config.yaml")
+        val cfg = ConfigLoader().load("--config", "/test/config.yaml")
         assertEquals("custom", cfg.get("name").value)
     }
 
@@ -43,7 +47,7 @@ class ConfigLoaderTest {
             "/test/config.yaml" to mapOf("name" to "custom"),
         )
 
-        val cfg = ConfigLoader.load()
+        val cfg = ConfigLoader().load()
         assertEquals("custom", cfg.get("name").value)
     }
 
@@ -54,7 +58,7 @@ class ConfigLoaderTest {
             "/test/custom.yaml" to mapOf("name" to "a")
         )
 
-        val cfg = ConfigLoader.load("--config", "/test/root.yaml")
+        val cfg = ConfigLoader().load("--config", "/test/root.yaml")
         assertEquals("a", cfg.get("name").value)
     }
 
@@ -65,7 +69,7 @@ class ConfigLoaderTest {
             "b.yaml" to mapOf("name" to "a")
         )
 
-        val cfg = ConfigLoader.load()
+        val cfg = ConfigLoader().load()
         assertEquals("b", cfg.get("name").value)
     }
 
@@ -80,7 +84,7 @@ class ConfigLoaderTest {
             "b.yaml" to mapOf("b" to true)
         )
 
-        val cfg = ConfigLoader.load("--profile", "a")
+        val cfg = ConfigLoader().load("--profile", "a")
         assertEquals(true, cfg.get("b").value)
     }
 
@@ -98,7 +102,7 @@ class ConfigLoaderTest {
             "b.yaml" to mapOf("b" to true)
         )
 
-        val cfg = ConfigLoader.load("--profile", "a")
+        val cfg = ConfigLoader().load("--profile", "a")
         assertEquals(false, cfg.get("b").value)
     }
 
@@ -113,7 +117,7 @@ class ConfigLoaderTest {
             relativeTo = null
         )
 
-        val cfg = ConfigLoader.load("--config", "a.yaml")
+        val cfg = ConfigLoader().load("--config", "a.yaml")
         assertEquals(emptyMap<String, Any>(), cfg.value)
     }
 
@@ -127,7 +131,7 @@ class ConfigLoaderTest {
             ), relativeTo = null
         )
 
-        val cfg = ConfigLoader.load("--config", "a.yaml", "--profile", "a")
+        val cfg = ConfigLoader().load("--config", "a.yaml", "--profile", "a")
         assertNotNull(cfg.value)
     }
 
@@ -148,7 +152,7 @@ class ConfigLoaderTest {
             relativeTo = null
         )
 
-        val cfg = ConfigLoader.load("--config", "a.yaml", "--profile", "a")
+        val cfg = ConfigLoader().load("--config", "a.yaml", "--profile", "a")
         assertNotNull(cfg.value)
     }
 
@@ -167,7 +171,7 @@ class ConfigLoaderTest {
             relativeTo = null
         )
 
-        val cfg = ConfigLoader.load("--config", "a.yaml")
+        val cfg = ConfigLoader().load("--config", "a.yaml")
         assertEquals(true, cfg.get("test").value)
     }
 
@@ -212,7 +216,7 @@ class ConfigLoaderTest {
             )
         )
 
-        val c1 = ConfigLoader.load("--profile", "a")
+        val c1 = ConfigLoader().load("--profile", "a")
         val keys = c1.map.keys.toList()
         assertContentEquals(listOf(
             "parent-base",
@@ -236,7 +240,7 @@ class ConfigLoaderTest {
             "/custom-base/mpb.yaml" to mapOf("custom-base" to true)
         )
 
-        val cfg = ConfigLoader.load()
+        val cfg = ConfigLoader().load()
         assertEquals(true, cfg.get("custom-base").value)
 
     }

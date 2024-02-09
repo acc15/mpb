@@ -2,6 +2,8 @@ package ru.vm.mpb.config.loader
 
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
+import org.fusesource.jansi.AnsiPrintStream
+import org.fusesource.jansi.io.AnsiOutputStream
 import ru.vm.mpb.config.MpbEnv
 import ru.vm.mpb.config.state.Config
 import ru.vm.mpb.config.state.ConfigArg
@@ -10,7 +12,7 @@ import ru.vm.mpb.util.OrderedHashMap
 import java.nio.file.Path
 import java.util.*
 
-object ConfigLoader {
+class ConfigLoader(val errPrinter: AnsiPrintStream? = null) {
 
     private val cleanupKeys = setOf("profile", "config")
 
@@ -97,7 +99,7 @@ object ConfigLoader {
         }
 
         val cycle = (stack.subListOf(path).map { it.key } + path).joinToString(" -> ")
-        AnsiConsole.err().println(
+        errPrinter?.println(
             Ansi.ansi().bold().fgRed().a("[error]").reset().a(" config cycle detected: $cycle")
         )
         return true

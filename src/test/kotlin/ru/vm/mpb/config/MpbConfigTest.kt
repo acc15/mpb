@@ -68,11 +68,6 @@ val testConfig get() = mapOf(
     "ticket" to mapOf("dir" to "ticket")
 )
 
-fun equalBranchPattern(b1: BranchPattern, b2: BranchPattern) =
-    b1.input.pattern == b2.input.pattern &&
-    b1.branch == b2.branch &&
-    b1.index == b2.index
-
 class MpbConfigTest {
 
     @BeforeTest
