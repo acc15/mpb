@@ -2,6 +2,7 @@ package ru.vm.mpb.config.state
 
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
+import java.util.*
 import kotlin.test.*
 
 class ConfigArgTest {
@@ -33,8 +34,13 @@ class ConfigArgTest {
                 mapOf("value" to "b")
             )
         ),
+        arrayOf("-shortList=a,b,c", "--longList", "a", "b", "c") to mapOf(
+            "shortList" to listOf("a", "b", "c"),
+            "longList" to listOf("a", "b", "c")
+        ),
+        arrayOf("-shortValue=a") to mapOf("shortValue" to "a")
     ).map {
-        DynamicTest.dynamicTest("parseConfigArgs: ${it.first}") {
+        DynamicTest.dynamicTest("parseConfigArgs: ${it.first.contentToString()}") {
             val expected = it.second
             val actual = ConfigArg.parse(*it.first).value
             assertEquals(expected, actual)
