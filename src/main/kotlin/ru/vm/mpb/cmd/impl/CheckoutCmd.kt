@@ -10,6 +10,7 @@ import ru.vm.mpb.printer.PrintStatus
 import ru.vm.mpb.util.run
 import ru.vm.mpb.util.lines
 import ru.vm.mpb.util.success
+import kotlin.io.path.absolute
 
 object CheckoutCmd: ProjectCmd {
 
@@ -29,7 +30,7 @@ object CheckoutCmd: ProjectCmd {
             return subject
         }
 
-        val branches = ctx.exec("git", "--no-pager", "branch", "-r").lines().map { it.substring(2) }.toList()
+        val branches = ctx.exec("git", "branch", "-r").lines().map { it.substring(2) }.toList()
         return BranchPattern.findMatch(patterns, branches, subject) ?: subject
     }
 

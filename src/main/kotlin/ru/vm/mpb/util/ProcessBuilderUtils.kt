@@ -12,8 +12,13 @@ fun ProcessBuilder.environment(map: Map<String, String>): ProcessBuilder {
     return this
 }
 
-fun ProcessBuilder.lines(): Sequence<String> {
+fun ProcessBuilder.lines(): List<String> {
     val p = redirectBoth(Redirect.PIPE).start()
-    val s = p.waitFor()
-    return if (s == 0) p.inputReader().lineSequence() else emptySequence()
+    val lines = p.inputReader().readLines()
+    val exitCode = p.waitFor()
+    if (exitCode != 0) {
+        throw RuntimeException(
+            "Error while executing command (exit code: ${exitCode}): ${command().joinToString(" ")}")
+    }
+    return lines
 }
