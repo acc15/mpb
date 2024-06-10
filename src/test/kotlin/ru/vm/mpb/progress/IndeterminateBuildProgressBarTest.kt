@@ -3,7 +3,7 @@ package ru.vm.mpb.progress
 import ru.vm.mpb.progressbar.IndeterminateProgressBar
 import kotlin.test.*
 
-class IndeterminateProgressBarTest {
+class IndeterminateBuildProgressBarTest {
 
     @Test
     @Ignore

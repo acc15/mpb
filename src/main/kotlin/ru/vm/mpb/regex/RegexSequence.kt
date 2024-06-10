@@ -1,7 +1,10 @@
 package ru.vm.mpb.regex
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class RegexSequence(
-    val patterns: List<Regex>,
+    val patterns: List<@Serializable(with=RegexAsStringSerializer::class) Regex>,
     val replacement: String
 ) {
 

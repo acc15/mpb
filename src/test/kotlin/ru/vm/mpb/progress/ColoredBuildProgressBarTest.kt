@@ -3,7 +3,7 @@ package ru.vm.mpb.progress
 import ru.vm.mpb.progressbar.ColoredProgressBar
 import kotlin.test.*
 
-class ColoredProgressBarTest {
+class ColoredBuildProgressBarTest {
 
 
     @Test

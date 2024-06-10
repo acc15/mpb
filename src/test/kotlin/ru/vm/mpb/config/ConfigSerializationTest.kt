@@ -2,22 +2,170 @@ package ru.vm.mpb.config
 
 import com.charleskorn.kaml.Yaml
 import com.charleskorn.kaml.YamlConfiguration
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import ru.vm.mpb.regex.RegexAsStringSerializer
 import ru.vm.mpb.regex.RegexSequence
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.test.*
 
-object RegexAsStringSerializer : KSerializer<Regex> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Regex", PrimitiveKind.STRING)
-    override fun serialize(encoder: Encoder, value: Regex) { encoder.encodeString(value.pattern) }
-    override fun deserialize(decoder: Decoder): Regex { return Regex(decoder.decodeString()) }
-}
+@Serializable
+data class OutputConfig(
+    /** Outputs all message lines, otherwise only current message (Status) is printed */
+    val plain: Boolean = false,
+
+    /** Disables colorful output */
+    val monochrome: Boolean = false,
+
+    /** Default terminal width */
+    val width: Int = 80
+)
+
+@Serializable
+data class BranchPattern(
+    @Serializable(with = RegexAsStringSerializer::class)
+    val input: Regex,
+    val branch: String,
+    val index: Int
+)
+
+@Serializable
+data class GitConfig(
+    /** Default branch name (for switching, etc) */
+    val default: String = "master",
+
+    /** List of branch patterns for quick switching to related branches */
+    val patterns: List<BranchPattern> = emptyList(),
+
+    /** Disables fetching */
+    val noFetch: Boolean = false,
+
+    /** Disables rebasing */
+    val noRebase: Boolean = false,
+
+    /** Ignored paths */
+    val ignore: Set<Path> = emptySet(),
+
+    /** Maximum session count (useful to limit maximum connection count to single server) */
+    val maxSessions: Int = 0
+)
+
+@Serializable
+data class ProjectGitConfig(
+    /**
+     * Default branch name (for switching, etc)
+     *
+     * Overrides top level [GitConfig.default]
+     */
+    val default: String? = null,
+
+    /**
+     * List of branch patterns for quick switching to related branches
+     *
+     * Overrides top level [GitConfig.patterns]
+     */
+    val patterns: List<BranchPattern>? = null,
+
+    /**
+     * Disables fetching
+     *
+     * Overrides top level [GitConfig.noFetch]
+     */
+    val noFetch: Boolean? = null,
+
+    /**
+     * Disables rebasing
+     *
+     * Overrides top level [GitConfig.noRebase]
+     */
+    val noRebase: Boolean? = null,
+
+    /**
+     * Ignored paths
+     *
+     * Overrides top level [GitConfig.ignore]
+     */
+    val ignore: Set<Path>? = null
+)
+
+@Serializable
+data class BuildProgress(
+    /** Command to run to get build plan (how many steps, and their names */
+    val cmd: List<String>,
+
+    /** Regex sequence to parse build plan */
+    val plan: RegexSequence,
+
+    /** Regex sequence to build execution */
+    val build: RegexSequence
+)
+
+@Serializable
+data class Build(
+    /** Parent build configuration */
+    val parent: String? = null,
+
+    /**
+     * Command line to launch tool
+     *
+     * Overrides `parent`->`tool` if not null */
+    val tool: List<String>? = null,
+
+    /**
+     * Additional options for tool (useful to specify additional options without overriding `tool`)
+     *
+     * Overrides `parent`->`opts` if not null
+     */
+    val opts: List<String>? = null,
+
+    /**
+     * Command alias map
+     *
+     * Inherited from parent, merged by keys
+     */
+    val commands: Map<String, List<String>> = emptyMap(),
+
+    /**
+     * Environment variables
+     *
+     * Inherited from parent, merged by keys
+     */
+    val env: Map<String, String> = emptyMap(),
+
+    /**
+     * Tool build progress configuration
+     *
+     * Overrides `parent`->`progress` if not null */
+    val progress: BuildProgress? = null
+)
+
+@Serializable
+data class ProjectConfig(
+    /**
+     * Project directory
+     *
+     * Defaults to project name
+     */
+    val dir: Path? = null,
+
+    /** Dependencies */
+    val deps: Set<String> = emptySet(),
+
+    /** Build configuration name */
+    val build: String = "default",
+
+    /** Git configuration */
+    val git: ProjectGitConfig = ProjectGitConfig()
+)
+
+@Serializable
+data class PathConfig(
+    /** Directory for build logs */
+    val log: Path = Path("log"),
+
+    /** Base dir for all projects */
+    val project: Path = Path("")
+)
 
 @Serializable
 data class NewMpbConfig(
@@ -31,97 +179,20 @@ data class NewMpbConfig(
     val seq: Boolean = false,
 
     /** Console output configuration */
-    val output: Output = Output(),
+    val output: OutputConfig = OutputConfig(),
+
+    /** Base paths */
+    val path: PathConfig = PathConfig(),
 
     /** Global git configuration */
-    val git: Git /*,
-    val projects: Map<String, Project>,
-    val jira: Jira,
-    val ticket: Ticket,
-    val build: Map<String, Build>,*/
-) {
+    val git: GitConfig = GitConfig(),
 
-    @Serializable
-    data class Output(
-        /** Outputs all message lines, otherwise only current message (Status) is printed */
-        val plain: Boolean = false,
+    /** Projects */
+    val projects: Map<String, ProjectConfig> = emptyMap(),
 
-        /** Disables colorful output */
-        val monochrome: Boolean = false,
-
-        /** Default terminal width */
-        val width: Int = 80
-    )
-
-    @Serializable
-    data class BranchPattern(
-        @Serializable(with = RegexAsStringSerializer::class)
-        val input: Regex,
-        val branch: String,
-        val index: Int
-    )
-
-    @Serializable
-    data class Git(
-        /** Default branch name (for switching, etc) */
-        val default: String? = null,
-
-        /** List of branch patterns for quick switching to related branches */
-        val patterns: List<BranchPattern> = emptyList(),
-
-        /** Disables fetching */
-        val noFetch: Boolean = false,
-
-        /** Disables rebasing */
-        val noRebase: Boolean = false,
-
-        /** Ignored paths */
-        val ignore: Set<Path> = emptySet()
-    )
-
-    data class Project(
-        /** Base directory */
-        val dir: Path,
-
-        /** Dependencies */
-        val deps: Set<String>,
-
-        /** Build configuration */
-        val build: BuildConfig,
-
-        /** Git configuration */
-        val git: Git,
-
-        /** Project log file */
-        val log: Path
-    )
-
-    data class Jira(
-        val url: String,
-        val project: String
-    )
-
-    data class Build(
-        val use: String?,
-        val tool: List<String>,
-        val opt: List<String>,
-        val commands: Map<String, List<String>>,
-        val env: Map<String, String>,
-        val progress: Progress
-    )
-
-    data class Progress(
-        val cmd: List<String>,
-        val plan: RegexSequence,
-        val build: RegexSequence
-    )
-
-    data class Ticket(
-        val dir: Path,
-        val overwrite: Boolean
-    )
-
-}
+    /** Build tools, options, environment and commands */
+    val build: Map<String, Build> = emptyMap()
+)
 
 
 class ConfigSerializationTest {
@@ -142,7 +213,7 @@ class ConfigSerializationTest {
                 name: abc
                 output: { plain: true, monochrome: true, width: 120 }
             """.trimIndent())
-        assertEquals(NewMpbConfig("abc", output = NewMpbConfig.Output(true, true, 120)), parsedConfig)
+        assertEquals(NewMpbConfig("abc", output = OutputConfig(plain = true, monochrome = true, 120)), parsedConfig)
     }
 
 }

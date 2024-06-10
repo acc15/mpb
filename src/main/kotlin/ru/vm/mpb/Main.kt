@@ -17,7 +17,6 @@ import java.io.File
 import kotlin.system.exitProcess
 
 val ALL_CMDS = listOf(
-    JiraCmd,
     TicketCmd,
     CheckoutCmd,
     BuildCmd,
