@@ -1,7 +1,7 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("jvm") version "1.9.22"
+    kotlin("jvm") version "2.0.0"
     application
 }
 
@@ -14,10 +14,10 @@ repositories {
 
 dependencies {
     implementation("org.yaml:snakeyaml:2.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
     implementation("org.fusesource.jansi:jansi:2.4.1")
-    testImplementation(kotlin("test", "1.9.22"))
-    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation(kotlin("test"))
+    testImplementation("io.mockk:mockk:1.13.11")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
 }
 
@@ -25,8 +25,17 @@ tasks.test {
     useJUnitPlatform()
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "17"
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+kotlin {
+    compilerOptions {
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        jvmTarget.set(JvmTarget.JVM_21)
+    }
 }
 
 tasks.installDist {

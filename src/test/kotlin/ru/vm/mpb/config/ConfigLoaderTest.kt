@@ -3,12 +3,8 @@ package ru.vm.mpb.config
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import org.fusesource.jansi.AnsiConsole
 import ru.vm.mpb.config.loader.ConfigLoader
 import ru.vm.mpb.config.loader.YamlLoader
-import java.io.ByteArrayOutputStream
-import java.io.OutputStream
-import java.io.PrintStream
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.test.*
