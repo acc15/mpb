@@ -16,7 +16,6 @@ data class MpbConfig(
     val ticket: TicketConfig,
     val build: Map<String, BuildConfig>,
     val args: ArgConfig,
-    val profiles: Set<String>,
     val maxSessions: Int
 ) {
 
@@ -42,7 +41,6 @@ data class MpbConfig(
                     BuildConfig.fromConfig(BuildConfig.merge(cfg, c, null))
                 },
                 ArgConfig.fromConfig(cfg, projects.keys, IncludeExclude.fromConfig(cfg)),
-                cfg.get("profiles").map.keys,
                 cfg.get("git").shorthand.get("maxSessions").int ?: 0
             )
         }

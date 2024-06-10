@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("jvm") version "2.0.0"
+    kotlin("plugin.serialization") version "2.0.0"
     application
 }
 
@@ -13,6 +14,7 @@ repositories {
 }
 
 dependencies {
+    implementation("com.charleskorn.kaml:kaml:0.60.0")
     implementation("org.yaml:snakeyaml:2.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
     implementation("org.fusesource.jansi:jansi:2.4.1")

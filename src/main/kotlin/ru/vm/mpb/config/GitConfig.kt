@@ -9,7 +9,7 @@ data class GitConfig(
     val patterns: List<BranchPattern>,
     val noFetch: Boolean,
     val noRebase: Boolean,
-    val ignore: Set<Path>
+    val ignore: Set<Path>,
 ) {
     companion object {
         fun fromConfig(cfg: Config) = GitConfig(
