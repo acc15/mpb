@@ -23,10 +23,24 @@ data class OutputConfig(
 
 @Serializable
 data class BranchPattern(
+
+    /**
+     * Pattern to match against user input
+     */
     @Serializable(with = RegexAsStringSerializer::class)
     val input: Regex,
+
+    /**
+     * Dynamic branch pattern (which may use match groups from [input]) to find requested branch
+     */
     val branch: String,
-    val index: Int
+
+    /**
+     * Index of branch to take.
+     *
+     * Negative values will take values from end of matched branch list, i.e. use `-1` for last element
+     */
+    val index: Int = -1
 )
 
 @Serializable
@@ -88,6 +102,8 @@ data class ProjectGitConfig(
     val ignore: Set<Path>? = null
 )
 
+
+
 @Serializable
 data class BuildProgress(
     /** Command to run to get build plan (how many steps, and their names */
@@ -141,12 +157,16 @@ data class Build(
 
 @Serializable
 data class ProjectConfig(
+
     /**
-     * Project directory
-     *
-     * Defaults to project name
+     * Project directory. Relative to [PathConfig.projects]. Defaults to `${name}`
      */
-    val dir: Path? = null,
+    val dir: Path?,
+
+    /**
+     * Project log file path. Relative to [PathConfig.logs]. Defaults to `${name}.log`
+     */
+    val log: Path?,
 
     /** Dependencies */
     val deps: Set<String> = emptySet(),
@@ -161,10 +181,10 @@ data class ProjectConfig(
 @Serializable
 data class PathConfig(
     /** Directory for build logs */
-    val log: Path = Path("log"),
+    val logs: Path = Path("log"),
 
     /** Base dir for all projects */
-    val project: Path = Path("")
+    val projects: Path = Path("")
 )
 
 @Serializable
