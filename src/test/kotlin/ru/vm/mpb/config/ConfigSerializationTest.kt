@@ -1,108 +1,15 @@
 package ru.vm.mpb.config
 
-import com.charleskorn.kaml.Yaml
-import com.charleskorn.kaml.YamlConfiguration
-import kotlinx.serialization.Serializable
-import ru.vm.mpb.regex.RegexAsStringSerializer
-import ru.vm.mpb.regex.RegexSequence
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.options.*
+import com.github.ajalt.clikt.parameters.types.int
+import com.github.ajalt.clikt.parameters.types.path
 import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.test.*
-
-@Serializable
-data class OutputConfig(
-    /** Outputs all message lines, otherwise only current message (Status) is printed */
-    val plain: Boolean = false,
-
-    /** Disables colorful output */
-    val monochrome: Boolean = false,
-
-    /** Default terminal width */
-    val width: Int = 80
-)
-
-@Serializable
-data class BranchPattern(
-
-    /**
-     * Pattern to match against user input
-     */
-    @Serializable(with = RegexAsStringSerializer::class)
-    val input: Regex,
-
-    /**
-     * Dynamic branch pattern (which may use match groups from [input]) to find requested branch
-     */
-    val branch: String,
-
-    /**
-     * Index of branch to take.
-     *
-     * Negative values will take values from end of matched branch list, i.e. use `-1` for last element
-     */
-    val index: Int = -1
-)
-
-@Serializable
-data class GitConfig(
-    /** Default branch name (for switching, etc) */
-    val default: String = "master",
-
-    /** List of branch patterns for quick switching to related branches */
-    val patterns: List<BranchPattern> = emptyList(),
-
-    /** Disables fetching */
-    val noFetch: Boolean = false,
-
-    /** Disables rebasing */
-    val noRebase: Boolean = false,
-
-    /** Ignored paths */
-    val ignore: Set<Path> = emptySet(),
-
-    /** Maximum session count (useful to limit maximum connection count to single server) */
-    val maxSessions: Int = 0
-)
-
-@Serializable
-data class ProjectGitConfig(
-    /**
-     * Default branch name (for switching, etc)
-     *
-     * Overrides top level [GitConfig.default]
-     */
-    val default: String? = null,
-
-    /**
-     * List of branch patterns for quick switching to related branches
-     *
-     * Overrides top level [GitConfig.patterns]
-     */
-    val patterns: List<BranchPattern>? = null,
-
-    /**
-     * Disables fetching
-     *
-     * Overrides top level [GitConfig.noFetch]
-     */
-    val noFetch: Boolean? = null,
-
-    /**
-     * Disables rebasing
-     *
-     * Overrides top level [GitConfig.noRebase]
-     */
-    val noRebase: Boolean? = null,
-
-    /**
-     * Ignored paths
-     *
-     * Overrides top level [GitConfig.ignore]
-     */
-    val ignore: Set<Path>? = null
-)
 
 
+
+
+/*
 
 @Serializable
 data class BuildProgress(
@@ -188,7 +95,7 @@ data class PathConfig(
 )
 
 @Serializable
-data class NewMpbConfig(
+data class MpbConfig(
     /** Configuration name (used for self-referencing) */
     val name: String,
 
@@ -197,9 +104,6 @@ data class NewMpbConfig(
 
     /** Run project tasks sequentially (not in parallel) */
     val seq: Boolean = false,
-
-    /** Console output configuration */
-    val output: OutputConfig = OutputConfig(),
 
     /** Base paths */
     val path: PathConfig = PathConfig(),
@@ -236,4 +140,4 @@ class ConfigSerializationTest {
         assertEquals(NewMpbConfig("abc", output = OutputConfig(plain = true, monochrome = true, 120)), parsedConfig)
     }
 
-}
+}*/

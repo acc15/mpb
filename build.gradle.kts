@@ -18,6 +18,7 @@ dependencies {
     implementation("org.yaml:snakeyaml:2.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
     implementation("org.fusesource.jansi:jansi:2.4.1")
+    implementation("com.github.ajalt.clikt:clikt:4.2.2")
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk:1.13.11")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
