@@ -8,7 +8,7 @@ import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
 class IndeterminateBuildProgress(
-    private val progressBar: ProgressBar
+    private val progress: ProgressBar
 ): BuildProgress {
 
     override suspend fun init() {
@@ -24,7 +24,8 @@ class IndeterminateBuildProgress(
         val progressJob = launch {
             while (isActive) {
                 if (changeFlag.getAndSet(false)) {
-                    onProgress(progressBar.update())
+                    progress.update()
+                    onProgress(progress)
                 }
                 delay(50)
             }

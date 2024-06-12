@@ -43,12 +43,11 @@ class BuildPlanProgress(val ctx: ProjectContext, val progress: ColoredProgressBa
         cfg.build.findAllMatches(inp.bufferedReader().lineSequence()) { match ->
 
             remaining.remove(match)
-
-            onProgress(progress.apply {
-                current = plan.size - remaining.size
-                total = plan.size
-                text = match
-            }.update())
+            progress.current = plan.size - remaining.size
+            progress.total = plan.size
+            progress.text = match
+            progress.update()
+            onProgress(progress)
 
         }
 

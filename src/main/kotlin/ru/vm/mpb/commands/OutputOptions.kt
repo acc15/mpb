@@ -9,7 +9,7 @@ import com.github.ajalt.clikt.parameters.types.int
 class OutputOptions : OptionGroup(name = "Output Options") {
     val plain: Boolean by option(
         "-p", "--plain",
-        help = "Outputs all messages, by default only latest messages are printed (Status mode)"
+        help = "Outputs all messages, by default only recent messages are displayed (Status mode)"
     ).flag()
 
     val monochrome: Boolean by option("-m", "--monochrome", help = "Disables color output").flag()

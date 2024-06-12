@@ -16,9 +16,8 @@ class ColoredProgressBar(
     private val pixelColor = Range(AnsiRgb.BLUE, AnsiRgb.GREEN)
     private val pixelRange = Range.fromTotal(10)
 
-    override fun update(): ProgressBar {
+    override fun update() {
         current = minOf(current, total)
-        return this
     }
 
     private fun ellipsized(s: String, w: Int): String {

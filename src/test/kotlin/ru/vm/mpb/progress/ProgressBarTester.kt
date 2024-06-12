@@ -8,7 +8,9 @@ class ProgressBarTester<T: ProgressBar>(val bar: T, val max: Int = 100, val min:
     fun test(changer: T.(cur: Int) -> Unit = {}) {
         val out = System.out
         for (i in min .. max) {
-            out.print(Ansi.ansi().a('\r').apply(bar.apply { changer(this, i) }.update()))
+            bar.apply { changer(this, i) }
+            bar.update()
+            out.print(Ansi.ansi().a('\r').apply(bar))
             out.flush()
             Thread.sleep(100)
         }

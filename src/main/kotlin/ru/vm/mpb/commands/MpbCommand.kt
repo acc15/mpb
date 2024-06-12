@@ -27,6 +27,7 @@ class MpbCommand : CliktCommand() {
     )
 
     override fun run() {
+        MpbConfi
         println(output)
         println(project)
     }

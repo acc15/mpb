@@ -16,19 +16,19 @@ class IndeterminateProgressBar(
     private var gradientRange = Range.fromTotal(width / 4)
     private var maxPosition: Int = 0
 
-    override fun update(): ProgressBar {
+    override fun update() {
         gradientRange = Range.fromTotal(width / 4)
         if (width < MIN_WIDTH) {
             position = 0
             offset = 0
             maxPosition = 0
-            return this
+            return
         }
 
         maxPosition = width - MIN_WIDTH
         if (offset == 0) {
             offset = 1
-            return this
+            return
         }
 
         position += offset
@@ -39,7 +39,6 @@ class IndeterminateProgressBar(
             position = maxPosition
             offset = -1
         }
-        return this
     }
 
     override fun apply(ansi: Ansi) {

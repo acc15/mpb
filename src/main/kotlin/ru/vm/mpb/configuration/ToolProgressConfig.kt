@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 import ru.vm.mpb.regex.RegexSequence
 
 @Serializable
-data class BuildProgressConfig(
+data class ToolProgressConfig(
     /** Command to run to get build plan (how many steps, and their names */
     val cmd: List<String>,
 
