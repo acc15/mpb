@@ -7,6 +7,7 @@ import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.path
 import java.nio.file.Path
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
+import ru.vm.mpb.config.MpbConfig
 
 class MpbCommand : CliktCommand() {
 
@@ -27,17 +28,8 @@ class MpbCommand : CliktCommand() {
     )
 
     override fun run() {
-        MpbConfi
+        MpbConfig
         println(output)
         println(project)
     }
 }
-
-fun main(args: Array<String>) = MpbCommand()
-    .completionOption()
-    .subcommands(
-        BuildCommand(),
-        SwitchCommand(),
-        PullCommand()
-    )
-    .main(args)

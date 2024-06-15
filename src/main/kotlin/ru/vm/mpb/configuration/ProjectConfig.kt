@@ -5,19 +5,18 @@ import java.nio.file.Path
 
 @Serializable
 data class ProjectConfig(
+    /** Project directory. Relative to [PathConfig.projects]. Defaults to `${project.key}` */
+    val dir: Path?,
 
-        /** Project directory. Relative to [PathConfig.projects]. Defaults to `${project.key}` */
-        val dir: Path?,
+    /** Project log file path. Relative to [PathConfig.logs]. Defaults to `${project.key}.log` */
+    val log: Path?,
 
-        /** Project log file path. Relative to [PathConfig.logs]. Defaults to `${project.key}.log` */
-        val log: Path?,
+    /** Dependencies */
+    val deps: Set<String> = emptySet(),
 
-        /** Dependencies */
-        val deps: Set<String> = emptySet(),
+    /** Build tool name */
+    val tool: String = "default",
 
-        /** Build tool name */
-        val tool: String = "default",
-
-        /** Git configuration */
-        val git: ProjectGitConfig = ProjectGitConfig()
+    /** Git configuration */
+    val git: ProjectGitConfig = ProjectGitConfig()
 )
