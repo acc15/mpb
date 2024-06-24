@@ -5,7 +5,7 @@ import java.nio.file.Path
 
 @Serializable
 data class PathConfig(
-    /** Base directory. Relative to [config file location][ru.vm.mpb.commands.MpbCommand.config] */
+    /** Base directory. Relative to [config file location][ru.vm.mpb.commands.MpbCommand.configPath] */
     val base: Path = Path.of("log"),
 
     /** Directory for build logs. Relative to [base] dir */

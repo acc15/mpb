@@ -1,24 +1,30 @@
 package ru.vm.mpb.commands
 
-import com.github.ajalt.clikt.completion.completionOption
+import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.YamlConfiguration
+import com.charleskorn.kaml.decodeFromStream
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.core.findOrSetObject
 import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.path
 import java.nio.file.Path
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
-import ru.vm.mpb.config.MpbConfig
+import kotlin.io.path.inputStream
 
 class MpbCommand : CliktCommand() {
 
     /** Config file location */
-    val config: Path by option("-c", "--config", help = "Config file location").path().default(Path.of("mpb.yaml"))
-
-    /** Output options */
-    val output by OutputOptions()
+    val configPath: Path by option("-c", "--config", help = "Config file location")
+        .path()
+        .default(Path.of("mpb.yaml"))
 
     /** Project options */
     val project by ProjectOptions()
+
+    val config by findOrSetObject {
+        val yaml = Yaml(configuration = YamlConfiguration(allowAnchorsAndAliases = true))
+        configPath.inputStream().use { yaml.decodeFromStream(ru.vm.mpb.configuration.MpbConfig.serializer(), it) }
+    }
 
     override fun aliases(): Map<String, List<String>> = mapOf(
         "b" to listOf("build"),
@@ -28,8 +34,8 @@ class MpbCommand : CliktCommand() {
     )
 
     override fun run() {
-        MpbConfig
-        println(output)
-        println(project)
+
+        println("config loaded: $config")
+
     }
 }
