@@ -40,4 +40,7 @@ target_link_libraries(ftx_demo
     PRIVATE ftxui::dom 
     PRIVATE ftxui::component)
 
+
+add_executable(term_demo ${SRC}/term_demo.cpp)
+
 # testing(TARGET mpb SRC ...)
